@@ -1,0 +1,102 @@
+/*
+  Localizable.strings
+  Atenea
+  Chinese (Simplified) Localization
+*/
+
+// MARK: - Common Actions
+"action.start" = "开始";
+"action.next" = "下一个";
+"action.skip" = "跳过";
+"action.cancel" = "取消";
+"action.save" = "保存";
+
+// MARK: - Onboarding
+"onboarding.title" = "Atenea";
+"onboarding.subtitle" = "在2026年国际足联世界杯导航、收集和连接";
+"onboarding.feature1" = "智能导航";
+"onboarding.feature2" = "AR贴纸相册";
+"onboarding.feature3" = "球迷社区";
+
+// MARK: - Login
+"login.welcome" = "欢迎来到";
+"login.appName" = "Atenea";
+"login.emailOrPhone" = "电子邮件或电话号码";
+"login.emailPlaceholder" = "输入您的电子邮件或电话";
+"login.terms" = "创建帐户即表示我同意Atenea的";
+"login.termsLink" = "服务条款";
+"login.and" = "和";
+"login.privacyLink" = "隐私声明";
+"login.continue" = "继续";
+"login.or" = "或";
+"login.continueWithApple" = "使用Apple继续";
+"login.help" = "帮助";
+"login.close" = "关闭";
+"login.noAccount" = "没有帐户？";
+"login.signUp" = "注册";
+
+// MARK: - Registration
+"register.title" = "创建帐户";
+"register.subtitle" = "加入Atenea社区";
+"register.name" = "全名";
+"register.namePlaceholder" = "输入您的全名";
+"register.age" = "年龄";
+"register.agePlaceholder" = "输入您的年龄";
+"register.origin" = "原籍地";
+"register.originPlaceholder" = "选择您的国家";
+"register.email" = "电子邮件";
+"register.emailPlaceholder" = "输入您的电子邮件";
+"register.phone" = "电话号码";
+"register.phonePlaceholder" = "输入您的电话号码";
+"register.createAccount" = "创建帐户";
+"register.alreadyHaveAccount" = "已经有帐户？";
+"register.signIn" = "登录";
+
+"register.accessibility" = "无障碍功能";
+
+// MARK: - Accessibility Options
+"accessibility.none" = "无需无障碍功能";
+"accessibility.visual" = "视觉";
+"accessibility.hearing" = "听觉";
+"accessibility.motor" = "运动/身体";
+"accessibility.cognitive" = "认知";
+"accessibility.speech" = "言语";
+"accessibility.neurological" = "神经";
+"accessibility.multiple" = "多重";
+"accessibility.other" = "其他";
+"accessibility.preferNotToSay" = "不愿透露";
+
+
+// MARK: - MainMapView
+"map.searchPlaceholder" = "在地图上搜索";
+"map.restaurants" = "餐厅";
+"map.cafes" = "咖啡馆";
+"map.markets" = "市场";
+"map.shopping" = "购物";
+"map.selectedLocation" = "选定位置";
+"map.pointOnMap" = "地图上的点";
+"map.location" = "位置";
+"map.stadiumCategory" = "FIFA 2026体育场";
+"time.lessThanMin" = "不到1分钟";
+"time.min" = "分钟";
+"time.hour" = "小时";
+"menu.mapStyle" = "地图样式";
+"menu.3dModel" = "3D模型";
+"menu.viewTangara3D" = "查看Tangara 3D列车";
+"menu.fifa2026" = "FIFA 2026世界杯";
+"menu.fifa2026Venues" = "FIFA 2026体育场";
+"menu.fifa2026VenuesDesc" = "墨西哥、美国和加拿大的16个体育场";
+"menu.simulations" = "模拟";
+"menu.line3Simulation" = "3号线模拟";
+"menu.line3Route" = "Indios Verdes → Universidad";
+"menu.goToStation" = "前往车站";
+"menu.transportStation" = "交通站";
+"menu.options" = "选项";
+"action.close" = "关闭";
+"map.bars" = "酒吧";
+"map.museums" = "博物馆";
+"map.gyms" = "健身房";
+"map.parks" = "公园";
+"map.suggestions" = "建议";
+"menu.language" = "语言";
+"menu.currentLanguage" = "当前语言";

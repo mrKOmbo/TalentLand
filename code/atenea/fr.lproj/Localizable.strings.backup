@@ -1,0 +1,100 @@
+/*
+  Localizable.strings
+  Atenea
+  French Localization
+*/
+
+// MARK: - Common Actions
+"action.start" = "Commencer";
+"action.next" = "Suivant";
+"action.skip" = "Passer";
+"action.cancel" = "Annuler";
+"action.save" = "Enregistrer";
+
+// MARK: - Onboarding
+"onboarding.title" = "Atenea";
+"onboarding.subtitle" = "Naviguez, collectez et connectez-vous à la Coupe du Monde FIFA 2026";
+"onboarding.feature1" = "Navigation Intelligente";
+"onboarding.feature2" = "Album d'Autocollants AR";
+"onboarding.feature3" = "Communauté de Fans";
+
+// MARK: - Login
+"login.welcome" = "Bienvenue à";
+"login.appName" = "Atenea";
+"login.emailOrPhone" = "E-mail ou numéro de téléphone";
+"login.emailPlaceholder" = "Entrez votre e-mail ou téléphone";
+"login.terms" = "En créant un compte, j'accepte les";
+"login.termsLink" = "Conditions d'utilisation";
+"login.and" = "et";
+"login.privacyLink" = "Avis de confidentialité";
+"login.continue" = "Continuer";
+"login.or" = "ou";
+"login.continueWithApple" = "Continuer avec Apple";
+"login.help" = "Aide";
+"login.close" = "Fermer";
+"login.noAccount" = "Vous n'avez pas de compte?";
+"login.signUp" = "S'inscrire";
+
+// MARK: - Registration
+"register.title" = "Créer un compte";
+"register.subtitle" = "Rejoignez la communauté Atenea";
+"register.name" = "Nom complet";
+"register.namePlaceholder" = "Entrez votre nom complet";
+"register.age" = "Âge";
+"register.agePlaceholder" = "Entrez votre âge";
+"register.origin" = "Pays d'origine";
+"register.originPlaceholder" = "Sélectionnez votre pays";
+"register.email" = "E-mail";
+"register.emailPlaceholder" = "Entrez votre e-mail";
+"register.phone" = "Numéro de téléphone";
+"register.phonePlaceholder" = "Entrez votre numéro de téléphone";
+"register.createAccount" = "Créer un compte";
+"register.alreadyHaveAccount" = "Vous avez déjà un compte?";
+"register.signIn" = "Se connecter";
+"register.accessibility" = "Accessibilité";
+
+// MARK: - Accessibility Options
+"accessibility.none" = "Sans accessibilité";
+"accessibility.visual" = "Visuelle";
+"accessibility.hearing" = "Auditive";
+"accessibility.motor" = "Motrice/Physique";
+"accessibility.cognitive" = "Cognitive";
+"accessibility.speech" = "De la parole";
+"accessibility.neurological" = "Neurologique";
+"accessibility.multiple" = "Multiple";
+"accessibility.other" = "Autre";
+"accessibility.preferNotToSay" = "Préfère ne pas dire";
+
+// MARK: - MainMapView
+"map.searchPlaceholder" = "Rechercher sur la carte";
+"map.restaurants" = "Restaurants";
+"map.cafes" = "Cafés";
+"map.markets" = "Marchés";
+"map.shopping" = "Shopping";
+"map.selectedLocation" = "Lieu sélectionné";
+"map.pointOnMap" = "Point sur la carte";
+"map.location" = "Lieu";
+"map.stadiumCategory" = "Stade FIFA 2026";
+"time.lessThanMin" = "moins de 1 min";
+"time.min" = "min";
+"time.hour" = "h";
+"menu.mapStyle" = "Style de carte";
+"menu.3dModel" = "Modèle 3D";
+"menu.viewTangara3D" = "Voir le train Tangara 3D";
+"menu.fifa2026" = "Coupe du Monde FIFA 2026";
+"menu.fifa2026Venues" = "Stades FIFA 2026";
+"menu.fifa2026VenuesDesc" = "16 stades au Mexique, USA et Canada";
+"menu.simulations" = "Simulations";
+"menu.line3Simulation" = "Simulation Ligne 3";
+"menu.line3Route" = "Indios Verdes → Universidad";
+"menu.goToStation" = "Aller à la station";
+"menu.transportStation" = "Station de transport";
+"menu.options" = "Options";
+"action.close" = "Fermer";
+"map.bars" = "Bars";
+"map.museums" = "Musées";
+"map.gyms" = "Gymnases";
+"map.parks" = "Parcs";
+"map.suggestions" = "Suggestions";
+"menu.language" = "Langue";
+"menu.currentLanguage" = "Langue actuelle";

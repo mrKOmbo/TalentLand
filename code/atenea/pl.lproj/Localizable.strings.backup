@@ -1,0 +1,102 @@
+/*
+  Localizable.strings
+  Atenea
+  Polish Localization
+*/
+
+// MARK: - Common Actions
+"action.start" = "Rozpocznij";
+"action.next" = "Dalej";
+"action.skip" = "Pomiń";
+"action.cancel" = "Anuluj";
+"action.save" = "Zapisz";
+
+// MARK: - Onboarding
+"onboarding.title" = "Atenea";
+"onboarding.subtitle" = "Nawiguj, zbieraj i łącz się na Mistrzostwach Świata FIFA 2026";
+"onboarding.feature1" = "Inteligentna Nawigacja";
+"onboarding.feature2" = "Album Naklejek AR";
+"onboarding.feature3" = "Społeczność Fanów";
+
+// MARK: - Login
+"login.welcome" = "Witamy w";
+"login.appName" = "Atenea";
+"login.emailOrPhone" = "E-mail lub numer telefonu";
+"login.emailPlaceholder" = "Wprowadź swój e-mail lub telefon";
+"login.terms" = "Tworząc konto, akceptuję";
+"login.termsLink" = "Warunki korzystania z usługi";
+"login.and" = "i";
+"login.privacyLink" = "Politykę prywatności";
+"login.continue" = "Kontynuuj";
+"login.or" = "lub";
+"login.continueWithApple" = "Kontynuuj z Apple";
+"login.help" = "Pomoc";
+"login.close" = "Zamknij";
+"login.noAccount" = "Nie masz konta?";
+"login.signUp" = "Zarejestruj się";
+
+// MARK: - Registration
+"register.title" = "Utwórz Konto";
+"register.subtitle" = "Dołącz do społeczności Atenea";
+"register.name" = "Imię i Nazwisko";
+"register.namePlaceholder" = "Wprowadź swoje imię i nazwisko";
+"register.age" = "Wiek";
+"register.agePlaceholder" = "Wprowadź swój wiek";
+"register.origin" = "Miejsce Pochodzenia";
+"register.originPlaceholder" = "Wybierz swój kraj";
+"register.email" = "E-mail";
+"register.emailPlaceholder" = "Wprowadź swój e-mail";
+"register.phone" = "Numer Telefonu";
+"register.phonePlaceholder" = "Wprowadź swój numer telefonu";
+"register.createAccount" = "Utwórz Konto";
+"register.alreadyHaveAccount" = "Masz już konto?";
+"register.signIn" = "Zaloguj się";
+
+"register.accessibility" = "رسائی";
+
+// MARK: - Accessibility Options
+"accessibility.none" = "رسائی کی ضرورت نہیں";
+"accessibility.visual" = "بصری";
+"accessibility.hearing" = "سماعتی";
+"accessibility.motor" = "حرکی/جسمانی";
+"accessibility.cognitive" = "علمی";
+"accessibility.speech" = "تقریر";
+"accessibility.neurological" = "اعصابی";
+"accessibility.multiple" = "متعدد";
+"accessibility.other" = "دیگر";
+"accessibility.preferNotToSay" = "کہنا پسند نہیں";
+
+
+// MARK: - MainMapView
+"map.searchPlaceholder" = "Szukaj na mapie";
+"map.restaurants" = "Restauracje";
+"map.cafes" = "Kawiarnie";
+"map.markets" = "Targi";
+"map.shopping" = "Zakupy";
+"map.selectedLocation" = "Wybrana lokalizacja";
+"map.pointOnMap" = "Punkt na mapie";
+"map.location" = "Lokalizacja";
+"map.stadiumCategory" = "Stadion FIFA 2026";
+"time.lessThanMin" = "mniej niż 1 min";
+"time.min" = "min";
+"time.hour" = "godz";
+"menu.mapStyle" = "Styl mapy";
+"menu.3dModel" = "Model 3D";
+"menu.viewTangara3D" = "Zobacz pociąg Tangara 3D";
+"menu.fifa2026" = "Mistrzostwa Świata FIFA 2026";
+"menu.fifa2026Venues" = "Stadiony FIFA 2026";
+"menu.fifa2026VenuesDesc" = "16 stadionów w Meksyku, USA i Kanadzie";
+"menu.simulations" = "Symulacje";
+"menu.line3Simulation" = "Symulacja linii 3";
+"menu.line3Route" = "Indios Verdes → Universidad";
+"menu.goToStation" = "Przejdź do stacji";
+"menu.transportStation" = "Stacja transportu";
+"menu.options" = "Opcje";
+"action.close" = "Zamknij";
+"map.bars" = "Bary";
+"map.museums" = "Muzea";
+"map.gyms" = "Siłownie";
+"map.parks" = "Parki";
+"map.suggestions" = "Sugestie";
+"menu.language" = "Język";
+"menu.currentLanguage" = "Obecny język";

@@ -1,0 +1,17 @@
+//
+//  WidgetAteneaBundle.swift
+//  WidgetAtenea
+//
+//  Created by Emilio Cruz V. on 01/11/25.
+//
+
+import WidgetKit
+import SwiftUI
+
+@main
+struct WidgetAteneaBundle: WidgetBundle {
+    var body: some Widget {
+        WidgetAtenea()
+    }
+}
+

@@ -1,0 +1,102 @@
+/*
+  Localizable.strings
+  Atenea
+  Indonesian Localization
+*/
+
+// MARK: - Common Actions
+"action.start" = "Mulai";
+"action.next" = "Berikutnya";
+"action.skip" = "Lewati";
+"action.cancel" = "Batal";
+"action.save" = "Simpan";
+
+// MARK: - Onboarding
+"onboarding.title" = "Atenea";
+"onboarding.subtitle" = "Navigasi, kumpulkan, dan terhubung di Piala Dunia FIFA 2026";
+"onboarding.feature1" = "Navigasi Pintar";
+"onboarding.feature2" = "Album Stiker AR";
+"onboarding.feature3" = "Komunitas Penggemar";
+
+// MARK: - Login
+"login.welcome" = "Selamat datang di";
+"login.appName" = "Atenea";
+"login.emailOrPhone" = "Email atau Nomor Telepon";
+"login.emailPlaceholder" = "Masukkan email atau telepon Anda";
+"login.terms" = "Dengan membuat akun, saya setuju dengan";
+"login.termsLink" = "Ketentuan layanan";
+"login.and" = "dan";
+"login.privacyLink" = "Pemberitahuan Privasi";
+"login.continue" = "Lanjutkan";
+"login.or" = "atau";
+"login.continueWithApple" = "Lanjutkan dengan Apple";
+"login.help" = "Bantuan";
+"login.close" = "Tutup";
+"login.noAccount" = "Belum punya akun?";
+"login.signUp" = "Daftar";
+
+// MARK: - Registration
+"register.title" = "Buat Akun";
+"register.subtitle" = "Bergabunglah dengan komunitas Atenea";
+"register.name" = "Nama Lengkap";
+"register.namePlaceholder" = "Masukkan nama lengkap Anda";
+"register.age" = "Umur";
+"register.agePlaceholder" = "Masukkan umur Anda";
+"register.origin" = "Tempat Asal";
+"register.originPlaceholder" = "Pilih negara Anda";
+"register.email" = "Email";
+"register.emailPlaceholder" = "Masukkan email Anda";
+"register.phone" = "Nomor Telepon";
+"register.phonePlaceholder" = "Masukkan nomor telepon Anda";
+"register.createAccount" = "Buat Akun";
+"register.alreadyHaveAccount" = "Sudah punya akun?";
+"register.signIn" = "Masuk";
+
+"register.accessibility" = "رسائی";
+
+// MARK: - Accessibility Options
+"accessibility.none" = "رسائی کی ضرورت نہیں";
+"accessibility.visual" = "بصری";
+"accessibility.hearing" = "سماعتی";
+"accessibility.motor" = "حرکی/جسمانی";
+"accessibility.cognitive" = "علمی";
+"accessibility.speech" = "تقریر";
+"accessibility.neurological" = "اعصابی";
+"accessibility.multiple" = "متعدد";
+"accessibility.other" = "دیگر";
+"accessibility.preferNotToSay" = "کہنا پسند نہیں";
+
+
+// MARK: - MainMapView
+"map.searchPlaceholder" = "Cari di peta";
+"map.restaurants" = "Restoran";
+"map.cafes" = "Kafe";
+"map.markets" = "Pasar";
+"map.shopping" = "Belanja";
+"map.selectedLocation" = "Lokasi yang dipilih";
+"map.pointOnMap" = "Titik di peta";
+"map.location" = "Lokasi";
+"map.stadiumCategory" = "Stadion FIFA 2026";
+"time.lessThanMin" = "kurang dari 1 mnt";
+"time.min" = "mnt";
+"time.hour" = "j";
+"menu.mapStyle" = "Gaya Peta";
+"menu.3dModel" = "Model 3D";
+"menu.viewTangara3D" = "Lihat Kereta Tangara 3D";
+"menu.fifa2026" = "Piala Dunia FIFA 2026";
+"menu.fifa2026Venues" = "Stadion FIFA 2026";
+"menu.fifa2026VenuesDesc" = "16 stadion di Meksiko, AS, dan Kanada";
+"menu.simulations" = "Simulasi";
+"menu.line3Simulation" = "Simulasi Jalur 3";
+"menu.line3Route" = "Indios Verdes → Universidad";
+"menu.goToStation" = "Pergi ke Stasiun";
+"menu.transportStation" = "Stasiun transportasi";
+"menu.options" = "Opsi";
+"action.close" = "Tutup";
+"map.bars" = "Bar";
+"map.museums" = "Museum";
+"map.gyms" = "Gym";
+"map.parks" = "Taman";
+"map.suggestions" = "Saran";
+"menu.language" = "Bahasa";
+"menu.currentLanguage" = "Bahasa saat ini";

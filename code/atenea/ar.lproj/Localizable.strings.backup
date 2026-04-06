@@ -1,0 +1,102 @@
+/*
+  Localizable.strings
+  Atenea
+  Arabic Localization
+*/
+
+// MARK: - Common Actions
+"action.start" = "ابدأ";
+"action.next" = "التالي";
+"action.skip" = "تخطي";
+"action.cancel" = "إلغاء";
+"action.save" = "حفظ";
+
+// MARK: - Onboarding
+"onboarding.title" = "Atenea";
+"onboarding.subtitle" = "تنقل، اجمع، وتواصل في كأس العالم FIFA 2026";
+"onboarding.feature1" = "ملاحة ذكية";
+"onboarding.feature2" = "ألبوم ملصقات AR";
+"onboarding.feature3" = "مجتمع المشجعين";
+
+// MARK: - Login
+"login.welcome" = "مرحباً بك في";
+"login.appName" = "Atenea";
+"login.emailOrPhone" = "البريد الإلكتروني أو رقم الهاتف";
+"login.emailPlaceholder" = "أدخل بريدك الإلكتروني أو هاتفك";
+"login.terms" = "بإنشاء حساب، أوافق على";
+"login.termsLink" = "شروط الخدمة";
+"login.and" = "و";
+"login.privacyLink" = "إشعار الخصوصية";
+"login.continue" = "متابعة";
+"login.or" = "أو";
+"login.continueWithApple" = "متابعة مع Apple";
+"login.help" = "مساعدة";
+"login.close" = "إغلاق";
+"login.noAccount" = "ليس لديك حساب؟";
+"login.signUp" = "سجل";
+
+// MARK: - Registration
+"register.title" = "إنشاء حساب";
+"register.subtitle" = "انضم إلى مجتمع Atenea";
+"register.name" = "الاسم الكامل";
+"register.namePlaceholder" = "أدخل اسمك الكامل";
+"register.age" = "العمر";
+"register.agePlaceholder" = "أدخل عمرك";
+"register.origin" = "مكان المنشأ";
+"register.originPlaceholder" = "اختر بلدك";
+"register.email" = "البريد الإلكتروني";
+"register.emailPlaceholder" = "أدخل بريدك الإلكتروني";
+"register.phone" = "رقم الهاتف";
+"register.phonePlaceholder" = "أدخل رقم هاتفك";
+"register.createAccount" = "إنشاء حساب";
+"register.alreadyHaveAccount" = "هل لديك حساب بالفعل؟";
+"register.signIn" = "تسجيل الدخول";
+
+"register.accessibility" = "إمكانية الوصول";
+
+// MARK: - Accessibility Options
+"accessibility.none" = "بدون إعاقة";
+"accessibility.visual" = "بصرية";
+"accessibility.hearing" = "سمعية";
+"accessibility.motor" = "حركية/جسدية";
+"accessibility.cognitive" = "إدراكية";
+"accessibility.speech" = "النطق";
+"accessibility.neurological" = "عصبية";
+"accessibility.multiple" = "متعددة";
+"accessibility.other" = "أخرى";
+"accessibility.preferNotToSay" = "أفضل عدم القول";
+
+
+// MARK: - MainMapView
+"map.searchPlaceholder" = "ابحث على الخريطة";
+"map.restaurants" = "مطاعم";
+"map.cafes" = "مقاهي";
+"map.markets" = "أسواق";
+"map.shopping" = "تسوق";
+"map.selectedLocation" = "الموقع المحدد";
+"map.pointOnMap" = "نقطة على الخريطة";
+"map.location" = "موقع";
+"map.stadiumCategory" = "ملعب فيفا 2026";
+"time.lessThanMin" = "أقل من دقيقة";
+"time.min" = "د";
+"time.hour" = "س";
+"menu.mapStyle" = "نمط الخريطة";
+"menu.3dModel" = "نموذج ثلاثي الأبعاد";
+"menu.viewTangara3D" = "عرض قطار Tangara ثلاثي الأبعاد";
+"menu.fifa2026" = "كأس العالم فيفا 2026";
+"menu.fifa2026Venues" = "ملاعب فيفا 2026";
+"menu.fifa2026VenuesDesc" = "16 ملعبًا في المكسيك والولايات المتحدة وكندا";
+"menu.simulations" = "محاكاة";
+"menu.line3Simulation" = "محاكاة الخط 3";
+"menu.line3Route" = "Indios Verdes → Universidad";
+"menu.goToStation" = "اذهب إلى المحطة";
+"menu.transportStation" = "محطة النقل";
+"menu.options" = "خيارات";
+"action.close" = "إغلاق";
+"map.bars" = "بارات";
+"map.museums" = "متاحف";
+"map.gyms" = "صالات رياضية";
+"map.parks" = "حدائق";
+"map.suggestions" = "اقتراحات";
+"menu.language" = "اللغة";
+"menu.currentLanguage" = "اللغة الحالية";

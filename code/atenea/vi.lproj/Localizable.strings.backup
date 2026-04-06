@@ -1,0 +1,102 @@
+/*
+  Localizable.strings
+  Atenea
+  Vietnamese Localization
+*/
+
+// MARK: - Common Actions
+"action.start" = "Bắt đầu";
+"action.next" = "Tiếp theo";
+"action.skip" = "Bỏ qua";
+"action.cancel" = "Hủy";
+"action.save" = "Lưu";
+
+// MARK: - Onboarding
+"onboarding.title" = "Atenea";
+"onboarding.subtitle" = "Điều hướng, sưu tầm và kết nối tại FIFA 2026";
+"onboarding.feature1" = "Điều hướng Thông minh";
+"onboarding.feature2" = "Album Sticker AR";
+"onboarding.feature3" = "Cộng đồng Fan hâm mộ";
+
+// MARK: - Login
+"login.welcome" = "Chào mừng đến";
+"login.appName" = "Atenea";
+"login.emailOrPhone" = "Email hoặc Số điện thoại";
+"login.emailPlaceholder" = "Nhập email hoặc số điện thoại";
+"login.terms" = "Bằng cách tạo tài khoản, tôi đồng ý với";
+"login.termsLink" = "Điều khoản dịch vụ";
+"login.and" = "và";
+"login.privacyLink" = "Thông báo Quyền riêng tư";
+"login.continue" = "Tiếp tục";
+"login.or" = "hoặc";
+"login.continueWithApple" = "Tiếp tục với Apple";
+"login.help" = "Trợ giúp";
+"login.close" = "Đóng";
+"login.noAccount" = "Chưa có tài khoản?";
+"login.signUp" = "Đăng ký";
+
+// MARK: - Registration
+"register.title" = "Tạo Tài khoản";
+"register.subtitle" = "Tham gia cộng đồng Atenea";
+"register.name" = "Họ và Tên";
+"register.namePlaceholder" = "Nhập họ và tên của bạn";
+"register.age" = "Tuổi";
+"register.agePlaceholder" = "Nhập tuổi của bạn";
+"register.origin" = "Quốc gia";
+"register.originPlaceholder" = "Chọn quốc gia của bạn";
+"register.email" = "Email";
+"register.emailPlaceholder" = "Nhập email của bạn";
+"register.phone" = "Số điện thoại";
+"register.phonePlaceholder" = "Nhập số điện thoại của bạn";
+"register.createAccount" = "Tạo Tài khoản";
+"register.alreadyHaveAccount" = "Đã có tài khoản?";
+"register.signIn" = "Đăng nhập";
+
+"register.accessibility" = "رسائی";
+
+// MARK: - Accessibility Options
+"accessibility.none" = "رسائی کی ضرورت نہیں";
+"accessibility.visual" = "بصری";
+"accessibility.hearing" = "سماعتی";
+"accessibility.motor" = "حرکی/جسمانی";
+"accessibility.cognitive" = "علمی";
+"accessibility.speech" = "تقریر";
+"accessibility.neurological" = "اعصابی";
+"accessibility.multiple" = "متعدد";
+"accessibility.other" = "دیگر";
+"accessibility.preferNotToSay" = "کہنا پسند نہیں";
+
+
+// MARK: - MainMapView
+"map.searchPlaceholder" = "Tìm kiếm trên bản đồ";
+"map.restaurants" = "Nhà hàng";
+"map.cafes" = "Quán cà phê";
+"map.markets" = "Chợ";
+"map.shopping" = "Mua sắm";
+"map.selectedLocation" = "Vị trí đã chọn";
+"map.pointOnMap" = "Điểm trên bản đồ";
+"map.location" = "Vị trí";
+"map.stadiumCategory" = "Sân vận động FIFA 2026";
+"time.lessThanMin" = "ít hơn 1 phút";
+"time.min" = "phút";
+"time.hour" = "giờ";
+"menu.mapStyle" = "Kiểu bản đồ";
+"menu.3dModel" = "Mô hình 3D";
+"menu.viewTangara3D" = "Xem tàu Tangara 3D";
+"menu.fifa2026" = "FIFA World Cup 2026";
+"menu.fifa2026Venues" = "Sân vận động FIFA 2026";
+"menu.fifa2026VenuesDesc" = "16 sân vận động tại Mexico, Mỹ và Canada";
+"menu.simulations" = "Mô phỏng";
+"menu.line3Simulation" = "Mô phỏng tuyến 3";
+"menu.line3Route" = "Indios Verdes → Universidad";
+"menu.goToStation" = "Đến trạm";
+"menu.transportStation" = "Trạm vận chuyển";
+"menu.options" = "Tùy chọn";
+"action.close" = "Đóng";
+"map.bars" = "Quán bar";
+"map.museums" = "Bảo tàng";
+"map.gyms" = "Phòng tập";
+"map.parks" = "Công viên";
+"map.suggestions" = "Gợi ý";
+"menu.language" = "Ngôn ngữ";
+"menu.currentLanguage" = "Ngôn ngữ hiện tại";

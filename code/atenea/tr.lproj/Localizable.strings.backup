@@ -1,0 +1,102 @@
+/*
+  Localizable.strings
+  Atenea
+  Turkish Localization
+*/
+
+// MARK: - Common Actions
+"action.start" = "Başla";
+"action.next" = "İleri";
+"action.skip" = "Atla";
+"action.cancel" = "İptal";
+"action.save" = "Kaydet";
+
+// MARK: - Onboarding
+"onboarding.title" = "Atenea";
+"onboarding.subtitle" = "FIFA 2026'da gezin, toplayın ve bağlanın";
+"onboarding.feature1" = "Akıllı Navigasyon";
+"onboarding.feature2" = "AR Çıkartma Albümü";
+"onboarding.feature3" = "Taraftar Topluluğu";
+
+// MARK: - Login
+"login.welcome" = "Hoş geldiniz";
+"login.appName" = "Atenea";
+"login.emailOrPhone" = "E-posta veya Telefon Numarası";
+"login.emailPlaceholder" = "E-posta veya telefonunuzu girin";
+"login.terms" = "Bir hesap oluşturarak, Atenea'nın";
+"login.termsLink" = "Hizmet Şartlarını";
+"login.and" = "ve";
+"login.privacyLink" = "Gizlilik Bildirimini";
+"login.continue" = "Devam Et";
+"login.or" = "veya";
+"login.continueWithApple" = "Apple ile Devam Et";
+"login.help" = "Yardım";
+"login.close" = "Kapat";
+"login.noAccount" = "Hesabınız yok mu?";
+"login.signUp" = "Kayıt Ol";
+
+// MARK: - Registration
+"register.title" = "Hesap Oluştur";
+"register.subtitle" = "Atenea topluluğuna katılın";
+"register.name" = "Ad Soyad";
+"register.namePlaceholder" = "Adınızı ve soyadınızı girin";
+"register.age" = "Yaş";
+"register.agePlaceholder" = "Yaşınızı girin";
+"register.origin" = "Köken Yeri";
+"register.originPlaceholder" = "Ülkenizi seçin";
+"register.email" = "E-posta";
+"register.emailPlaceholder" = "E-postanızı girin";
+"register.phone" = "Telefon Numarası";
+"register.phonePlaceholder" = "Telefon numaranızı girin";
+"register.createAccount" = "Hesap Oluştur";
+"register.alreadyHaveAccount" = "Zaten hesabınız var mı?";
+"register.signIn" = "Giriş Yap";
+
+"register.accessibility" = "Erişilebilirlik";
+
+// MARK: - Accessibility Options
+"accessibility.none" = "Erişilebilirlik ihtiyacı yok";
+"accessibility.visual" = "Görsel";
+"accessibility.hearing" = "İşitsel";
+"accessibility.motor" = "Motor/Fiziksel";
+"accessibility.cognitive" = "Bilişsel";
+"accessibility.speech" = "Konuşma";
+"accessibility.neurological" = "Nörolojik";
+"accessibility.multiple" = "Çoklu";
+"accessibility.other" = "Diğer";
+"accessibility.preferNotToSay" = "Belirtmemeyi tercih ediyorum";
+
+
+// MARK: - MainMapView
+"map.searchPlaceholder" = "Haritada ara";
+"map.restaurants" = "Restoranlar";
+"map.cafes" = "Kafeler";
+"map.markets" = "Pazarlar";
+"map.shopping" = "Alışveriş";
+"map.selectedLocation" = "Seçilen konum";
+"map.pointOnMap" = "Harita üzerinde nokta";
+"map.location" = "Konum";
+"map.stadiumCategory" = "FIFA 2026 Stadyumu";
+"time.lessThanMin" = "1 dakikadan az";
+"time.min" = "dk";
+"time.hour" = "sa";
+"menu.mapStyle" = "Harita Stili";
+"menu.3dModel" = "3D Model";
+"menu.viewTangara3D" = "Tangara 3D Trenini Görüntüle";
+"menu.fifa2026" = "FIFA Dünya Kupası 2026";
+"menu.fifa2026Venues" = "FIFA 2026 Stadyumları";
+"menu.fifa2026VenuesDesc" = "Meksika, ABD ve Kanada'da 16 stadyum";
+"menu.simulations" = "Simülasyonlar";
+"menu.line3Simulation" = "Hat 3 Simülasyonu";
+"menu.line3Route" = "Indios Verdes → Universidad";
+"menu.goToStation" = "İstasyona git";
+"menu.transportStation" = "Ulaşım istasyonu";
+"menu.options" = "Seçenekler";
+"action.close" = "Kapat";
+"map.bars" = "Barlar";
+"map.museums" = "Müzeler";
+"map.gyms" = "Spor Salonları";
+"map.parks" = "Parklar";
+"map.suggestions" = "Öneriler";
+"menu.language" = "Dil";
+"menu.currentLanguage" = "Mevcut dil";

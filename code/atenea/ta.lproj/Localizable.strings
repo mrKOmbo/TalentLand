@@ -1,0 +1,450 @@
+/*
+  Localizable.strings
+  Atenea
+  English Localization
+*/
+
+// MARK: - Main Tabs
+"tab.map" = "Map";
+"tab.community" = "Community";
+"tab.album" = "Album";
+
+// MARK: - Common Actions
+"action.start" = "Start";
+"action.next" = "Next";
+"action.skip" = "Skip";
+"action.cancel" = "Cancel";
+"action.save" = "Save";
+"action.delete" = "Delete";
+"action.update" = "Update";
+"action.retry" = "Retry";
+"action.confirm" = "Confirm";
+"action.accept" = "Accept";
+"action.openSettings" = "Open Settings";
+
+// MARK: - Status Messages
+"status.loading" = "Loading...";
+"status.loadingPosts" = "Loading posts...";
+"status.error" = "Error";
+"status.errorLoadingPosts" = "Error loading posts";
+"status.noPostsAvailable" = "No posts available";
+"status.confirmed" = "Confirmed";
+"status.pending" = "Pending";
+"status.cancelled" = "Cancelled";
+"status.waiting" = "Waiting";
+
+// MARK: - Onboarding
+"onboarding.title" = "Atenea";
+"onboarding.subtitle" = "Navigate, collect, and connect at FIFA 2026";
+"onboarding.feature1" = "Smart Navigation";
+"onboarding.feature2" = "AR Sticker Album";
+"onboarding.feature3" = "Fan Community";
+
+// MARK: - Tutorial
+"tutorial.welcome" = "Welcome to Atenea";
+"tutorial.welcomeDesc" = "Discover the venues of the 2026 World Cup. Tap on the markers to see details and collect stickers.";
+"tutorial.menu" = "Features Menu";
+"tutorial.menuDesc" = "Here you'll find recommendations, AR scanner, calendar, and more features.";
+"tutorial.search" = "Find Nearby Places";
+"tutorial.searchDesc" = "Press on categories like restaurants or hotels to find places near you.";
+"tutorial.community" = "Community Tab";
+"tutorial.communityDesc" = "Discover Instagram posts about the World Cup shared by the community.";
+"tutorial.album" = "Sticker Album";
+"tutorial.albumDesc" = "Collect stickers of all World Cup venues and teams. Visit places to unlock them.";
+
+// MARK: - Community
+"community.filter.all" = "All";
+"community.filter.worldCup" = "World Cup 2026";
+"community.filter.trending" = "Trending";
+"community.filter.creator" = "Creator";
+"community.activePosts" = "செயலில் உள்ள இடுகைகள்";
+
+// MARK: - Album
+"album.stickers" = "stickers";
+"album.of" = "of";
+"album.completed" = "completed";
+"album.new" = "NEW";
+
+// MARK: - Menu
+"menu.main" = "Main Menu";
+"menu.navigation" = "NAVIGATION";
+"menu.venueMap" = "Venue Map";
+"menu.myLocation" = "My Location";
+"menu.worldCup" = "WORLD CUP";
+"menu.calendar" = "Calendar";
+"menu.matches" = "Matches";
+"menu.favorites" = "Favorites";
+"menu.transport" = "TRANSPORT";
+"menu.transportModes" = "Transport Modes";
+"menu.routes" = "Routes";
+"menu.others" = "OTHERS";
+"menu.ar" = "Augmented Reality";
+"menu.scanPlayers" = "Scan Players";
+"menu.information" = "Information";
+"menu.settings" = "Settings";
+"menu.version" = "Version 1.0.0";
+"menu.cameraPermission" = "Camera Permission Required";
+"menu.cameraPermissionDesc" = "To use Augmented Reality, you need to enable camera access in Settings.";
+
+// MARK: - Profile
+"profile.menu" = "Menu";
+"profile.mapType" = "Map Type";
+"profile.language" = "Language";
+"profile.claudeAPI" = "Claude API";
+"profile.configured" = "Configured";
+"profile.notConfigured" = "Not configured";
+"profile.scheduleMatch" = "Schedule Match";
+"profile.selectVenue" = "Select Venue";
+"profile.selectVenueDesc" = "Choose the stadium where the match will be played";
+"profile.seats" = "Seats";
+"profile.dateTime" = "Date & Time";
+"profile.status" = "Status";
+"profile.confirmReservation" = "Confirm Reservation";
+"profile.reservationConfirmed" = "Reservation Confirmed!";
+"profile.yourMatchAt" = "Your match at";
+"profile.seatsPlaceholder" = "e.g.: Section A, Row 12...";
+"profile.capacity" = "Capacity";
+
+// MARK: - Venues
+"venue.azteca" = "Azteca Stadium";
+"venue.bbva" = "BBVA Stadium";
+"venue.akron" = "Akron Stadium";
+"venue.sofi" = "SoFi Stadium";
+"venue.metlife" = "MetLife Stadium";
+"venue.att" = "AT&T Stadium";
+"venue.arrowhead" = "Arrowhead Stadium";
+"venue.nrg" = "NRG Stadium";
+"venue.hardrock" = "Hard Rock Stadium";
+"venue.mercedes" = "Mercedes-Benz Stadium";
+"venue.lumen" = "Lumen Field";
+"venue.levis" = "Levi's Stadium";
+"venue.gillette" = "Gillette Stadium";
+"venue.lincoln" = "Lincoln Financial Field";
+"venue.bcplace" = "BC Place";
+"venue.bmo" = "BMO Field";
+
+// MARK: - FIFA World Cup
+"worldcup.title" = "FIFA World Cup 2026™";
+
+// MARK: - Map & Search
+"map.search" = "Search";
+"map.restaurant" = "Restaurant";
+"map.coffee" = "Coffee";
+"map.bar" = "Bar";
+"map.hotel" = "Hotel";
+"map.museum" = "Museum";
+"map.gym" = "Gym";
+"map.park" = "Park";
+"map.clear" = "Clear";
+"map.recommendations" = "Recommendations";
+
+// MARK: - Navigation
+"navigation.startNavigation" = "Start Navigation";
+"navigation.endNavigation" = "End Navigation";
+"navigation.arriving" = "Arriving";
+"navigation.inProgress" = "In Progress";
+
+// MARK: - Transport
+"transport.walking" = "Walking";
+"transport.driving" = "Driving";
+"transport.transit" = "Transit";
+"transport.cycling" = "Cycling";
+
+// MARK: - AR Scanner
+"ar.scanPlayer" = "Scan Player";
+"ar.scanning" = "Scanning...";
+"ar.pointAtPlayer" = "Point at a player card or poster";
+"ar.playerDetected" = "Player Detected!";
+
+// MARK: - Settings
+"settings.title" = "Settings";
+"settings.apiKey" = "API Key";
+"settings.notifications" = "Notifications";
+"settings.privacy" = "Privacy";
+"settings.about" = "About";
+
+// MARK: - Errors
+"error.general" = "An error occurred";
+"error.network" = "Network error";
+"error.noInternet" = "No internet connection";
+"error.serverError" = "Server error";
+
+// MARK: - Time Formats
+"time.justNow" = "Just now";
+"time.minutesAgo" = "%d minute(s) ago";
+"time.hoursAgo" = "%d hour(s) ago";
+"time.daysAgo" = "%d day(s) ago";
+
+// MARK: - Login
+"login.welcome" = "Welcome to";
+"login.appName" = "Atenea";
+"login.emailOrPhone" = "Email or Phone Number";
+"login.emailPlaceholder" = "Enter your email or phone";
+"login.terms" = "By creating an account, I agree to Atenea's";
+"login.termsLink" = "Terms of service";
+"login.and" = "and";
+"login.privacyLink" = "Privacy Notice";
+"login.continue" = "Continue";
+"login.or" = "or";
+"login.continueWithGoogle" = "Continue with Google";
+"login.continueWithApple" = "Continue with Apple";
+"login.help" = "Help";
+"login.close" = "Close";
+"login.noAccount" = "Don't have an account?";
+"login.signUp" = "Sign Up";
+
+// MARK: - Registration
+"register.title" = "Create Account";
+"register.subtitle" = "Join the Atenea community";
+"register.name" = "Full Name";
+"register.namePlaceholder" = "Enter your full name";
+"register.age" = "Age";
+"register.agePlaceholder" = "Enter your age";
+"register.origin" = "Place of Origin";
+"register.originPlaceholder" = "Select your country";
+"register.email" = "Email";
+"register.emailPlaceholder" = "Enter your email";
+"register.phone" = "Phone Number";
+"register.phonePlaceholder" = "Enter your phone number";
+"register.createAccount" = "Create Account";
+"register.alreadyHaveAccount" = "Already have an account?";
+"register.signIn" = "Sign In";
+
+"register.accessibility" = "رسائی";
+
+// MARK: - Accessibility Options
+"accessibility.none" = "رسائی کی ضرورت نہیں";
+"accessibility.visual" = "بصری";
+"accessibility.hearing" = "سماعتی";
+"accessibility.motor" = "حرکی/جسمانی";
+"accessibility.cognitive" = "علمی";
+"accessibility.speech" = "تقریر";
+"accessibility.neurological" = "اعصابی";
+"accessibility.multiple" = "متعدد";
+"accessibility.other" = "دیگر";
+"accessibility.preferNotToSay" = "کہنا پسند نہیں";
+
+
+// MARK: - Venue Details
+"venue.howToGet" = "How to get there";
+"venue.matches" = "MATCHES";
+"venue.funFacts" = "FUN FACTS";
+"venue.moreMatches" = "+%d more matches";
+"venue.moreFacts" = "+%d more facts";
+"venue.close" = "Close";
+"venue.capacity" = "Capacity";
+"venue.venues" = "%d venues";
+
+// MARK: - AR Scanner
+"ar.scanPoster" = "Scan Poster";
+"ar.discover" = "Discover information about each venue";
+"ar.startScan" = "Start Scanning";
+"ar.scanPlayerCard" = "Scan a Player Card";
+"ar.pointCamera" = "Point your camera at the player image";
+"ar.arReady" = "AR Ready";
+"ar.playerFound" = "Player Found!";
+"ar.openingAlbum" = "Opening album on page %d...";
+"ar.scanning" = "Scanning...";
+"ar.getCloser" = "Get closer to the venue";
+"ar.mustBeWithin" = "You must be within 100m";
+"ar.noVenuesNearby" = "No venues nearby";
+"ar.visitVenue" = "Visit a 2026 World Cup venue";
+"ar.collectStickers" = "Collect Stickers with AR";
+"ar.stickersCollected" = "Stickers Collected!";
+"ar.stickerAdded" = "+1 Sticker";
+"ar.initializing" = "Initializing AR...";
+"ar.preparingDetection" = "Preparing poster detection";
+"ar.worldCupAR" = "World Cup 2026 AR";
+"ar.worldCupVenue" = "🏟️ WORLD CUP 2026 VENUE";
+"ar.addToAlbum" = "Add to Album";
+"ar.collectThisVenue" = "Collect this venue";
+"ar.viewOnMap" = "View on Map";
+"ar.viewAlbum" = "View %@ album";
+"ar.pointAtPoster" = "Point at a World Cup 2026 poster";
+"ar.keepPosterCentered" = "Keep the poster in the center of the screen";
+"ar.openInAppleMaps" = "Open in Apple Maps";
+
+// MARK: - Album
+"album.openingAlbum" = "Opening Album";
+"album.preparingPages" = "Preparing the pages...";
+"album.swipeToFlip" = "Swipe to flip pages";
+
+// MARK: - Menu (Hamburger)
+"menu.worldCup2026" = "World Cup 2026";
+"menu.mainMenu" = "Main Menu";
+"menu.navigation" = "NAVIGATION";
+"menu.venueMap" = "Venue Map";
+"menu.myLocation" = "My Location";
+"menu.worldCupSection" = "WORLD CUP";
+"menu.calendar" = "Calendar";
+"menu.matches" = "Matches";
+"menu.favorites" = "Favorites";
+"menu.transportSection" = "TRANSPORT";
+"menu.transportModes" = "Transport Modes";
+"menu.routes" = "Routes";
+"menu.othersSection" = "OTHERS";
+"menu.ar" = "Augmented Reality";
+"menu.scanPlayers" = "Scan Players";
+"menu.information" = "Information";
+"menu.settings" = "Settings";
+"menu.fifaWorldCup" = "FIFA World Cup 2026";
+"menu.version" = "Version 1.0.0";
+"menu.cameraAccess" = "To use Augmented Reality, you need to enable camera access in Settings > Atenea > Camera";
+"menu.countries" = "16 Venues • 3 Countries";
+
+// MARK: - Profile Menu
+"profile.menu" = "Menu";
+"profile.mapType" = "Map Type";
+"profile.language" = "Language";
+"profile.claudeAPI" = "Claude API";
+"profile.configured" = "Configured";
+"profile.notConfigured" = "Not configured";
+"profile.scheduleMatch" = "Schedule Match";
+"profile.selectVenue" = "Select Venue";
+"profile.selectVenueDesc" = "Choose the stadium where the match will be played";
+"profile.seats" = "Seats";
+"profile.dateTime" = "Date & Time";
+"profile.status" = "Status";
+"profile.confirmReservation" = "Confirm Reservation";
+"profile.reservationConfirmed" = "Reservation Confirmed!";
+"profile.yourMatchAt" = "Your match at";
+"profile.seatsPlaceholder" = "e.g.: Section A, Row 12...";
+"profile.capacity" = "Capacity";
+"profile.venue" = "Venue";
+"profile.completeData" = "Complete the data to reserve your match";
+
+// MARK: - Map
+"map.clear" = "Clear";
+"map.suggestions" = "Suggestions";
+"map.dinner" = "Dinner";
+"map.coffee" = "Coffee";
+"map.bars" = "Bars";
+"map.hotels" = "Hotels";
+"map.museums" = "Museums";
+"map.gyms" = "Gyms";
+"map.parks" = "Parks";
+"map.findTransport" = "Find transport";
+"map.matchScheduled" = "Match Scheduled";
+"map.yourLocation" = "Your location";
+"map.locationDisabled" = "Location disabled";
+"map.myReservations" = "My Reservations";
+"map.activeReservations" = "%d active reservations";
+"map.noReservations" = "You have no reservations";
+"map.exploreVenues" = "Explore the venues and reserve your place\nfor the 2026 World Cup matches";
+
+// MARK: - Trip
+"trip.started" = "Trip Started!";
+"trip.navigatingTo" = "Navigating to";
+"trip.eta" = "ETA";
+"trip.distance" = "Distance";
+"trip.startNavigation" = "Start Navigation";
+"trip.endTrip" = "End Trip";
+
+// MARK: - Debug
+"debug.liveActivityTest" = "🧪 Live Activity Test";
+"debug.startActivity" = "Start Live Activity";
+"debug.updateActivity" = "Update Live Activity";
+"debug.stopActivity" = "Stop Live Activity";
+"debug.systemInfo" = "System Information:";
+
+// MARK: - MainMapView
+"map.searchPlaceholder" = "Search on map";
+"map.restaurants" = "Restaurants";
+"map.cafes" = "Cafés";
+"map.markets" = "Markets";
+"map.shopping" = "Shopping";
+"map.selectedLocation" = "Selected location";
+"map.pointOnMap" = "Point on map";
+"map.location" = "Location";
+"map.stadiumCategory" = "FIFA 2026 Stadium";
+"time.lessThanMin" = "less than 1 min";
+"time.min" = "min";
+"time.hour" = "h";
+"menu.mapStyle" = "Map Style";
+"menu.3dModel" = "3D Model";
+"menu.viewTangara3D" = "View Tangara 3D Train";
+"menu.fifa2026" = "FIFA World Cup 2026";
+"menu.fifa2026Venues" = "FIFA 2026 Venues";
+"menu.fifa2026VenuesDesc" = "16 stadiums in Mexico, USA and Canada";
+"menu.simulations" = "Simulations";
+"menu.line3Simulation" = "Line 3 Simulation";
+"menu.line3Route" = "Indios Verdes → Universidad";
+"menu.goToStation" = "Go to Station";
+"menu.transportStation" = "Transport station";
+"menu.options" = "Options";
+"action.close" = "Close";
+"map.bars" = "Bars";
+"map.museums" = "Museums";
+"map.gyms" = "Gyms";
+"map.parks" = "Parks";
+"map.suggestions" = "Suggestions";
+"menu.language" = "Language";
+"menu.currentLanguage" = "Current language";
+
+// MARK: - Missing Keys (Added automatically - needs translation)
+"action.back" = "Back";
+"directions.chooseRoute" = "Choose Your Route";
+"directions.fastest" = "Fastest";
+"directions.from" = "From";
+"directions.go" = "Go";
+"directions.lowEmission" = "Low emission zone";
+"directions.normalTraffic" = "Normal traffic";
+"directions.optionsCount" = "%d options";
+"directions.preparingNavigation" = "Preparing navigation...";
+"directions.startNavigation" = "Start Navigation";
+"directions.title" = "Directions";
+"directions.to" = "To";
+"emergency.button" = "Emergency";
+"emergency.call911" = "Call 911";
+"emergency.callAmbulance" = "Call Ambulance";
+"emergency.callPolice" = "Emergency";
+"emergency.endEmergency" = "End Emergency";
+"emergency.shareLocation" = "Share My Location";
+"emergency.title" = "Emergency Contact";
+"location.current" = "Current location";
+"location.defaultCity" = "Mexico City";
+"location.defaultCountry" = "Mexico";
+"location.enable" = "Enable your location";
+"location.loading" = "Getting location...";
+"location.myLocation" = "My Location";
+"mapStyle.dark" = "Dark";
+"mapStyle.light" = "Light";
+"mapStyle.outdoors" = "Outdoors";
+"mapStyle.satellite" = "Satellite";
+"mapStyle.satelliteStreets" = "Satellite Streets";
+"mapStyle.standard" = "Standard";
+"mapStyle.streets" = "Streets";
+"menu.countries" = "16 Venues • 3 Countries
+Countries";
+"menu.exploreVenues" = "Explore all venues";
+"menu.help" = "Help";
+"menu.logout" = "Log Out";
+"menu.logoutDescription" = "Sign out of your account";
+"menu.profile" = "Profile";
+"menu.reserve" = "Reserve";
+"menu.stadiums" = "Stadiums";
+"reservation.activeCount" = "%d active reservations";
+"reservation.empty" = "No reservations";
+"reservation.emptyDescription" = "Explore the venues and create your first reservation";
+"reservation.myReservations" = "My Reservations";
+"reservation.next" = "Next reservation";
+"reservation.seat" = "Seat %@";
+"status.unknown" = "Unknown";
+"transport.cycle" = "Cycle";
+"transport.drive" = "Drive";
+"transport.ride" = "Ride";
+"transport.transit" = "Transit
+Transit";
+"transport.walk" = "Walk";
+"tutorial.album.tab.description" = "Collect digital stickers by visiting stadiums. Complete your album and become the ultimate collector!";
+"tutorial.album.tab.title" = "Sticker Album";
+"tutorial.community.tab.description" = "Connect with fans worldwide! Share your World Cup experiences and see posts from the community.";
+"tutorial.community.tab.title" = "Community Feed";
+"tutorial.emergency.button.description" = "Quick access to emergency services. Your safety is our priority.";
+"tutorial.emergency.button.title" = "Emergency Mode";
+"tutorial.map.markers.description" = "Tap on any stadium marker to view details, match schedules, and collect exclusive stickers!";
+"tutorial.map.markers.title" = "Tap Stadium Markers";
+"tutorial.menu.button.description" = "Access recommendations, AR scanner, match calendar, and other amazing features from here.";
+"tutorial.menu.button.title" = "Open Menu";
+"tutorial.search.button.description" = "Find restaurants, hotels, bars, and more places near your location.";
+"tutorial.search.button.title" = "Search Nearby";

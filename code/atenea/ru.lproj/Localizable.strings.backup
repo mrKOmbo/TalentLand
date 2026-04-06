@@ -1,0 +1,102 @@
+/*
+  Localizable.strings
+  Atenea
+  Russian Localization
+*/
+
+// MARK: - Common Actions
+"action.start" = "Начать";
+"action.next" = "Далее";
+"action.skip" = "Пропустить";
+"action.cancel" = "Отмена";
+"action.save" = "Сохранить";
+
+// MARK: - Onboarding
+"onboarding.title" = "Atenea";
+"onboarding.subtitle" = "Навигация, сбор и общение на чемпионате мира FIFA 2026";
+"onboarding.feature1" = "Умная навигация";
+"onboarding.feature2" = "AR-альбом стикеров";
+"onboarding.feature3" = "Сообщество фанатов";
+
+// MARK: - Login
+"login.welcome" = "Добро пожаловать в";
+"login.appName" = "Atenea";
+"login.emailOrPhone" = "Электронная почта или номер телефона";
+"login.emailPlaceholder" = "Введите вашу почту или телефон";
+"login.terms" = "Создавая аккаунт, я соглашаюсь с";
+"login.termsLink" = "Условиями использования";
+"login.and" = "и";
+"login.privacyLink" = "Политикой конфиденциальности";
+"login.continue" = "Продолжить";
+"login.or" = "или";
+"login.continueWithApple" = "Продолжить с Apple";
+"login.help" = "Помощь";
+"login.close" = "Закрыть";
+"login.noAccount" = "Нет аккаунта?";
+"login.signUp" = "Зарегистрироваться";
+
+// MARK: - Registration
+"register.title" = "Создать аккаунт";
+"register.subtitle" = "Присоединяйтесь к сообществу Atenea";
+"register.name" = "Полное имя";
+"register.namePlaceholder" = "Введите ваше полное имя";
+"register.age" = "Возраст";
+"register.agePlaceholder" = "Введите ваш возраст";
+"register.origin" = "Место происхождения";
+"register.originPlaceholder" = "Выберите вашу страну";
+"register.email" = "Электронная почта";
+"register.emailPlaceholder" = "Введите вашу почту";
+"register.phone" = "Номер телефона";
+"register.phonePlaceholder" = "Введите ваш номер телефона";
+"register.createAccount" = "Создать аккаунт";
+"register.alreadyHaveAccount" = "Уже есть аккаунт?";
+"register.signIn" = "Войти";
+
+"register.accessibility" = "Доступность";
+
+// MARK: - Accessibility Options
+"accessibility.none" = "Без особых потребностей";
+"accessibility.visual" = "Зрительная";
+"accessibility.hearing" = "Слуховая";
+"accessibility.motor" = "Двигательная/Физическая";
+"accessibility.cognitive" = "Когнитивная";
+"accessibility.speech" = "Речь";
+"accessibility.neurological" = "Неврологическая";
+"accessibility.multiple" = "Множественная";
+"accessibility.other" = "Другое";
+"accessibility.preferNotToSay" = "Предпочитаю не говорить";
+
+
+// MARK: - MainMapView
+"map.searchPlaceholder" = "Поиск на карте";
+"map.restaurants" = "Рестораны";
+"map.cafes" = "Кафе";
+"map.markets" = "Рынки";
+"map.shopping" = "Магазины";
+"map.selectedLocation" = "Выбранное место";
+"map.pointOnMap" = "Точка на карте";
+"map.location" = "Местоположение";
+"map.stadiumCategory" = "Стадион FIFA 2026";
+"time.lessThanMin" = "менее 1 мин";
+"time.min" = "мин";
+"time.hour" = "ч";
+"menu.mapStyle" = "Стиль карты";
+"menu.3dModel" = "3D модель";
+"menu.viewTangara3D" = "Посмотреть поезд Tangara 3D";
+"menu.fifa2026" = "Чемпионат мира FIFA 2026";
+"menu.fifa2026Venues" = "Стадионы FIFA 2026";
+"menu.fifa2026VenuesDesc" = "16 стадионов в Мексике, США и Канаде";
+"menu.simulations" = "Симуляции";
+"menu.line3Simulation" = "Симуляция линии 3";
+"menu.line3Route" = "Indios Verdes → Universidad";
+"menu.goToStation" = "Перейти к станции";
+"menu.transportStation" = "Транспортная станция";
+"menu.options" = "Опции";
+"action.close" = "Закрыть";
+"map.bars" = "Бары";
+"map.museums" = "Музеи";
+"map.gyms" = "Спортзалы";
+"map.parks" = "Парки";
+"map.suggestions" = "Предложения";
+"menu.language" = "Язык";
+"menu.currentLanguage" = "Текущий язык";

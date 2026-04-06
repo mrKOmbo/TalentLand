@@ -1,0 +1,102 @@
+/*
+  Localizable.strings
+  Atenea
+  Dutch Localization
+*/
+
+// MARK: - Common Actions
+"action.start" = "Start";
+"action.next" = "Volgende";
+"action.skip" = "Overslaan";
+"action.cancel" = "Annuleren";
+"action.save" = "Opslaan";
+
+// MARK: - Onboarding
+"onboarding.title" = "Atenea";
+"onboarding.subtitle" = "Navigeer, verzamel en verbind bij FIFA WK 2026";
+"onboarding.feature1" = "Slimme Navigatie";
+"onboarding.feature2" = "AR Stickeralbum";
+"onboarding.feature3" = "Fansgemeenschap";
+
+// MARK: - Login
+"login.welcome" = "Welkom bij";
+"login.appName" = "Atenea";
+"login.emailOrPhone" = "E-mail of telefoonnummer";
+"login.emailPlaceholder" = "Voer uw e-mail of telefoon in";
+"login.terms" = "Door een account aan te maken, ga ik akkoord met de";
+"login.termsLink" = "Servicevoorwaarden";
+"login.and" = "en";
+"login.privacyLink" = "Privacyverklaring";
+"login.continue" = "Doorgaan";
+"login.or" = "of";
+"login.continueWithApple" = "Doorgaan met Apple";
+"login.help" = "Help";
+"login.close" = "Sluiten";
+"login.noAccount" = "Heeft u geen account?";
+"login.signUp" = "Aanmelden";
+
+// MARK: - Registration
+"register.title" = "Account Aanmaken";
+"register.subtitle" = "Word lid van de Atenea-community";
+"register.name" = "Volledige Naam";
+"register.namePlaceholder" = "Voer uw volledige naam in";
+"register.age" = "Leeftijd";
+"register.agePlaceholder" = "Voer uw leeftijd in";
+"register.origin" = "Land van Herkomst";
+"register.originPlaceholder" = "Selecteer uw land";
+"register.email" = "E-mail";
+"register.emailPlaceholder" = "Voer uw e-mail in";
+"register.phone" = "Telefoonnummer";
+"register.phonePlaceholder" = "Voer uw telefoonnummer in";
+"register.createAccount" = "Account Aanmaken";
+"register.alreadyHaveAccount" = "Heeft u al een account?";
+"register.signIn" = "Inloggen";
+
+"register.accessibility" = "رسائی";
+
+// MARK: - Accessibility Options
+"accessibility.none" = "رسائی کی ضرورت نہیں";
+"accessibility.visual" = "بصری";
+"accessibility.hearing" = "سماعتی";
+"accessibility.motor" = "حرکی/جسمانی";
+"accessibility.cognitive" = "علمی";
+"accessibility.speech" = "تقریر";
+"accessibility.neurological" = "اعصابی";
+"accessibility.multiple" = "متعدد";
+"accessibility.other" = "دیگر";
+"accessibility.preferNotToSay" = "کہنا پسند نہیں";
+
+
+// MARK: - MainMapView
+"map.searchPlaceholder" = "Zoek op kaart";
+"map.restaurants" = "Restaurants";
+"map.cafes" = "Cafés";
+"map.markets" = "Markten";
+"map.shopping" = "Winkelen";
+"map.selectedLocation" = "Geselecteerde locatie";
+"map.pointOnMap" = "Punt op kaart";
+"map.location" = "Locatie";
+"map.stadiumCategory" = "FIFA 2026 Stadion";
+"time.lessThanMin" = "minder dan 1 min";
+"time.min" = "min";
+"time.hour" = "u";
+"menu.mapStyle" = "Kaartstijl";
+"menu.3dModel" = "3D-model";
+"menu.viewTangara3D" = "Bekijk Tangara 3D-trein";
+"menu.fifa2026" = "FIFA Wereldkampioenschap 2026";
+"menu.fifa2026Venues" = "FIFA 2026 Stadions";
+"menu.fifa2026VenuesDesc" = "16 stadions in Mexico, VS en Canada";
+"menu.simulations" = "Simulaties";
+"menu.line3Simulation" = "Lijn 3 Simulatie";
+"menu.line3Route" = "Indios Verdes → Universidad";
+"menu.goToStation" = "Ga naar station";
+"menu.transportStation" = "Vervoersstation";
+"menu.options" = "Opties";
+"action.close" = "Sluiten";
+"map.bars" = "Bars";
+"map.museums" = "Musea";
+"map.gyms" = "Sportscholen";
+"map.parks" = "Parken";
+"map.suggestions" = "Suggesties";
+"menu.language" = "Taal";
+"menu.currentLanguage" = "Huidige taal";

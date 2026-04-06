@@ -1,0 +1,1007 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		26214D1F2EB9CF1B0050472A /* watchAtenea Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 26214D1E2EB9CF1B0050472A /* watchAtenea Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		2633228A2EB1BE5A0038EDF9 /* MapboxNavigationCore in Frameworks */ = {isa = PBXBuildFile; productRef = 263322892EB1BE5A0038EDF9 /* MapboxNavigationCore */; };
+		2633228C2EB1BE610038EDF9 /* MapboxNavigationUIKit in Frameworks */ = {isa = PBXBuildFile; productRef = 2633228B2EB1BE610038EDF9 /* MapboxNavigationUIKit */; };
+		2640EF372EB69CA50015FAA7 /* ConfettiSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 2640EF362EB69CA50015FAA7 /* ConfettiSwiftUI */; };
+		2640EF3E2EB69D9C0015FAA7 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2640EF3D2EB69D9C0015FAA7 /* WidgetKit.framework */; };
+		2640EF402EB69D9C0015FAA7 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2640EF3F2EB69D9C0015FAA7 /* SwiftUI.framework */; };
+		2640EF4B2EB69D9E0015FAA7 /* WidgetAteneaExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2640EF3C2EB69D9C0015FAA7 /* WidgetAteneaExtension.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		2609449E2EADA4CB00574282 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 26FE609E2EAD9B62003960DC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 26FE60A52EAD9B62003960DC;
+			remoteInfo = atenea;
+		};
+		26214D202EB9CF1B0050472A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 26FE609E2EAD9B62003960DC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 26214D1D2EB9CF1B0050472A;
+			remoteInfo = "watchAtenea Watch App";
+		};
+		2640EF492EB69D9E0015FAA7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 26FE609E2EAD9B62003960DC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2640EF3B2EB69D9C0015FAA7;
+			remoteInfo = WidgetAteneaExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		26214D2C2EB9CF1C0050472A /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				26214D1F2EB9CF1B0050472A /* watchAtenea Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2640EF502EB69D9E0015FAA7 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				2640EF4B2EB69D9E0015FAA7 /* WidgetAteneaExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		2609449A2EADA4CB00574282 /* _MapboxNavigationTestKit.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = _MapboxNavigationTestKit.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		26214D192EB9CF1B0050472A /* watchAtenea.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = watchAtenea.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		26214D1E2EB9CF1B0050472A /* watchAtenea Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "watchAtenea Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		2640EF3C2EB69D9C0015FAA7 /* WidgetAteneaExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WidgetAteneaExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		2640EF3D2EB69D9C0015FAA7 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = /System/Library/Frameworks/WidgetKit.framework; sourceTree = "<absolute>"; };
+		2640EF3F2EB69D9C0015FAA7 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = /System/Library/Frameworks/SwiftUI.framework; sourceTree = "<absolute>"; };
+		26FE60A62EAD9B62003960DC /* atenea.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = atenea.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		2640EF4F2EB69D9E0015FAA7 /* Exceptions for "WidgetAtenea" folder in "WidgetAteneaExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 2640EF3B2EB69D9C0015FAA7 /* WidgetAteneaExtension */;
+		};
+		26FE60B52EAD9B8F003960DC /* Exceptions for "atenea" folder in "atenea" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 26FE60A52EAD9B62003960DC /* atenea */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		2609449B2EADA4CB00574282 /* _MapboxNavigationTestKit */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = _MapboxNavigationTestKit;
+			sourceTree = "<group>";
+		};
+		26214D222EB9CF1B0050472A /* watchAtenea Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "watchAtenea Watch App";
+			sourceTree = "<group>";
+		};
+		2640EF412EB69D9C0015FAA7 /* WidgetAtenea */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				2640EF4F2EB69D9E0015FAA7 /* Exceptions for "WidgetAtenea" folder in "WidgetAteneaExtension" target */,
+			);
+			path = WidgetAtenea;
+			sourceTree = "<group>";
+		};
+		26FE60A82EAD9B62003960DC /* atenea */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				26FE60B52EAD9B8F003960DC /* Exceptions for "atenea" folder in "atenea" target */,
+			);
+			path = atenea;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		260944972EADA4CB00574282 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		26214D1B2EB9CF1B0050472A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2640EF392EB69D9C0015FAA7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2640EF402EB69D9C0015FAA7 /* SwiftUI.framework in Frameworks */,
+				2640EF3E2EB69D9C0015FAA7 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		26FE60A32EAD9B62003960DC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2640EF372EB69CA50015FAA7 /* ConfettiSwiftUI in Frameworks */,
+				2633228C2EB1BE610038EDF9 /* MapboxNavigationUIKit in Frameworks */,
+				2633228A2EB1BE5A0038EDF9 /* MapboxNavigationCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		260944862EADA44500574282 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				2640EF3D2EB69D9C0015FAA7 /* WidgetKit.framework */,
+				2640EF3F2EB69D9C0015FAA7 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		26FE609D2EAD9B62003960DC = {
+			isa = PBXGroup;
+			children = (
+				26FE60A82EAD9B62003960DC /* atenea */,
+				2609449B2EADA4CB00574282 /* _MapboxNavigationTestKit */,
+				2640EF412EB69D9C0015FAA7 /* WidgetAtenea */,
+				26214D222EB9CF1B0050472A /* watchAtenea Watch App */,
+				260944862EADA44500574282 /* Frameworks */,
+				26FE60A72EAD9B62003960DC /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		26FE60A72EAD9B62003960DC /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				26FE60A62EAD9B62003960DC /* atenea.app */,
+				2609449A2EADA4CB00574282 /* _MapboxNavigationTestKit.xctest */,
+				2640EF3C2EB69D9C0015FAA7 /* WidgetAteneaExtension.appex */,
+				26214D192EB9CF1B0050472A /* watchAtenea.app */,
+				26214D1E2EB9CF1B0050472A /* watchAtenea Watch App.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		260944992EADA4CB00574282 /* _MapboxNavigationTestKit */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 260944A02EADA4CB00574282 /* Build configuration list for PBXNativeTarget "_MapboxNavigationTestKit" */;
+			buildPhases = (
+				260944962EADA4CB00574282 /* Sources */,
+				260944972EADA4CB00574282 /* Frameworks */,
+				260944982EADA4CB00574282 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2609449F2EADA4CB00574282 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				2609449B2EADA4CB00574282 /* _MapboxNavigationTestKit */,
+			);
+			name = _MapboxNavigationTestKit;
+			packageProductDependencies = (
+			);
+			productName = _MapboxNavigationTestKit;
+			productReference = 2609449A2EADA4CB00574282 /* _MapboxNavigationTestKit.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		26214D182EB9CF1B0050472A /* watchAtenea */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 26214D2D2EB9CF1C0050472A /* Build configuration list for PBXNativeTarget "watchAtenea" */;
+			buildPhases = (
+				26214D172EB9CF1B0050472A /* Resources */,
+				26214D2C2EB9CF1C0050472A /* Embed Watch Content */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				26214D212EB9CF1B0050472A /* PBXTargetDependency */,
+			);
+			name = watchAtenea;
+			packageProductDependencies = (
+			);
+			productName = watchAtenea;
+			productReference = 26214D192EB9CF1B0050472A /* watchAtenea.app */;
+			productType = "com.apple.product-type.application.watchapp2-container";
+		};
+		26214D1D2EB9CF1B0050472A /* watchAtenea Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 26214D292EB9CF1C0050472A /* Build configuration list for PBXNativeTarget "watchAtenea Watch App" */;
+			buildPhases = (
+				26214D1A2EB9CF1B0050472A /* Sources */,
+				26214D1B2EB9CF1B0050472A /* Frameworks */,
+				26214D1C2EB9CF1B0050472A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				26214D222EB9CF1B0050472A /* watchAtenea Watch App */,
+			);
+			name = "watchAtenea Watch App";
+			packageProductDependencies = (
+			);
+			productName = "watchAtenea Watch App";
+			productReference = 26214D1E2EB9CF1B0050472A /* watchAtenea Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		2640EF3B2EB69D9C0015FAA7 /* WidgetAteneaExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2640EF4C2EB69D9E0015FAA7 /* Build configuration list for PBXNativeTarget "WidgetAteneaExtension" */;
+			buildPhases = (
+				2640EF382EB69D9C0015FAA7 /* Sources */,
+				2640EF392EB69D9C0015FAA7 /* Frameworks */,
+				2640EF3A2EB69D9C0015FAA7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				2640EF412EB69D9C0015FAA7 /* WidgetAtenea */,
+			);
+			name = WidgetAteneaExtension;
+			packageProductDependencies = (
+			);
+			productName = WidgetAteneaExtension;
+			productReference = 2640EF3C2EB69D9C0015FAA7 /* WidgetAteneaExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		26FE60A52EAD9B62003960DC /* atenea */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 26FE60B12EAD9B62003960DC /* Build configuration list for PBXNativeTarget "atenea" */;
+			buildPhases = (
+				26FE60A22EAD9B62003960DC /* Sources */,
+				26FE60A32EAD9B62003960DC /* Frameworks */,
+				26FE60A42EAD9B62003960DC /* Resources */,
+				2640EF502EB69D9E0015FAA7 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2640EF4A2EB69D9E0015FAA7 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				26FE60A82EAD9B62003960DC /* atenea */,
+			);
+			name = atenea;
+			packageProductDependencies = (
+				263322892EB1BE5A0038EDF9 /* MapboxNavigationCore */,
+				2633228B2EB1BE610038EDF9 /* MapboxNavigationUIKit */,
+				2640EF362EB69CA50015FAA7 /* ConfettiSwiftUI */,
+			);
+			productName = atenea;
+			productReference = 26FE60A62EAD9B62003960DC /* atenea.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		26FE609E2EAD9B62003960DC /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					260944992EADA4CB00574282 = {
+						CreatedOnToolsVersion = 26.0.1;
+						TestTargetID = 26FE60A52EAD9B62003960DC;
+					};
+					26214D182EB9CF1B0050472A = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
+					26214D1D2EB9CF1B0050472A = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
+					2640EF3B2EB69D9C0015FAA7 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
+					26FE60A52EAD9B62003960DC = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
+				};
+			};
+			buildConfigurationList = 26FE60A12EAD9B62003960DC /* Build configuration list for PBXProject "atenea" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				es,
+				"zh-Hans",
+				fr,
+				pt,
+				de,
+				ja,
+				hi,
+				ru,
+				ar,
+				id,
+				bn,
+				te,
+				ur,
+				sw,
+				mr,
+				it,
+				ko,
+				nl,
+				tr,
+				pl,
+				vi,
+				fa,
+				el,
+				th,
+				ta,
+			);
+			mainGroup = 26FE609D2EAD9B62003960DC;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				263322882EB1BE350038EDF9 /* XCRemoteSwiftPackageReference "mapbox-navigation-ios" */,
+				2640EF352EB69CA50015FAA7 /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 26FE60A72EAD9B62003960DC /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				26FE60A52EAD9B62003960DC /* atenea */,
+				260944992EADA4CB00574282 /* _MapboxNavigationTestKit */,
+				2640EF3B2EB69D9C0015FAA7 /* WidgetAteneaExtension */,
+				26214D182EB9CF1B0050472A /* watchAtenea */,
+				26214D1D2EB9CF1B0050472A /* watchAtenea Watch App */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		260944982EADA4CB00574282 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		26214D172EB9CF1B0050472A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		26214D1C2EB9CF1B0050472A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2640EF3A2EB69D9C0015FAA7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		26FE60A42EAD9B62003960DC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		260944962EADA4CB00574282 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		26214D1A2EB9CF1B0050472A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2640EF382EB69D9C0015FAA7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		26FE60A22EAD9B62003960DC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2609449F2EADA4CB00574282 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 26FE60A52EAD9B62003960DC /* atenea */;
+			targetProxy = 2609449E2EADA4CB00574282 /* PBXContainerItemProxy */;
+		};
+		26214D212EB9CF1B0050472A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 26214D1D2EB9CF1B0050472A /* watchAtenea Watch App */;
+			targetProxy = 26214D202EB9CF1B0050472A /* PBXContainerItemProxy */;
+		};
+		2640EF4A2EB69D9E0015FAA7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			platformFilter = ios;
+			target = 2640EF3B2EB69D9C0015FAA7 /* WidgetAteneaExtension */;
+			targetProxy = 2640EF492EB69D9E0015FAA7 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		260944A12EADA4CB00574282 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QYUV8U45UV;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "xyz.KOmbo.-MapboxNavigationTestKit";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/atenea.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/atenea";
+			};
+			name = Debug;
+		};
+		260944A22EADA4CB00574282 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QYUV8U45UV;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "xyz.KOmbo.-MapboxNavigationTestKit";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/atenea.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/atenea";
+			};
+			name = Release;
+		};
+		26214D2A2EB9CF1C0050472A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QYUV8U45UV;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = watchAtenea;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKWatchOnly = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = xyz.KOmbo.watchAtenea.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Debug;
+		};
+		26214D2B2EB9CF1C0050472A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QYUV8U45UV;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = watchAtenea;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKWatchOnly = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = xyz.KOmbo.watchAtenea.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Release;
+		};
+		26214D2E2EB9CF1C0050472A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QYUV8U45UV;
+				INFOPLIST_KEY_CFBundleDisplayName = watchAtenea;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = xyz.KOmbo.watchAtenea;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		26214D2F2EB9CF1C0050472A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QYUV8U45UV;
+				INFOPLIST_KEY_CFBundleDisplayName = watchAtenea;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = xyz.KOmbo.watchAtenea;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		2640EF4D2EB69D9E0015FAA7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QYUV8U45UV;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WidgetAtenea/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = WidgetAtenea;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = xyz.KOmbo.atenea2.WidgetAtenea;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				XROS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Debug;
+		};
+		2640EF4E2EB69D9E0015FAA7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QYUV8U45UV;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WidgetAtenea/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = WidgetAtenea;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = xyz.KOmbo.atenea2.WidgetAtenea;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				XROS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Release;
+		};
+		26FE60AF2EAD9B62003960DC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = QYUV8U45UV;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		26FE60B02EAD9B62003960DC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = QYUV8U45UV;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		26FE60B22EAD9B62003960DC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QYUV8U45UV;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_CAMERA = YES;
+				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = atenea/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = xyz.KOmbo.atenea2;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		26FE60B32EAD9B62003960DC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QYUV8U45UV;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_CAMERA = YES;
+				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = atenea/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = xyz.KOmbo.atenea2;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		260944A02EADA4CB00574282 /* Build configuration list for PBXNativeTarget "_MapboxNavigationTestKit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				260944A12EADA4CB00574282 /* Debug */,
+				260944A22EADA4CB00574282 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		26214D292EB9CF1C0050472A /* Build configuration list for PBXNativeTarget "watchAtenea Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				26214D2A2EB9CF1C0050472A /* Debug */,
+				26214D2B2EB9CF1C0050472A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		26214D2D2EB9CF1C0050472A /* Build configuration list for PBXNativeTarget "watchAtenea" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				26214D2E2EB9CF1C0050472A /* Debug */,
+				26214D2F2EB9CF1C0050472A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2640EF4C2EB69D9E0015FAA7 /* Build configuration list for PBXNativeTarget "WidgetAteneaExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2640EF4D2EB69D9E0015FAA7 /* Debug */,
+				2640EF4E2EB69D9E0015FAA7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		26FE60A12EAD9B62003960DC /* Build configuration list for PBXProject "atenea" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				26FE60AF2EAD9B62003960DC /* Debug */,
+				26FE60B02EAD9B62003960DC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		26FE60B12EAD9B62003960DC /* Build configuration list for PBXNativeTarget "atenea" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				26FE60B22EAD9B62003960DC /* Debug */,
+				26FE60B32EAD9B62003960DC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		263322882EB1BE350038EDF9 /* XCRemoteSwiftPackageReference "mapbox-navigation-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mapbox/mapbox-navigation-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.16.0;
+			};
+		};
+		2640EF352EB69CA50015FAA7 /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/simibac/ConfettiSwiftUI.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		263322892EB1BE5A0038EDF9 /* MapboxNavigationCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 263322882EB1BE350038EDF9 /* XCRemoteSwiftPackageReference "mapbox-navigation-ios" */;
+			productName = MapboxNavigationCore;
+		};
+		2633228B2EB1BE610038EDF9 /* MapboxNavigationUIKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 263322882EB1BE350038EDF9 /* XCRemoteSwiftPackageReference "mapbox-navigation-ios" */;
+			productName = MapboxNavigationUIKit;
+		};
+		2640EF362EB69CA50015FAA7 /* ConfettiSwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2640EF352EB69CA50015FAA7 /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */;
+			productName = ConfettiSwiftUI;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 26FE609E2EAD9B62003960DC /* Project object */;
+}

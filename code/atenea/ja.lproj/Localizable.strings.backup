@@ -1,0 +1,102 @@
+/*
+  Localizable.strings
+  Atenea
+  Japanese Localization
+*/
+
+// MARK: - Common Actions
+"action.start" = "開始";
+"action.next" = "次へ";
+"action.skip" = "スキップ";
+"action.cancel" = "キャンセル";
+"action.save" = "保存";
+
+// MARK: - Onboarding
+"onboarding.title" = "Atenea";
+"onboarding.subtitle" = "2026年FIFAワールドカップでナビゲート、収集、接続";
+"onboarding.feature1" = "スマートナビゲーション";
+"onboarding.feature2" = "ARステッカーアルバム";
+"onboarding.feature3" = "ファンコミュニティ";
+
+// MARK: - Login
+"login.welcome" = "ようこそ";
+"login.appName" = "Atenea";
+"login.emailOrPhone" = "メールアドレスまたは電話番号";
+"login.emailPlaceholder" = "メールアドレスまたは電話番号を入力";
+"login.terms" = "アカウントを作成することにより、Ateneaの";
+"login.termsLink" = "利用規約";
+"login.and" = "と";
+"login.privacyLink" = "プライバシーポリシー";
+"login.continue" = "続ける";
+"login.or" = "または";
+"login.continueWithApple" = "Appleで続ける";
+"login.help" = "ヘルプ";
+"login.close" = "閉じる";
+"login.noAccount" = "アカウントをお持ちでない場合";
+"login.signUp" = "登録";
+
+// MARK: - Registration
+"register.title" = "アカウント作成";
+"register.subtitle" = "Ateneaコミュニティに参加";
+"register.name" = "氏名";
+"register.namePlaceholder" = "氏名を入力してください";
+"register.age" = "年齢";
+"register.agePlaceholder" = "年齢を入力してください";
+"register.origin" = "出身国";
+"register.originPlaceholder" = "国を選択してください";
+"register.email" = "メールアドレス";
+"register.emailPlaceholder" = "メールアドレスを入力してください";
+"register.phone" = "電話番号";
+"register.phonePlaceholder" = "電話番号を入力してください";
+"register.createAccount" = "アカウント作成";
+"register.alreadyHaveAccount" = "すでにアカウントをお持ちですか？";
+"register.signIn" = "ログイン";
+
+"register.accessibility" = "アクセシビリティ";
+
+// MARK: - Accessibility Options
+"accessibility.none" = "アクセシビリティなし";
+"accessibility.visual" = "視覚";
+"accessibility.hearing" = "聴覚";
+"accessibility.motor" = "運動/身体";
+"accessibility.cognitive" = "認知";
+"accessibility.speech" = "言語";
+"accessibility.neurological" = "神経";
+"accessibility.multiple" = "複数";
+"accessibility.other" = "その他";
+"accessibility.preferNotToSay" = "回答しない";
+
+
+// MARK: - MainMapView
+"map.searchPlaceholder" = "地図を検索";
+"map.restaurants" = "レストラン";
+"map.cafes" = "カフェ";
+"map.markets" = "市場";
+"map.shopping" = "ショッピング";
+"map.selectedLocation" = "選択された場所";
+"map.pointOnMap" = "地図上のポイント";
+"map.location" = "場所";
+"map.stadiumCategory" = "FIFA 2026スタジアム";
+"time.lessThanMin" = "1分未満";
+"time.min" = "分";
+"time.hour" = "時間";
+"menu.mapStyle" = "地図スタイル";
+"menu.3dModel" = "3Dモデル";
+"menu.viewTangara3D" = "タンガラ3D列車を見る";
+"menu.fifa2026" = "FIFAワールドカップ2026";
+"menu.fifa2026Venues" = "FIFA 2026スタジアム";
+"menu.fifa2026VenuesDesc" = "メキシコ、米国、カナダの16スタジアム";
+"menu.simulations" = "シミュレーション";
+"menu.line3Simulation" = "3号線シミュレーション";
+"menu.line3Route" = "Indios Verdes → Universidad";
+"menu.goToStation" = "駅へ行く";
+"menu.transportStation" = "交通駅";
+"menu.options" = "オプション";
+"action.close" = "閉じる";
+"map.bars" = "バー";
+"map.museums" = "博物館";
+"map.gyms" = "ジム";
+"map.parks" = "公園";
+"map.suggestions" = "提案";
+"menu.language" = "言語";
+"menu.currentLanguage" = "現在の言語";
