@@ -107,6 +107,7 @@ struct VenueBottomSheet: View {
 
     @State private var currentHeight: CGFloat = 164
     @GestureState private var dragOffset: CGFloat = 0
+    @State private var autoHideTask: Task<Void, Never>?
 
     var body: some View {
         GeometryReader { geometry in
@@ -150,10 +151,10 @@ struct VenueBottomSheet: View {
                 }
                 .frame(height: max(0, currentHeight + dragOffset))
                 .frame(maxWidth: .infinity)
-                .background(Color.black)
+                .background(Color.white)
                 .cornerRadius(30, corners: [.topLeft, .topRight])
                 .clipped()
-                .shadow(color: Color.black.opacity(0.3), radius: 20, x: 0, y: -5)
+                .shadow(color: Color.white.opacity(0.3), radius: 20, x: 0, y: -5)
                 .opacity(sheetState == .hidden ? 0 : 1)
                 .gesture(
                     DragGesture()
@@ -174,8 +175,24 @@ struct VenueBottomSheet: View {
                 .onChange(of: currentHeight) { oldValue, newValue in
                     sheetHeight = newValue  // Actualizar binding durante el drag
                 }
+                .onChange(of: sheetState) { oldState, newState in
+                    // Cuando el sheet se colapsa y no hay reservaciones, auto-ocultar después de 3 segundos
+                    if newState == .collapsed && reservations.isEmpty {
+                        startAutoHideTimer()
+                    } else {
+                        cancelAutoHideTimer()
+                    }
+                }
                 .onAppear {
                     currentHeight = sheetState.height(for: geometry, hasReservations: !reservations.isEmpty)
+
+                    // Si aparece colapsado y sin reservaciones, iniciar timer
+                    if sheetState == .collapsed && reservations.isEmpty {
+                        startAutoHideTimer()
+                    }
+                }
+                .onDisappear {
+                    cancelAutoHideTimer()
                 }
                 .id(languageManager.currentLanguage) // Force re-render when language changes
             }
@@ -245,6 +262,34 @@ struct VenueBottomSheet: View {
             currentHeight = expandedHeight
         }
     }
+
+    // MARK: - Auto Hide Timer
+
+    private func startAutoHideTimer() {
+        // Cancelar timer anterior si existe
+        cancelAutoHideTimer()
+
+        // Crear nuevo timer que oculta el sheet después de 3 segundos
+        autoHideTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 6_000_000_000) // 3 segundos
+
+            // Verificar que la tarea no fue cancelada
+            guard !Task.isCancelled else { return }
+
+            // Solo ocultar si aún está en collapsed y sin reservaciones
+            if sheetState == .collapsed && reservations.isEmpty {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    sheetState = .hidden
+                }
+                print("🕒 Bottom sheet auto-ocultado después de 3 segundos")
+            }
+        }
+    }
+
+    private func cancelAutoHideTimer() {
+        autoHideTask?.cancel()
+        autoHideTask = nil
+    }
 }
 
 // MARK: - Collapsed Sheet View
@@ -265,7 +310,7 @@ struct CollapsedSheetView: View {
                 .overlay(
                     Image(systemName: hasActiveReservation ? "ticket.fill" : "mappin.circle.fill")
                         .font(.system(size: CGFloat(20)))
-                        .foregroundColor(.white)
+                        .foregroundColor(.black)
                 )
 
             // Información
@@ -280,7 +325,7 @@ struct CollapsedSheetView: View {
                         // Badge de estado
                         Text(nextReservation.statusText)
                             .font(.system(size: CGFloat(10), weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(.black)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 2)
                             .background(nextReservation.statusColor)
@@ -289,7 +334,7 @@ struct CollapsedSheetView: View {
 
                     Text(nextReservation.venueName)
                         .font(.system(size: CGFloat(14), weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.black)
                         .lineLimit(1)
 
                     Text(shortDate(for: nextReservation.date))
@@ -301,7 +346,7 @@ struct CollapsedSheetView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(locationName.isEmpty ? LocalizedString("location.loading") : locationName)
                         .font(.system(size: CGFloat(16), weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.black)
                         .lineLimit(1)
 
                     if locationManager.currentLocation != nil {
@@ -420,7 +465,7 @@ struct ExpandedSheetView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(LocalizedString("reservation.myReservations"))
                             .font(.system(size: CGFloat(24), weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundColor(.black)
                         Text(String(format: LocalizedString("reservation.activeCount"), reservations.count))
                             .font(.system(size: CGFloat(14)))
                             .foregroundColor(.gray)
@@ -477,7 +522,7 @@ struct EmptyReservationsView: View {
 
                 Text(LocalizedString("reservation.empty"))
                     .font(.system(size: CGFloat(18), weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.black)
 
                 Text(LocalizedString("reservation.emptyDescription"))
                     .font(.system(size: CGFloat(14)))
@@ -492,7 +537,7 @@ struct EmptyReservationsView: View {
                     Text(LocalizedString("profile.scheduleMatch"))
                         .font(.system(size: 15, weight: .semibold))
                 }
-                .foregroundColor(.white)
+                .foregroundColor(.black)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
                 .background(
@@ -537,13 +582,13 @@ struct ReservationCard: View {
                     .overlay(
                         Image(systemName: "soccerball")
                             .font(.system(size: CGFloat(24)))
-                            .foregroundColor(.white)
+                            .foregroundColor(.black)
                     )
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(reservation.venueName)
                         .font(.system(size: CGFloat(16), weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.black)
 
                     Text(reservation.venueCity)
                         .font(.system(size: CGFloat(14)))
@@ -555,7 +600,7 @@ struct ReservationCard: View {
                 // Estado
                 Text(reservation.statusText)
                     .font(.system(size: CGFloat(12), weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.black)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(
@@ -602,7 +647,7 @@ struct InfoItem: View {
                 .foregroundColor(.gray)
             Text(text)
                 .font(.system(size: CGFloat(13)))
-                .foregroundColor(.white)
+                .foregroundColor(.black)
         }
     }
 }

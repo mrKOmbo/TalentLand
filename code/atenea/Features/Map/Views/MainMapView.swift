@@ -64,6 +64,9 @@ struct MainMapView: View {
     @StateObject private var stickerCollectionManager = StickerCollectionManager.shared
     @State private var isARNavigationMode = false // Indica que estamos navegando a una sede detectada por AR
 
+    // Collapsible Search Bar
+    @State private var isSearchBarExpanded = false // Control de expansión del buscador
+
     // Accessibility
     @State private var showAccessibilityView = false
 
@@ -254,7 +257,8 @@ struct MainMapView: View {
                 isSearchFocused = false
             },
             onSearch: {
-                // Activar búsqueda
+                // Activar búsqueda expandiendo el buscador
+                isSearchBarExpanded = true
                 isSearchFocused = true
             },
             onProfile: {
@@ -802,9 +806,17 @@ struct MainMapView: View {
     @ViewBuilder
     private var searchBarView: some View {
         VStack(alignment: .leading, spacing: 8) {
-            searchBarContent
-            searchResultsDropdown
-            recommendationChipsView
+            // Nuevo buscador desplegable
+            CollapsibleSearchBar(
+                searchViewModel: searchViewModel,
+                isExpanded: $isSearchBarExpanded,
+                isSearchFocused: $isSearchFocused,
+                isWorldCupToday: $isWorldCupToday,
+                onMenuTap: {
+                    menuState.showMenu = true
+                }
+            )
+
             Spacer()
         }
     }
@@ -1025,6 +1037,7 @@ struct MainMapView: View {
             handlePlaceSelection(place)
             searchViewModel.clearSearch()
             isSearchFocused = false
+            isSearchBarExpanded = false
 
             // Haptic feedback
             let generator = UIImpactFeedbackGenerator(style: .light)
@@ -1900,13 +1913,13 @@ struct MapboxMainMapView: UIViewRepresentable {
         // Actualizar el estado del coordinator
         context.coordinator.currentShouldFollowUser = shouldFollowUser
 
-        // Ocultar brújula y escala
+        // Ocultar brújula, escala, logo y atribución
         mapView.ornaments.options.compass.visibility = .hidden
         mapView.ornaments.options.scaleBar.visibility = .hidden
 
-        // Configurar ubicación del logo y atribución
-        mapView.ornaments.options.logo.position = .bottomLeft
-        mapView.ornaments.options.attributionButton.position = .bottomRight
+        // Ocultar logo y botón de atribución moviéndolos fuera de la pantalla
+        mapView.ornaments.options.logo.margins = CGPoint(x: -1000, y: -1000)
+        mapView.ornaments.options.attributionButton.margins = CGPoint(x: -1000, y: -1000)
 
         // Agregar tap gesture recognizer para detectar taps en el mapa
         let tapGesture = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleMapTap(_:)))

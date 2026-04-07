@@ -12,8 +12,8 @@ struct ContentView: View {
     @StateObject private var collectionManager = StickerCollectionManager.shared
     @ObservedObject private var emergencyManager = EmergencyModeManager.shared
     @State private var menuState = MenuStateManager.shared
-    @State private var showSplash = true  // Temporalmente oculto para desarrollo
-    @State private var showOnboarding = true  // Temporalmente oculto para desarrollo
+    @State private var showSplash = false  // Temporalmente oculto para desarrollo
+    @State private var showOnboarding = false  // Temporalmente oculto para desarrollo
     @State private var isLoggedIn: Bool = UserDefaults.standard.bool(forKey: "isUserLoggedIn")
     @State private var selectedTab = 0
     @State private var lastCollectedVenue: WorldCupVenue?
@@ -73,20 +73,9 @@ struct ContentView: View {
                             VStack {
                                 Spacer()
 
-                                VStack(spacing: 0) {
-                                    SimpleTabBar(selectedTab: $selectedTab)
-                                        .environmentObject(languageManager)
-                                        .background(Color.black)
-                                }
-                                .cornerRadius(30, corners: [.topLeft, .topRight])
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 30)
-                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                            .padding(.bottom, -1000)
-                                )
-                                .clipped()
+                                SimpleTabBar(selectedTab: $selectedTab)
+                                    .environmentObject(languageManager)
                             }
-                            .ignoresSafeArea(edges: .bottom)
                             .zIndex(10) // Tab bar tiene zIndex 10
                             .transition(.move(edge: .bottom).combined(with: .opacity))
                             .rotation3DEffect(
