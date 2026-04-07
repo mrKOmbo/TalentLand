@@ -11,7 +11,6 @@ import SwiftUI
 struct CommunityView: View {
     @State private var selectedFilter = LocalizedString("community.filter.all")
     @Binding var selectedTab: Int
-    @StateObject private var postService = PostService.shared
 
     var filters: [String] {
         [
@@ -49,11 +48,6 @@ struct CommunityView: View {
                 }
             }
             .navigationBarHidden(true)
-            .onAppear {
-                Task {
-                    await postService.fetchPosts()
-                }
-            }
         }
     }
 
@@ -69,18 +63,11 @@ struct CommunityView: View {
 
                     HStack(spacing: 8) {
                         Circle()
-                            .fill(postService.isSyncing ? .orange : .green)
+                            .fill(Color.secondary)
                             .frame(width: 8, height: 8)
-
-                        if postService.isSyncing {
-                            Text("Sincronizando...")
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundStyle(.secondary)
-                        } else {
-                            Text("\(postService.posts.count) \(LocalizedString("community.activePosts"))")
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundStyle(.secondary)
-                        }
+                        Text(LocalizedString("status.noPostsAvailable"))
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(.secondary)
                     }
                 }
 
@@ -88,29 +75,18 @@ struct CommunityView: View {
 
                 // Action buttons
                 HStack(spacing: 12) {
-                    // Sync button
-                    Button(action: {
-                        Task {
-                            await postService.forceSync()
-                        }
-                    }) {
+                    Button(action: {}) {
                         ZStack {
                             Circle()
-                                .fill(postService.isSyncing ? Color.blue.opacity(0.15) : Color.gray.opacity(0.12))
+                                .fill(Color.gray.opacity(0.12))
                                 .frame(width: 40, height: 40)
-
-                            if postService.isSyncing {
-                                ProgressView()
-                                    .tint(.blue)
-                            } else {
-                                Image(systemName: "arrow.triangle.2.circlepath")
-                                    .font(.system(size: 18, weight: .medium))
-                                    .foregroundStyle(.blue)
-                                    .symbolRenderingMode(.hierarchical)
-                            }
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundStyle(.blue)
+                                .symbolRenderingMode(.hierarchical)
                         }
                     }
-                    .disabled(postService.isSyncing)
+                    .disabled(true)
 
                     Button(action: {}) {
                         ZStack {
@@ -154,7 +130,7 @@ struct CommunityView: View {
                 CommunityStatCard(
                     icon: "flame.fill",
                     title: LocalizedString("community.filter.trending"),
-                    value: "\(postService.posts.sorted { $0.likes > $1.likes }.prefix(10).count)",
+                    value: "0",
                     color: .orange
                 )
 
@@ -164,7 +140,7 @@ struct CommunityView: View {
                 CommunityStatCard(
                     icon: "soccerball",
                     title: LocalizedString("community.filter.worldCup"),
-                    value: "\(postService.posts.filter { let kw = $0.keywords.lowercased(); return kw.contains("world cup") || kw.contains("worldcup") || kw.contains("fifa") }.count)",
+                    value: "0",
                     color: .green
                 )
 
@@ -174,7 +150,7 @@ struct CommunityView: View {
                 CommunityStatCard(
                     icon: "newspaper.fill",
                     title: LocalizedString("community.filter.creator"),
-                    value: "\(postService.mainUserPosts.count + postService.posts.filter { $0.source.lowercased() == "news" }.count)",
+                    value: "0",
                     color: .blue
                 )
             }
@@ -216,15 +192,7 @@ struct CommunityView: View {
     // MARK: - Community Feed
     private var communityFeed: some View {
         Group {
-            if postService.isLoading && postService.posts.isEmpty {
-                loadingState
-            } else if let error = postService.errorMessage {
-                errorState(error: error)
-            } else if postService.posts.isEmpty {
-                emptyState
-            } else {
-                postsScrollView
-            }
+            emptyState
         }
     }
 
@@ -269,9 +237,6 @@ struct CommunityView: View {
             }
 
             Button {
-                Task {
-                    await postService.refreshPosts()
-                }
             } label: {
                 Text(LocalizedString("action.retry"))
                     .font(.system(size: 16, weight: .semibold))
@@ -321,9 +286,7 @@ struct CommunityView: View {
             .padding(.vertical, 20)
             .padding(.bottom, 100)
         }
-        .refreshable {
-            await postService.refreshPosts()
-        }
+        .refreshable {}
     }
 
     // MARK: - Helper Functions
@@ -339,31 +302,7 @@ struct CommunityView: View {
     }
 
     // MARK: - Filtered Posts
-    private var filteredPosts: [CommunityPost] {
-        let worldCupFilter = LocalizedString("community.filter.worldCup")
-        let trendingFilter = LocalizedString("community.filter.trending")
-        let creatorFilter = LocalizedString("community.filter.creator")
-
-        switch selectedFilter {
-        case worldCupFilter:
-            return postService.posts.filter {
-                let kw = $0.keywords.lowercased()
-                return kw.contains("world cup") ||
-                       kw.contains("worldcup") ||
-                       kw.contains("fifa") ||
-                       kw.contains("weare26")
-            }
-        case trendingFilter:
-            return postService.posts.sorted { $0.likes > $1.likes }
-        case creatorFilter:
-            // Mostrar primero los posts de main_user, luego los posts de news
-            let mainUserPosts = postService.mainUserPosts
-            let newsPosts = postService.posts.filter { $0.source.lowercased() == "news" }
-            return mainUserPosts + newsPosts
-        default:
-            return postService.posts
-        }
-    }
+    private var filteredPosts: [CommunityPost] { [] }
 }
 
 // MARK: - Filter Chip Component

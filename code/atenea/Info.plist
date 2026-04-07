@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>MBXAccessToken</key>
-	<string>TOKEN_AQUI</string>
+	<string>pk.eyJ1IjoibXJrb21ibyIsImEiOiJjbWg0MTJ2bm0wZmFtMm9xMGIybmR1emk5In0.2u-K5dCzznXlCQRlxtQ6QA</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Your precise location is used to calculate turn-by-turn directions, show your location on the map, and help improve the map.</string>
 	<key>UIBackgroundModes</key>

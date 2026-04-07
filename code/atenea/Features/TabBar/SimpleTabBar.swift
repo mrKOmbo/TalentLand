@@ -14,34 +14,44 @@ struct SimpleTabBar: View {
             Spacer()
 
             HStack(spacing: 8) {
-                // Tab 1: Mapa
+                // Tab 0: Home
                 SimpleTabBarItem(
-                    icon: "map.fill",
-                    title: LocalizedString("tab.map"),
+                    icon: "house.fill",
+                    title: LocalizedString("tab.home"),
                     isSelected: selectedTab == 0,
                     isExpanded: isExpanded && selectedTab == 0
                 ) {
                     handleTabTap(0)
                 }
 
-                // Tab 2: Comunidad
+                // Tab 1: Mapa
                 SimpleTabBarItem(
-                    icon: "person.3.fill",
-                    title: LocalizedString("tab.community"),
+                    icon: "map.fill",
+                    title: LocalizedString("tab.map"),
                     isSelected: selectedTab == 1,
                     isExpanded: isExpanded && selectedTab == 1
                 ) {
                     handleTabTap(1)
                 }
 
-                // Tab 3: Álbum
+                // Tab 2: Comunidad
                 SimpleTabBarItem(
-                    icon: "square.grid.3x3.fill",
-                    title: LocalizedString("tab.album"),
+                    icon: "person.3.fill",
+                    title: LocalizedString("tab.community"),
                     isSelected: selectedTab == 2,
                     isExpanded: isExpanded && selectedTab == 2
                 ) {
                     handleTabTap(2)
+                }
+
+                // Tab 3: Álbum
+                SimpleTabBarItem(
+                    icon: "square.grid.3x3.fill",
+                    title: LocalizedString("tab.album"),
+                    isSelected: selectedTab == 3,
+                    isExpanded: isExpanded && selectedTab == 3
+                ) {
+                    handleTabTap(3)
                 }
             }
             .padding(.horizontal, 12)

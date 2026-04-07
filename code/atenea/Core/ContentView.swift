@@ -47,12 +47,15 @@ struct ContentView: View {
                         Group {
                             switch selectedTab {
                             case 0:
-                                MainMapView(selectedTab: $selectedTab, isLoggedIn: $isLoggedIn)
+                                HomeView(selectedTab: $selectedTab)
                                     .environmentObject(languageManager)
                             case 1:
-                                CommunityView(selectedTab: $selectedTab)
+                                MainMapView(selectedTab: $selectedTab, isLoggedIn: $isLoggedIn)
                                     .environmentObject(languageManager)
                             case 2:
+                                CommunityView(selectedTab: $selectedTab)
+                                    .environmentObject(languageManager)
+                            case 3:
                                 StickerAlbumView(
                                     selectedTab: $selectedTab,
                                     collectionManager: collectionManager,
@@ -61,7 +64,7 @@ struct ContentView: View {
                                 )
                                 .environmentObject(languageManager)
                             default:
-                                MainMapView(selectedTab: $selectedTab, isLoggedIn: $isLoggedIn)
+                                HomeView(selectedTab: $selectedTab)
                                     .environmentObject(languageManager)
                             }
                         }
@@ -79,13 +82,13 @@ struct ContentView: View {
                             .zIndex(10) // Tab bar tiene zIndex 10
                             .transition(.move(edge: .bottom).combined(with: .opacity))
                             .rotation3DEffect(
-                                .degrees(menuState.showMenu && selectedTab == 0 ? 25 : 0),
+                                .degrees(menuState.showMenu && selectedTab == 1 ? 25 : 0),
                                 axis: (x: 0, y: 1, z: 0),
                                 anchor: .trailing,
                                 perspective: 0.4
                             )
-                            .offset(x: menuState.showMenu && selectedTab == 0 ? -300 : 0)
-                            .scaleEffect(menuState.showMenu && selectedTab == 0 ? CGFloat(0.78) : CGFloat(1.0))
+                            .offset(x: menuState.showMenu && selectedTab == 1 ? -300 : 0)
+                            .scaleEffect(menuState.showMenu && selectedTab == 1 ? CGFloat(0.78) : CGFloat(1.0))
                             .animation(.spring(response: 0.35, dampingFraction: 0.8), value: menuState.showMenu)
                         }
 
@@ -133,10 +136,10 @@ struct ContentView: View {
             // Limpiar flag primero
             UserDefaults.standard.removeObject(forKey: "shouldOpenAlbum")
 
-            // Cambiar al tab del álbum (tab 2)
+            // Cambiar al tab del álbum (tab 3)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                 withAnimation(.easeInOut(duration: 0.3)) {
-                    selectedTab = 2
+                    selectedTab = 3
                 }
             }
         }

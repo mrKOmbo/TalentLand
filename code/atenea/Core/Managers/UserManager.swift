@@ -34,6 +34,16 @@ class UserManager: ObservableObject {
             country: "España",
             phoneNumber: "+34 91 234 5678",
             profileImage: nil
+        ),
+        User(
+            email: "don.taco@atenea.com",
+            name: "Don Taco",
+            role: .merchant,
+            accessibilityOption: .none,
+            age: "45",
+            country: "México",
+            phoneNumber: "+52 55 9876 5432",
+            profileImage: nil
         )
     ]
 
