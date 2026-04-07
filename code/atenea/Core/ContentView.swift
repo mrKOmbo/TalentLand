@@ -11,6 +11,7 @@ struct ContentView: View {
     @StateObject private var languageManager = LanguageManager.shared
     @StateObject private var collectionManager = StickerCollectionManager.shared
     @ObservedObject private var emergencyManager = EmergencyModeManager.shared
+    @ObservedObject private var navigationStateManager = NavigationStateManager.shared
     @State private var menuState = MenuStateManager.shared
     @State private var showSplash = false  // Temporalmente oculto para desarrollo
     @State private var showOnboarding = false  // Temporalmente oculto para desarrollo
@@ -18,6 +19,16 @@ struct ContentView: View {
     @State private var selectedTab = 0
     @State private var lastCollectedVenue: WorldCupVenue?
     @State private var showCollectionAnimation = false
+
+    // Estados para modales del nuevo menú
+    @State private var showProfileView = false
+    @State private var showSettingsView = false
+    @State private var showFavoritesView = false
+    @State private var showHelpView = false
+    @State private var showVenuesView = false
+    @State private var showARPosterScanner = false
+    @State private var showScheduleModal = false
+    @State private var showAccessibilityView = false
 
     @Environment(\.scenePhase) private var scenePhase
 
@@ -42,63 +53,104 @@ struct ContentView: View {
                             UserDefaults.standard.set(newValue, forKey: "isUserLoggedIn")
                         }
                 } else {
-                    // Main app content with tab bar
-                    ZStack {
-                        Group {
-                            switch selectedTab {
-                            case 0:
-                                MainMapView(selectedTab: $selectedTab, isLoggedIn: $isLoggedIn)
+                    // Main app content with sidebar push menu
+                    SidebarPushMenuContainer(languageManager: languageManager) {
+                        // Contenido principal con tabs
+                        ZStack {
+                            Group {
+                                switch selectedTab {
+                                case 0:
+                                    MainMapView(selectedTab: $selectedTab, isLoggedIn: $isLoggedIn)
+                                        .environmentObject(languageManager)
+                                case 1:
+                                    CommunityView(selectedTab: $selectedTab)
+                                        .environmentObject(languageManager)
+                                case 2:
+                                    StickerAlbumView(
+                                        selectedTab: $selectedTab,
+                                        collectionManager: collectionManager,
+                                        lastCollectedVenue: $lastCollectedVenue,
+                                        showCollectionAnimation: $showCollectionAnimation
+                                    )
                                     .environmentObject(languageManager)
-                            case 1:
-                                CommunityView(selectedTab: $selectedTab)
-                                    .environmentObject(languageManager)
-                            case 2:
-                                StickerAlbumView(
-                                    selectedTab: $selectedTab,
-                                    collectionManager: collectionManager,
-                                    lastCollectedVenue: $lastCollectedVenue,
-                                    showCollectionAnimation: $showCollectionAnimation
-                                )
-                                .environmentObject(languageManager)
-                            default:
-                                MainMapView(selectedTab: $selectedTab, isLoggedIn: $isLoggedIn)
-                                    .environmentObject(languageManager)
+                                default:
+                                    MainMapView(selectedTab: $selectedTab, isLoggedIn: $isLoggedIn)
+                                        .environmentObject(languageManager)
+                                }
+                            }
+                            .transition(.opacity)
+
+                            // Tab Bar global en todos los tabs (ocultar en modo emergencia y cuando showDirections es true)
+                            if !emergencyManager.isEmergencyActive {
+                                VStack {
+                                    Spacer()
+
+                                    SimpleTabBar(selectedTab: $selectedTab)
+                                        .environmentObject(languageManager)
+                                }
+                                .zIndex(10)
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
+                                .offset(y: navigationStateManager.showDirections ? 120 : 0)
+                                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: navigationStateManager.showDirections)
+                            }
+
+                            // Resplandor rojo ultrathink en todos los bordes (modo emergencia)
+                            if emergencyManager.isEmergencyActive {
+                                EmergencyGlowOverlay()
+                                    .zIndex(1000)
+                                    .allowsHitTesting(false)
+                                    .transition(.opacity)
                             }
                         }
-                        .transition(.opacity)
-                        .zIndex(menuState.showMenu ? 100 : 0) // Mayor zIndex cuando el menú está abierto
-
-                        // Tab Bar global en todos los tabs (ocultar en modo emergencia)
-                        if !emergencyManager.isEmergencyActive {
-                            VStack {
-                                Spacer()
-
-                                SimpleTabBar(selectedTab: $selectedTab)
-                                    .environmentObject(languageManager)
-                            }
-                            .zIndex(10) // Tab bar tiene zIndex 10
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                            .rotation3DEffect(
-                                .degrees(menuState.showMenu && selectedTab == 0 ? 25 : 0),
-                                axis: (x: 0, y: 1, z: 0),
-                                anchor: .trailing,
-                                perspective: 0.4
-                            )
-                            .offset(x: menuState.showMenu && selectedTab == 0 ? -300 : 0)
-                            .scaleEffect(menuState.showMenu && selectedTab == 0 ? CGFloat(0.78) : CGFloat(1.0))
-                            .animation(.spring(response: 0.35, dampingFraction: 0.8), value: menuState.showMenu)
-                        }
-
-                        // Resplandor rojo ultrathink en todos los bordes (modo emergencia)
-                        if emergencyManager.isEmergencyActive {
-                            EmergencyGlowOverlay()
-                                .zIndex(1000)
-                                .allowsHitTesting(false)
-                                .transition(.opacity)
+                    }
+                    .onProfile {
+                        showProfileView = true
+                    }
+                    .onSettings {
+                        showSettingsView = true
+                    }
+                    .onFavorites {
+                        showFavoritesView = true
+                    }
+                    .onHelp {
+                        showHelpView = true
+                    }
+                    .onShowVenues {
+                        showVenuesView = true
+                    }
+                    .onShowARScanner {
+                        showARPosterScanner = true
+                    }
+                    .onShowSchedule {
+                        showScheduleModal = true
+                    }
+                    .onAccessibility {
+                        showAccessibilityView = true
+                    }
+                    .onLogout {
+                        handleLogout()
+                    }
+                    .sheet(isPresented: $showProfileView) {
+                        UserProfileView()
+                    }
+                    .sheet(isPresented: $showSettingsView) {
+                        SettingsView(languageManager: languageManager)
+                    }
+                    .sheet(isPresented: $showFavoritesView) {
+                        FavoritesView()
+                    }
+                    .sheet(isPresented: $showHelpView) {
+                        HelpView()
+                    }
+                    .sheet(isPresented: $showAccessibilityView) {
+                        VisualAccessibilitySettingsView()
+                    }
+                    .sheet(isPresented: $showVenuesView) {
+                        NavigationView {
+                            VenuesListView()
                         }
                     }
                     .onChange(of: isLoggedIn) { _, newValue in
-                        // Persistir el estado de login
                         UserDefaults.standard.set(newValue, forKey: "isUserLoggedIn")
                     }
                 }
@@ -140,6 +192,16 @@ struct ContentView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Handle Logout
+
+    private func handleLogout() {
+        withAnimation {
+            isLoggedIn = false
+        }
+        UserDefaults.standard.set(false, forKey: "isUserLoggedIn")
+        print("🔓 Usuario cerró sesión")
     }
 }
 

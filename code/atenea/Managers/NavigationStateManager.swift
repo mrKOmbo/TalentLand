@@ -13,6 +13,7 @@ class NavigationStateManager: ObservableObject {
 
     @Published var isNavigationActive: Bool = false
     @Published var shouldOpenNavigation: Bool = false
+    @Published var showDirections: Bool = false // Controla visibilidad del Tab Bar
 
     private init() {}
 

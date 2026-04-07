@@ -1,0 +1,358 @@
+//
+//  SidebarPushMenuContainer.swift
+//  atenea
+//
+//  Contenedor principal que maneja el menú lateral tipo "push" (desliza el contenido hacia la derecha)
+//  Inspirado en diseños modernos de apps de e-commerce
+//
+
+import SwiftUI
+
+// MARK: - Sidebar Push Menu Container
+
+struct SidebarPushMenuContainer<Content: View>: View {
+    @ObservedObject var menuStateManager = MenuStateManager.shared
+    @ObservedObject var languageManager: LanguageManager
+    @ObservedObject var userManager = UserManager.shared
+
+    // Contenido principal (vista del mapa o cualquier contenido)
+    let content: Content
+
+    // Callbacks del menú
+    var onProfile: (() -> Void)?
+    var onSettings: (() -> Void)?
+    var onFavorites: (() -> Void)?
+    var onHelp: (() -> Void)?
+    var onShowVenues: (() -> Void)?
+    var onShowARScanner: (() -> Void)?
+    var onShowSchedule: (() -> Void)?
+    var onAccessibility: (() -> Void)?
+    var onLogout: (() -> Void)?
+
+    init(
+        languageManager: LanguageManager,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.languageManager = languageManager
+        self.content = content()
+    }
+
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack {
+                // FONDO: Menú verde (siempre visible detrás)
+                greenMenuBackground
+                    .ignoresSafeArea()
+
+                // CONTENIDO: Vista principal que se desliza
+                content
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(.systemBackground))
+                    .clipShape(
+                        RoundedRectangle(
+                            cornerRadius: menuStateManager.showMenu ? 24 : 0,
+                            style: .continuous
+                        )
+                    )
+                    .shadow(
+                        color: Color.black.opacity(menuStateManager.showMenu ? 0.3 : 0),
+                        radius: menuStateManager.showMenu ? 30 : 0,
+                        x: -8,
+                        y: 0
+                    )
+                    .offset(x: menuStateManager.showMenu ? geometry.size.width * 0.75 : 0)
+                    .scaleEffect(menuStateManager.showMenu ? CGSize(width: 0.90, height: 0.90) : CGSize(width: 1.0, height: 1.0))
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: menuStateManager.showMenu)
+                    .onTapGesture {
+                        // Cerrar el menú cuando se toca el contenido desplazado
+                        if menuStateManager.showMenu {
+                            closeMenu()
+                        }
+                    }
+                    .gesture(
+                        // Permitir arrastrar para cerrar el menú
+                        DragGesture()
+                            .onEnded { value in
+                                if menuStateManager.showMenu && value.translation.width < -50 {
+                                    // Si se arrastra hacia la izquierda más de 50pt, cerrar menú
+                                    closeMenu()
+                                }
+                            }
+                    )
+            }
+            .ignoresSafeArea()
+        }
+    }
+
+    // MARK: - Green Menu Background
+
+    private var greenMenuBackground: some View {
+        ZStack(alignment: .topLeading) {
+            // Fondo verde con gradiente suave
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(hex: "#4CAF50"),
+                    Color(hex: "#45A049"),
+                    Color(hex: "#3D8B40")
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+
+            // Overlay de textura sutil
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color.white.opacity(0.1),
+                    Color.clear,
+                    Color.black.opacity(0.05)
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+
+            // Contenido del menú
+            VStack(alignment: .leading, spacing: 0) {
+                // Header con icono de perfil y botón de cierre
+                menuHeader
+                    .padding(.top, 60)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 40)
+
+                // Opciones del menú
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 18) {
+                        menuItem(icon: "square.grid.2x2", title: "Categories")
+                        menuItem(icon: "creditcard", title: "Wallet")
+                        menuItem(icon: "gift", title: "Gift Ideas")
+                        menuItem(icon: "crown", title: "Subscription")
+
+                        // Sección FIFA World Cup
+                        menuDivider()
+
+                        menuSectionTitle("FIFA World Cup 2026™")
+
+                        menuItem(icon: "location", title: "Store Locator") {
+                            onShowVenues?()
+                            closeMenu()
+                        }
+
+                        menuItem(icon: "camera.viewfinder", title: "AR Poster Scanner") {
+                            onShowARScanner?()
+                            closeMenu()
+                        }
+
+                        menuItem(icon: "ticket", title: "Reservations") {
+                            onShowSchedule?()
+                            closeMenu()
+                        }
+
+                        // Sección de configuración
+                        menuDivider()
+
+                        menuItem(icon: "person.crop.circle", title: "Profile") {
+                            onProfile?()
+                            closeMenu()
+                        }
+
+                        menuItem(icon: "gearshape", title: "Settings") {
+                            onSettings?()
+                            closeMenu()
+                        }
+
+                        menuItem(icon: "star", title: "Favorites") {
+                            onFavorites?()
+                            closeMenu()
+                        }
+
+                        menuItem(icon: "newspaper", title: "Blog & Articles")
+                        menuItem(icon: "heart", title: "Help & Support") {
+                            onHelp?()
+                            closeMenu()
+                        }
+
+                        // Accessibility (condicional)
+                        if userManager.currentUser?.needsAccessibilityFeatures == true {
+                            menuItem(icon: "accessibility", title: "Accessibility") {
+                                onAccessibility?()
+                                closeMenu()
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                }
+
+                Spacer()
+
+                // Botón de Logout fijo al fondo
+                logoutButton
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 40)
+            }
+        }
+    }
+
+    // MARK: - Menu Header
+
+    private var menuHeader: some View {
+        HStack {
+            // Icono de perfil
+            ZStack {
+                Circle()
+                    .fill(Color.white.opacity(0.2))
+                    .frame(width: 50, height: 50)
+
+                Image(systemName: "person.fill")
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundColor(.white)
+            }
+
+            Spacer()
+
+            // Botón de cierre (X)
+            Button(action: {
+                closeMenu()
+            }) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.8))
+                    .frame(width: 44, height: 44)
+            }
+        }
+    }
+
+    // MARK: - Menu Item
+
+    private func menuItem(icon: String, title: String, action: (() -> Void)? = nil) -> some View {
+        Button(action: {
+            // Haptic feedback
+            let generator = UIImpactFeedbackGenerator(style: .light)
+            generator.impactOccurred()
+
+            action?()
+        }) {
+            HStack(spacing: 16) {
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(width: 28)
+
+                Text(title)
+                    .font(.system(size: 17, weight: .medium))
+                    .foregroundColor(.white)
+
+                Spacer()
+            }
+            .padding(.vertical, 8)
+        }
+    }
+
+    // MARK: - Menu Section Title
+
+    private func menuSectionTitle(_ title: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "soccerball")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(.white.opacity(0.9))
+
+            Text(title)
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .foregroundColor(.white.opacity(0.9))
+                .textCase(.uppercase)
+        }
+        .padding(.vertical, 12)
+    }
+
+    // MARK: - Menu Divider
+
+    private func menuDivider() -> some View {
+        Rectangle()
+            .fill(Color.white.opacity(0.15))
+            .frame(height: 0.5)
+            .padding(.vertical, 12)
+    }
+
+    // MARK: - Logout Button
+
+    private var logoutButton: some View {
+        Button(action: {
+            onLogout?()
+            closeMenu()
+        }) {
+            HStack(spacing: 16) {
+                Image(systemName: "rectangle.portrait.and.arrow.right")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 28)
+
+                Text("Logout")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.white)
+
+                Spacer()
+            }
+            .padding(.vertical, 16)
+            .padding(.horizontal, 20)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color.white.opacity(0.15))
+            )
+        }
+    }
+
+    // MARK: - Helpers
+
+    private func closeMenu() {
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            menuStateManager.closeMenu()
+        }
+    }
+}
+
+// MARK: - Preview
+
+#Preview {
+    SidebarPushMenuContainer(languageManager: LanguageManager.shared) {
+        // Contenido de ejemplo (mapa simulado)
+        ZStack {
+            // Fondo del mapa
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(hex: "#667eea"),
+                    Color(hex: "#764ba2")
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+
+            VStack {
+                HStack {
+                    Button(action: {
+                        MenuStateManager.shared.toggleMenu()
+                    }) {
+                        Image(systemName: "line.3.horizontal")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(
+                                Circle()
+                                    .fill(Color.black.opacity(0.3))
+                            )
+                    }
+                    .padding(.leading, 20)
+
+                    Spacer()
+                }
+                .padding(.top, 60)
+
+                Spacer()
+
+                Text("Main Map View")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+
+                Spacer()
+            }
+        }
+    }
+}
