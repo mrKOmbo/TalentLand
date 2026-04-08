@@ -17,17 +17,21 @@ struct ContentView: View {
             HomeWatchView()
                 .tag(0)
 
-            // Tab 2: Navegación
-            NavigationWatchView()
+            // Tab 2: Guía háptica a vendedores (accesibilidad)
+            HapticVendorNavView()
                 .tag(1)
 
-            // Tab 3: Comunidad
-            CommunityWatchView()
+            // Tab 3: Navegación
+            NavigationWatchView()
                 .tag(2)
 
-            // Tab 4: Actividad
-            ActivityWatchView()
+            // Tab 4: Comunidad
+            CommunityWatchView()
                 .tag(3)
+
+            // Tab 5: Actividad
+            ActivityWatchView()
+                .tag(4)
         }
         .tabViewStyle(.verticalPage)
     }
@@ -82,9 +86,15 @@ struct HomeWatchView: View {
                     )
 
                     QuickActionButton(
+                        icon: "hand.point.up.braille.fill",
+                        title: "Guía Háptica",
+                        color: .green
+                    )
+
+                    QuickActionButton(
                         icon: "person.2.fill",
                         title: "Comunidad",
-                        color: .green
+                        color: .teal
                     )
                 }
             }

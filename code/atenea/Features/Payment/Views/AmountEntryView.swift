@@ -97,6 +97,30 @@ struct AmountEntryView: View {
                 }
                 .disabled(!viewModel.canGenerate)
 
+                // Tap to Pay (simulación)
+                Button {
+                    viewModel.startTapToPay()
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "wave.3.right")
+                            .font(.system(size: 20, weight: .semibold))
+                        Text("Tap to Pay")
+                            .font(.system(size: 18, weight: .bold))
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(
+                                viewModel.amountInCents > 0
+                                    ? LinearGradient(colors: [.blue, .cyan], startPoint: .leading, endPoint: .trailing)
+                                    : LinearGradient(colors: [.gray.opacity(0.3), .gray.opacity(0.3)], startPoint: .leading, endPoint: .trailing)
+                            )
+                    )
+                }
+                .disabled(viewModel.amountInCents <= 0)
+
                 // Cobrar en efectivo
                 Button {
                     viewModel.startCashPayment()

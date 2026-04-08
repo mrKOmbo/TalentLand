@@ -15,6 +15,8 @@ class SaleViewModel: ObservableObject {
     @Published var paymentStatus: PaymentStatus = .pending
     @Published var errorMessage: String?
     @Published var cashReceivedString: String = ""
+    @Published var tapToPayPhase: TapToPayPhase = .preparing
+    @Published var tapToPayResult: TapToPayResult?
 
     private let stripeService = StripeService.shared
     private var pollingTimer: AnyCancellable?
@@ -65,6 +67,76 @@ class SaleViewModel: ObservableObject {
     func confirmCashPayment() {
         paymentStatus = .completed
         currentStep = .confirmed
+    }
+
+    // MARK: - Tap to Pay Simulation
+
+    func startTapToPay() {
+        tapToPayPhase = .preparing
+        tapToPayResult = nil
+        currentStep = .tapToPay
+
+        Task {
+            // Fase 1: Preparando lector (1s)
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            tapToPayPhase = .waitingForCard
+
+            // Fase 2: Esperando tarjeta — el usuario "acerca" la tarjeta
+            // (se avanza manualmente con simulateTapCard() o auto después de 3s)
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            if tapToPayPhase == .waitingForCard {
+                simulateTapCard()
+            }
+        }
+    }
+
+    func simulateTapCard() {
+        guard tapToPayPhase == .waitingForCard else { return }
+        tapToPayPhase = .reading
+
+        Task {
+            // Fase 3: Leyendo tarjeta (1.2s)
+            try? await Task.sleep(nanoseconds: 1_200_000_000)
+            tapToPayPhase = .processing
+
+            // Fase 4: Procesando pago (1.5s)
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+
+            // Fase 5: Resultado
+            // TODO: Implementa tu lógica de resultado aquí
+            let result = simulateTapToPayResult()
+            tapToPayResult = result
+
+            if result.approved {
+                tapToPayPhase = .approved
+                try? await Task.sleep(nanoseconds: 1_500_000_000)
+                paymentStatus = .completed
+                currentStep = .confirmed
+            } else {
+                tapToPayPhase = .declined(result.declineReason ?? "Tarjeta declinada")
+            }
+        }
+    }
+
+    /// Decide el resultado de la transacción simulada.
+    /// Modifica esta función para cambiar el comportamiento:
+    /// - Always approve: siempre devuelve approved = true
+    /// - Realistic: agrega probabilidad de decline
+    func simulateTapToPayResult() -> TapToPayResult {
+        let brands = [
+            ("Visa", "4521"),
+            ("Mastercard", "8832"),
+            ("Amex", "1007")
+        ]
+        let (brand, last4) = brands.randomElement()!
+
+        // Always approve — cambia a false para simular declines
+        return TapToPayResult(
+            approved: true,
+            cardBrand: brand,
+            lastFour: last4,
+            declineReason: nil
+        )
     }
 
     // MARK: - Keypad Actions
@@ -166,6 +238,8 @@ class SaleViewModel: ObservableObject {
         paymentStatus = .pending
         errorMessage = nil
         cashReceivedString = ""
+        tapToPayPhase = .preparing
+        tapToPayResult = nil
         stopPolling()
     }
 

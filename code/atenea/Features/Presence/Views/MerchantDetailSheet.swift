@@ -18,6 +18,9 @@ struct MerchantDetailSheet: View {
                 // Header
                 headerSection
 
+                // Street Cred Badge
+                streetCredBadge
+
                 // Estado
                 statusSection
 
@@ -195,6 +198,15 @@ struct MerchantDetailSheet: View {
             }
             .padding(.horizontal, 24)
         }
+    }
+
+    // MARK: - Street Cred
+
+    @ViewBuilder
+    private var streetCredBadge: some View {
+        let score = StreetCredManager.shared.calculateScore(for: merchant)
+        StreetCredBadgeView(score: score)
+            .padding(.horizontal, 24)
     }
 
     // MARK: - Helpers

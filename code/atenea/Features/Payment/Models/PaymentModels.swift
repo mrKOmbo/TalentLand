@@ -6,7 +6,26 @@ enum SaleStep: Int {
     case enterAmount
     case showQR
     case cashPayment
+    case tapToPay
     case confirmed
+}
+
+// MARK: - Tap to Pay Simulation
+
+enum TapToPayPhase: Equatable {
+    case preparing
+    case waitingForCard
+    case reading
+    case processing
+    case approved
+    case declined(String)
+}
+
+struct TapToPayResult {
+    let approved: Bool
+    let cardBrand: String   // "Visa", "Mastercard", "Amex"
+    let lastFour: String    // "4521"
+    let declineReason: String?
 }
 
 // MARK: - Payment Status
@@ -65,6 +84,18 @@ struct SaleRecord: Identifiable, Codable {
     let status: PaymentStatus
     let createdAt: Date
     let paymentLinkId: String
+    let merchantId: UUID?
+
+    init(id: UUID = UUID(), amount: Int, currency: String, description: String, status: PaymentStatus, createdAt: Date = Date(), paymentLinkId: String, merchantId: UUID? = nil) {
+        self.id = id
+        self.amount = amount
+        self.currency = currency
+        self.description = description
+        self.status = status
+        self.createdAt = createdAt
+        self.paymentLinkId = paymentLinkId
+        self.merchantId = merchantId
+    }
 
     var formattedAmount: String {
         let value = Double(amount) / 100.0

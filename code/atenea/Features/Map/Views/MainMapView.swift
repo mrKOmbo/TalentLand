@@ -19,6 +19,8 @@ struct MainMapView: View {
     @EnvironmentObject var languageManager: LanguageManager
     @ObservedObject private var emergencyManager = EmergencyModeManager.shared
     @ObservedObject private var menuState = MenuStateManager.shared
+    @ObservedObject private var demandManager = DemandZoneManager.shared
+    @ObservedObject private var userManager = UserManager.shared
     @Binding var selectedTab: Int
     @Binding var isLoggedIn: Bool
     @State private var selectedSearchPlace: SearchPlace? = nil
@@ -387,6 +389,25 @@ struct MainMapView: View {
                         }
                         .padding(.leading, 20)
                         .transition(.move(edge: .leading).combined(with: .opacity))
+
+                        // Botón de heatmap
+                        Button(action: {
+                                let generator = UIImpactFeedbackGenerator(style: .medium)
+                                generator.impactOccurred()
+                                demandManager.showHeatMap.toggle()
+                            }) {
+                                ZStack {
+                                    Circle()
+                                        .fill(demandManager.showHeatMap ? Color.orange : Color.white)
+                                        .frame(width: 50, height: 50)
+                                        .shadow(color: (demandManager.showHeatMap ? Color.orange : Color.black).opacity(0.3), radius: 8, x: 0, y: 4)
+
+                                    Image(systemName: demandManager.showHeatMap ? "flame.fill" : "flame")
+                                        .font(.system(size: CGFloat(22)))
+                                        .foregroundColor(demandManager.showHeatMap ? .white : .orange)
+                                }
+                            }
+                        .transition(.scale.combined(with: .opacity))
 
                     Spacer()
 
@@ -780,6 +801,8 @@ struct MainMapView: View {
                 cameraPitch: cameraPitch,
                 shouldFollowUser: shouldFollowUser,
                 isEmergencyActive: emergencyManager.isEmergencyActive,
+                demandZones: demandManager.demandZones,
+                showHeatMap: demandManager.showHeatMap,
                 onMarkerTapped: { marker in
                     handleMarkerTap(marker)
                 },
@@ -1929,6 +1952,8 @@ struct MapboxMainMapView: UIViewRepresentable {
     var cameraPitch: Double
     var shouldFollowUser: Bool
     var isEmergencyActive: Bool
+    var demandZones: [DemandZone]
+    var showHeatMap: Bool
     var onMarkerTapped: ((SearchPlace) -> Void)?
     var onVenueTapped: ((WorldCupVenue) -> Void)?
     var onMapTapped: ((CLLocationCoordinate2D) -> Void)?
@@ -1959,9 +1984,22 @@ struct MapboxMainMapView: UIViewRepresentable {
                 print("❌ Error cargando estilo: \(error)")
             } else {
                 print("✅ Estilo \(mapStyle.displayName) cargado")
+                context.coordinator.styleLoaded = true
                 // Agregar marcadores de sedes FIFA después de cargar el estilo
                 if !self.venueMarkers.isEmpty {
                     context.coordinator.updateVenueMarkers(self.venueMarkers, on: mapView)
+                }
+                // Agregar heatmap pendiente o activo
+                print("🔥 [styleLoaded] showHeatMap=\(self.showHeatMap), zones=\(self.demandZones.count), pending=\(context.coordinator.pendingHeatmapZones?.count ?? -1)")
+                if let pendingZones = context.coordinator.pendingHeatmapZones {
+                    print("🔥 [styleLoaded] Agregando heatmap pendiente con \(pendingZones.count) zonas")
+                    context.coordinator.addDemandHeatmap(zones: pendingZones, on: mapView)
+                    context.coordinator.pendingHeatmapZones = nil
+                } else if self.showHeatMap && !self.demandZones.isEmpty {
+                    print("🔥 [styleLoaded] Agregando heatmap directo con \(self.demandZones.count) zonas")
+                    context.coordinator.addDemandHeatmap(zones: self.demandZones, on: mapView)
+                } else {
+                    print("🔥 [styleLoaded] No se agrega heatmap — showHeatMap=\(self.showHeatMap), zones=\(self.demandZones.count)")
                 }
             }
         }
@@ -2046,6 +2084,8 @@ struct MapboxMainMapView: UIViewRepresentable {
         // Verificar si cambió el estilo del mapa
         if context.coordinator.currentStyle != mapStyle {
             context.coordinator.currentStyle = mapStyle
+            context.coordinator.styleLoaded = false
+            context.coordinator.heatmapAdded = false
 
             // Cambiar el estilo del mapa
             mapView.mapboxMap.loadStyleURI(mapStyle.styleURI) { error in
@@ -2053,12 +2093,17 @@ struct MapboxMainMapView: UIViewRepresentable {
                     print("❌ Error cambiando estilo: \(error)")
                 } else {
                     print("✅ Estilo cambiado a \(mapStyle.displayName)")
+                    context.coordinator.styleLoaded = true
                     // Re-agregar marcadores de búsqueda
                     context.coordinator.updateSearchMarkers(searchMarkers, on: mapView)
                     // Re-agregar marcadores de sedes
                     context.coordinator.updateVenueMarkers(venueMarkers, on: mapView)
                     // Re-agregar rutas
                     context.coordinator.updateRoutePolylines(routePolylines, selectedIndex: selectedRouteIndex, transportMode: selectedTransportMode, on: mapView)
+                    // Re-agregar heatmap si estaba activo
+                    if self.showHeatMap && !self.demandZones.isEmpty {
+                        context.coordinator.addDemandHeatmap(zones: self.demandZones, on: mapView)
+                    }
                 }
             }
         }
@@ -2122,6 +2167,42 @@ struct MapboxMainMapView: UIViewRepresentable {
             context.coordinator.currentIsEmergencyActive = isEmergencyActive
             context.coordinator.updateEmergencyPuck(isActive: isEmergencyActive, on: mapView)
         }
+
+        // Actualizar heatmap de demanda
+        let heatmapToggled = context.coordinator.currentShowHeatMap != showHeatMap
+        let zonesChanged = context.coordinator.currentDemandZoneCount != demandZones.count
+
+        print("🔥 [updateUIView] showHeatMap=\(showHeatMap), zones=\(demandZones.count), toggled=\(heatmapToggled), zonesChanged=\(zonesChanged), styleLoaded=\(context.coordinator.styleLoaded), heatmapAdded=\(context.coordinator.heatmapAdded)")
+
+        if heatmapToggled {
+            context.coordinator.currentShowHeatMap = showHeatMap
+            if showHeatMap && !demandZones.isEmpty {
+                if !context.coordinator.styleLoaded {
+                    print("🔥 [updateUIView] Estilo no cargado, guardando \(demandZones.count) zonas como pendientes")
+                    context.coordinator.pendingHeatmapZones = demandZones
+                } else if !context.coordinator.heatmapAdded {
+                    print("🔥 [updateUIView] Agregando heatmap ahora")
+                    context.coordinator.addDemandHeatmap(zones: demandZones, on: mapView)
+                } else {
+                    print("🔥 [updateUIView] Toggling visibility ON")
+                    context.coordinator.toggleDemandHeatmapVisibility(show: true, on: mapView)
+                }
+            } else {
+                if context.coordinator.heatmapAdded {
+                    print("🔥 [updateUIView] Toggling visibility OFF")
+                    context.coordinator.toggleDemandHeatmapVisibility(show: false, on: mapView)
+                }
+            }
+        } else if zonesChanged && showHeatMap && context.coordinator.styleLoaded {
+            context.coordinator.currentDemandZoneCount = demandZones.count
+            if context.coordinator.heatmapAdded {
+                print("🔥 [updateUIView] Actualizando datos del heatmap")
+                context.coordinator.updateDemandHeatmapData(zones: demandZones, on: mapView)
+            } else {
+                print("🔥 [updateUIView] Agregando heatmap (zones changed)")
+                context.coordinator.addDemandHeatmap(zones: demandZones, on: mapView)
+            }
+        }
     }
 
     func makeCoordinator() -> Coordinator {
@@ -2148,6 +2229,11 @@ struct MapboxMainMapView: UIViewRepresentable {
         var onMarkerTapped: ((SearchPlace) -> Void)?
         var onVenueTapped: ((WorldCupVenue) -> Void)?
         var onMapTapped: ((CLLocationCoordinate2D) -> Void)?
+        var currentShowHeatMap: Bool = false
+        var currentDemandZoneCount: Int = 0
+        var heatmapAdded: Bool = false
+        var styleLoaded: Bool = false
+        var pendingHeatmapZones: [DemandZone]?
 
         init(initialStyle: MapStyle, onMarkerTapped: ((SearchPlace) -> Void)?, onVenueTapped: ((WorldCupVenue) -> Void)?, onMapTapped: ((CLLocationCoordinate2D) -> Void)?) {
             self.currentStyle = initialStyle
@@ -3000,6 +3086,72 @@ struct MapboxMainMapView: UIViewRepresentable {
                     arrowPath.lineWidth = 2
                     arrowPath.stroke()
                 }
+            }
+        }
+
+        // MARK: - Demand Heatmap
+
+        func addDemandHeatmap(zones: [DemandZone], on mapView: MapView) {
+            removeDemandHeatmap(from: mapView)
+
+            // Generar cientos de puntos individuales alrededor de Expo Santa Fe
+            let expoCenter = CLLocationCoordinate2D(latitude: 19.3585, longitude: -99.2740)
+            let featureCollection = DemandHeatmapBuilder.generateCrowdFeatures(around: expoCenter)
+            let source = DemandHeatmapBuilder.makeSource(with: featureCollection)
+
+            do {
+                try mapView.mapboxMap.addSource(source)
+            } catch {
+                print("🔥 [HEATMAP] ERROR source: \(error)")
+                return
+            }
+
+            // Agregar capas — mismo patrón que addMetroLine (sin layerPosition)
+            do {
+                try mapView.mapboxMap.addLayer(DemandHeatmapBuilder.makeGlowLayer())
+                try mapView.mapboxMap.addLayer(DemandHeatmapBuilder.makeCircleLayer())
+                try mapView.mapboxMap.addLayer(DemandHeatmapBuilder.makeSymbolLayer())
+                heatmapAdded = true
+                print("🔥 [HEATMAP] OK — \(featureCollection.features.count) puntos, glow+circle+symbol")
+            } catch {
+                print("🔥 [HEATMAP] ERROR layers: \(error)")
+            }
+        }
+
+        func removeDemandHeatmap(from mapView: MapView) {
+            try? mapView.mapboxMap.removeLayer(withId: DemandHeatmapBuilder.symbolLayerId)
+            try? mapView.mapboxMap.removeLayer(withId: DemandHeatmapBuilder.circleLayerId)
+            try? mapView.mapboxMap.removeLayer(withId: DemandHeatmapBuilder.glowLayerId)
+            try? mapView.mapboxMap.removeSource(withId: DemandHeatmapBuilder.sourceId)
+            heatmapAdded = false
+        }
+
+        func updateDemandHeatmapData(zones: [DemandZone], on mapView: MapView) {
+            // Regenerar todos los puntos
+            guard heatmapAdded else { return }
+            let expoCenter = CLLocationCoordinate2D(latitude: 19.3585, longitude: -99.2740)
+            let featureCollection = DemandHeatmapBuilder.generateCrowdFeatures(around: expoCenter)
+            mapView.mapboxMap.updateGeoJSONSource(
+                withId: DemandHeatmapBuilder.sourceId,
+                geoJSON: .featureCollection(featureCollection)
+            )
+        }
+
+        func toggleDemandHeatmapVisibility(show: Bool, on mapView: MapView) {
+            guard heatmapAdded else { return }
+            let visibility: MapboxMaps.Visibility = show ? .visible : .none
+            do {
+                try mapView.mapboxMap.updateLayer(withId: DemandHeatmapBuilder.glowLayerId, type: CircleLayer.self) { layer in
+                    layer.visibility = .constant(visibility)
+                }
+                try mapView.mapboxMap.updateLayer(withId: DemandHeatmapBuilder.circleLayerId, type: CircleLayer.self) { layer in
+                    layer.visibility = .constant(visibility)
+                }
+                try mapView.mapboxMap.updateLayer(withId: DemandHeatmapBuilder.symbolLayerId, type: SymbolLayer.self) { layer in
+                    layer.visibility = .constant(visibility)
+                }
+            } catch {
+                print("❌ Error toggling heatmap: \(error)")
             }
         }
 

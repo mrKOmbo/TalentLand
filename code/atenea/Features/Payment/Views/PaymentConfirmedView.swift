@@ -114,15 +114,25 @@ struct PaymentConfirmedView: View {
             }
 
             // Guardar venta en historial
-            if let linkId = viewModel.paymentLinkId {
+            let linkId = viewModel.paymentLinkId ?? (viewModel.tapToPayResult != nil ? "tap-to-pay-\(UUID().uuidString.prefix(8))" : nil)
+            if let linkId {
+                let description: String
+                if let ttpResult = viewModel.tapToPayResult {
+                    description = viewModel.saleDescription.isEmpty
+                        ? "Tap to Pay — \(ttpResult.cardBrand) •••• \(ttpResult.lastFour)"
+                        : viewModel.saleDescription
+                } else {
+                    description = viewModel.saleDescription.isEmpty ? "Venta Atenea" : viewModel.saleDescription
+                }
                 let record = SaleRecord(
                     id: UUID(),
                     amount: viewModel.amountInCents,
                     currency: "mxn",
-                    description: viewModel.saleDescription.isEmpty ? "Venta Atenea" : viewModel.saleDescription,
+                    description: description,
                     status: .completed,
                     createdAt: Date(),
-                    paymentLinkId: linkId
+                    paymentLinkId: linkId,
+                    merchantId: MerchantManager.shared.currentMerchantProfile?.id
                 )
                 SalesHistoryManager.shared.addSale(record)
             }

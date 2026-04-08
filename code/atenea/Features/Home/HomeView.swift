@@ -60,10 +60,16 @@ struct MerchantHomeView: View {
     @ObservedObject private var presenceManager = PresenceManager.shared
     @ObservedObject private var demandManager = DemandZoneManager.shared
     @ObservedObject private var radarService = RadarService.shared
+    @ObservedObject private var streetCredManager = StreetCredManager.shared
+    @ObservedObject private var predictionEngine = PredictionEngine.shared
     @State private var profileViews = 87
     @State private var animateCards = false
     @State private var showTimbreHistory = false
     @State private var showDemandInsights = false
+    @State private var showStreetCredDetail = false
+    @State private var showPredictionDetail = false
+    @State private var streetCredScore: StreetCredScore?
+    @State private var matchPrediction: MatchPrediction?
 
     private var isBusinessActive: Binding<Bool> {
         Binding(
@@ -93,6 +99,15 @@ struct MerchantHomeView: View {
                     // Status toggle
                     businessStatusCard
 
+                    // Street Cred Score
+                    if let score = streetCredScore {
+                        StreetCredCardView(score: score) {
+                            showStreetCredDetail = true
+                        }
+                        .opacity(animateCards ? 1 : 0)
+                        .offset(y: animateCards ? 0 : 20)
+                    }
+
                     // Métricas del día
                     metricsGrid
 
@@ -101,6 +116,17 @@ struct MerchantHomeView: View {
 
                     // Tip del día
                     demandTipCard
+
+                    // Predicción del próximo partido
+                    if let prediction = matchPrediction {
+                        PredictionCardView(
+                            prediction: prediction,
+                            merchantCategory: merchantManager.currentMerchantProfile?.category,
+                            onTap: { showPredictionDetail = true }
+                        )
+                        .opacity(animateCards ? 1 : 0)
+                        .offset(y: animateCards ? 0 : 20)
+                    }
 
                     Spacer(minLength: 100)
                 }
@@ -132,29 +158,52 @@ struct MerchantHomeView: View {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.1)) {
                 animateCards = true
             }
-            // Centrar zonas de demanda en la ubicación actual del dispositivo
-            if let loc = CLLocationManager().location {
-                demandManager.refreshMockData(around: (loc.coordinate.latitude, loc.coordinate.longitude))
+            // Diferir actualizaciones para evitar "Publishing changes from within view updates"
+            DispatchQueue.main.async {
+                // Centrar zonas de demanda en Expo Santa Fe CDMX (demo)
+                demandManager.refreshMockData(around: (19.3585, -99.2740))
+                // Calcular Street Cred
+                if let merchant = merchantManager.currentMerchantProfile {
+                    if streetCredManager.activityLog.filter({ $0.merchantId == merchant.id }).isEmpty {
+                        streetCredManager.generateMockData(for: merchant)
+                    }
+                    streetCredScore = streetCredManager.calculateScore(for: merchant)
+                }
+                // Predicción del próximo partido
+                matchPrediction = predictionEngine.predictNextMatch()
             }
-            // Iniciar broadcasting si el negocio está activo
-            if let merchant = merchantManager.currentMerchantProfile, merchant.isActive {
-                PresenceManager.shared.startBroadcasting(merchant: merchant)
-                RadarService.shared.startAdvertising(merchant: merchant)
+            // Iniciar broadcasting y escaneo diferido
+            DispatchQueue.main.async {
+                if let merchant = merchantManager.currentMerchantProfile, merchant.isActive {
+                    PresenceManager.shared.startBroadcasting(merchant: merchant)
+                    RadarService.shared.startAdvertising(merchant: merchant)
+                }
+                RadarService.shared.startScanning()
             }
-            // Escanear siempre (ver otros merchants)
-            RadarService.shared.startScanning()
         }
         .onChange(of: merchantManager.currentMerchantProfile?.isActive) { _, isActive in
-            if let merchant = merchantManager.currentMerchantProfile, isActive == true {
-                PresenceManager.shared.startBroadcasting(merchant: merchant)
-                RadarService.shared.startAdvertising(merchant: merchant)
-            } else {
-                PresenceManager.shared.stopBroadcasting()
-                RadarService.shared.stopAdvertising()
+            DispatchQueue.main.async {
+                if let merchant = merchantManager.currentMerchantProfile, isActive == true {
+                    PresenceManager.shared.startBroadcasting(merchant: merchant)
+                    RadarService.shared.startAdvertising(merchant: merchant)
+                } else {
+                    PresenceManager.shared.stopBroadcasting()
+                    RadarService.shared.stopAdvertising()
+                }
             }
         }
         .sheet(isPresented: $showTimbreHistory) {
             TimbreHistoryView()
+        }
+        .sheet(isPresented: $showStreetCredDetail) {
+            if let score = streetCredScore {
+                StreetCredDetailView(score: score)
+            }
+        }
+        .sheet(isPresented: $showPredictionDetail) {
+            if let prediction = matchPrediction {
+                PredictionDetailView(prediction: prediction, selectedTab: $selectedTab)
+            }
         }
     }
 
@@ -343,6 +392,9 @@ struct CustomerHomeView: View {
     @State private var animateCards = false
     @State private var selectedMerchantForTimbre: Merchant?
     @State private var showRadar = false
+    @State private var showTapToPay = false
+    @State private var showARStreetMenu = false
+    @State private var showVoiceTranslator = false
 
     private var nearbyMerchants: [NearbyMerchant] {
         merchantManager.nearbyMerchantsList(fromLatitude: mockUserLatitude, longitude: mockUserLongitude)
@@ -370,6 +422,9 @@ struct CustomerHomeView: View {
                     // Recomendación IA
                     aiRecommendationCard
 
+                    // Traductor de voz
+                    voiceTranslatorCard
+
                     // Acciones rápidas
                     customerQuickActions
 
@@ -391,6 +446,16 @@ struct CustomerHomeView: View {
         }
         .fullScreenCover(isPresented: $showRadar) {
             RadarView()
+        }
+        .fullScreenCover(isPresented: $showTapToPay) {
+            TapToPayCustomerView()
+        }
+        .fullScreenCover(isPresented: $showARStreetMenu) {
+            ARStreetMenuView()
+                .environmentObject(LanguageManager.shared)
+        }
+        .sheet(isPresented: $showVoiceTranslator) {
+            VoiceTranslatorView()
         }
         .sheet(item: $selectedMerchantForTimbre) { merchant in
             VStack(spacing: 20) {
@@ -649,6 +714,41 @@ struct CustomerHomeView: View {
         .offset(y: animateCards ? 0 : 20)
     }
 
+    // MARK: - Voice Translator
+
+    private var voiceTranslatorCard: some View {
+        Button { showVoiceTranslator = true } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "waveform.and.mic")
+                    .font(.system(size: 22))
+                    .foregroundStyle(LinearGradient(colors: [.purple, .pink], startPoint: .top, endPoint: .bottom))
+                    .frame(width: 44, height: 44)
+                    .background(Color.purple.opacity(0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Traductor de voz")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.white)
+                    Text("Habla y el vendedor te entiende al instante")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.6))
+                        .lineLimit(2)
+                }
+
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.3))
+            }
+            .padding(14)
+            .background(glassCard(color: .purple.opacity(0.1)))
+        }
+        .buttonStyle(.plain)
+        .opacity(animateCards ? 1 : 0)
+        .offset(y: animateCards ? 0 : 20)
+    }
+
     // MARK: - Quick Actions
 
     private var customerQuickActions: some View {
@@ -659,15 +759,18 @@ struct CustomerHomeView: View {
                 .kerning(1.5)
 
             HStack(spacing: 12) {
+                CustomerActionButton(icon: "camera.viewfinder", label: "AR\nMenú", color: .purple) {
+                    showARStreetMenu = true
+                }
+                CustomerActionButton(icon: "wave.3.right", label: "Tap to\nPay", color: .cyan) {
+                    showTapToPay = true
+                }
                 CustomerActionButton(icon: "bell.fill", label: "Timbrar\ncercano", color: .orange) {
                     if let first = merchantManager.activeMerchants().first {
                         selectedMerchantForTimbre = first
                     }
                 }
                 CustomerActionButton(icon: "mappin.and.ellipse", label: "Buscar\ncomercio", color: .blue) {
-                    selectedTab = 1
-                }
-                CustomerActionButton(icon: "camera.viewfinder", label: "Escáner\nAR", color: .purple) {
                     selectedTab = 1
                 }
             }

@@ -15,11 +15,9 @@ class LanguageManager: ObservableObject {
     @Published var currentLanguage: String = "es"
 
     private init() {
-        // Force Spanish language for the app
-        currentLanguage = "es"
+        // currentLanguage ya es "es" por el valor default de la propiedad
         UserDefaults.standard.set(["es"], forKey: "AppleLanguages")
         UserDefaults.standard.synchronize()
-        print("🌐 Language initialized to: \(currentLanguage)")
     }
 
     // MARK: - Device Language Detection

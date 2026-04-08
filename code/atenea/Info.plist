@@ -6,6 +6,10 @@
 	<string>pk.eyJ1IjoibXJrb21ibyIsImEiOiJjbWg0MTJ2bm0wZmFtMm9xMGIybmR1emk5In0.2u-K5dCzznXlCQRlxtQ6QA</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Your precise location is used to calculate turn-by-turn directions, show your location on the map, and help improve the map.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Atenea necesita acceso al micrófono para traducir conversaciones entre vendedores y turistas en tiempo real.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Atenea usa reconocimiento de voz para transcribir y traducir lo que dices al idioma del interlocutor.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
@@ -38,6 +42,8 @@
 		<string>_atenea-sos._udp</string>
 		<string>_atenea-rdr._tcp</string>
 		<string>_atenea-rdr._udp</string>
+		<string>_atenea-pay._tcp</string>
+		<string>_atenea-pay._udp</string>
 	</array>
 	<key>STRIPE_SECRET_KEY</key>
 	<string>sk_test_51T8Tg3GjXvm4xCpRLnNqVXIXePLUTzw8N4oUmAZ15LHTv6REUKmaafY3KBz8zBk09lbRuJswXRLcHWBKOjjjT4FV00fEDnxcDk</string>
