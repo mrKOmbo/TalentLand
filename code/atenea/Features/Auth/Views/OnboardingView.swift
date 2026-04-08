@@ -205,6 +205,9 @@ struct OnboardingView: View {
                                 notificationGenerator.notificationOccurred(.success)
 
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    // Marcar onboarding como completado
+                                    UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+
                                     withAnimation(.easeInOut(duration: 0.3)) {
                                         showOnboarding = false
                                     }
@@ -263,6 +266,9 @@ struct OnboardingView: View {
                             Button(action: {
                                 let generator = UIImpactFeedbackGenerator(style: .light)
                                 generator.impactOccurred()
+
+                                // Marcar onboarding como completado al saltar
+                                UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
 
                                 withAnimation(.easeInOut(duration: 0.3)) {
                                     showOnboarding = false

@@ -13,9 +13,11 @@ struct ContentView: View {
     @ObservedObject private var emergencyManager = EmergencyModeManager.shared
     @ObservedObject private var navigationStateManager = NavigationStateManager.shared
     @State private var menuState = MenuStateManager.shared
-    @State private var showSplash = false  // Temporalmente oculto para desarrollo
-    @State private var showOnboarding = false  // Temporalmente oculto para desarrollo
+    @State private var showSplash = true  // Mostrar SplashScreen al inicio
+    @State private var showOnboarding = !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
+    @State private var showOnboardingWelcome = false  // Pantalla de bienvenida personalizada
     @State private var isLoggedIn: Bool = UserDefaults.standard.bool(forKey: "isUserLoggedIn")
+    @State private var currentUserName: String = UserDefaults.standard.string(forKey: "currentUserName") ?? "Usuario"
     @State private var selectedTab = 0
     @State private var lastCollectedVenue: WorldCupVenue?
     @State private var showCollectionAnimation = false
@@ -44,14 +46,28 @@ struct ContentView: View {
                     OnboardingView(showOnboarding: $showOnboarding)
                         .environmentObject(languageManager)
                 } else if !isLoggedIn {
-                    // Show login after onboarding
-                    LoginView(isLoggedIn: $isLoggedIn)
+                    // Show welcome/login flow
+                    WelcomeView(isLoggedIn: $isLoggedIn)
                         .environmentObject(languageManager)
                         .transition(.move(edge: .bottom))
                         .onChange(of: isLoggedIn) { _, newValue in
-                            // Persistir el estado de login
-                            UserDefaults.standard.set(newValue, forKey: "isUserLoggedIn")
+                            if newValue {
+                                // Usuario acaba de iniciar sesión
+                                // Mostrar pantalla de bienvenida personalizada
+                                showOnboardingWelcome = true
+
+                                // Persistir el estado de login
+                                UserDefaults.standard.set(newValue, forKey: "isUserLoggedIn")
+                            }
                         }
+                } else if showOnboardingWelcome {
+                    // Show personalized welcome screen after login
+                    OnboardingWelcomeView(userName: currentUserName) {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            showOnboardingWelcome = false
+                        }
+                    }
+                    .transition(.opacity)
                 } else {
                     // Main app content with sidebar push menu
                     SidebarPushMenuContainer(languageManager: languageManager) {
