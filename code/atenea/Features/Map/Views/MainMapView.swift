@@ -105,6 +105,7 @@ struct MainMapView: View {
             .onAppear {
                 loadReservations()
                 handleAppIntentRequests()
+                loadUserRouteOnMap()
             }
             .onChange(of: selectedTab) { oldValue, newValue in
                 if newValue == 0 && modalState == SheetState.hidden {
@@ -911,31 +912,6 @@ struct MainMapView: View {
                 .transition(.scale.combined(with: .opacity))
             }
 
-            // Botón de usuario más compacto
-            Button(action: {
-                menuState.toggleMenu()
-                isSearchFocused = false
-                let generator = UIImpactFeedbackGenerator(style: .medium)
-                generator.impactOccurred()
-            }) {
-                ZStack {
-                    // Gradiente de fondo
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.blue, Color.cyan],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 32, height: 32)
-
-                    Image(systemName: "person.fill")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.white)
-                }
-            }
-            .buttonStyle(.plain)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, isWorldCupToday ? 12 : 8)
@@ -1423,6 +1399,29 @@ struct MainMapView: View {
             // Iniciar con array vacío - no crear reservaciones de ejemplo
             reservations = []
         }
+    }
+
+    private func loadUserRouteOnMap() {
+        // Cargar ruta del usuario registrado si existe
+        guard let user = userManager.currentUser,
+              user.routeHistory.count > 0 else {
+            return
+        }
+
+        // Convertir historial de rutas a polyline
+        let coordinates = user.routeHistory.map { location in
+            CLLocationCoordinate2D(latitude: location.latitude, longitude: location.longitude)
+        }
+
+        guard coordinates.count >= 2 else { return }
+
+        // Crear polyline
+        let polyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
+
+        // Agregar a las rutas mostradas en el mapa
+        routePolylines.append(polyline)
+
+        print("📍 Ruta del usuario cargada con \(coordinates.count) puntos")
     }
 
     // MARK: - App Intent Request Handler
