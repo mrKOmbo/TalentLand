@@ -21,6 +21,7 @@ struct MainMapView: View {
     @ObservedObject private var menuState = MenuStateManager.shared
     @Binding var selectedTab: Int
     @Binding var isLoggedIn: Bool
+    @Binding var pendingMerchantPlace: SearchPlace?
     @State private var selectedSearchPlace: SearchPlace? = nil
     @State private var searchMarkers: [SearchPlace] = []
     @State private var preparedNavigation: PreparedNavigation? = nil
@@ -104,16 +105,62 @@ struct MainMapView: View {
             }
             .onChange(of: navigationStateManager.shouldOpenNavigation) { oldValue, newValue in
                 if newValue && preparedNavigation != nil {
-                    // La navegación ya está abierta o se va a abrir
                     print("🧭 [DEEP LINK] Navegación ya está abierta")
-                    // Reset el flag
                     navigationStateManager.shouldOpenNavigation = false
+                }
+            }
+            .onChange(of: pendingMerchantPlace, initial: true) { oldValue, newValue in
+                guard let merchant = newValue else { return }
+
+                // Limpiar estado previo
+                searchMarkers = []
+                selectedMarker = nil
+                temporaryMarker = nil
+                showDirections = false
+                routePolylines = []
+                selectedDirectionsRouteIndex = 0
+                selectedChipId = nil
+                shouldFollowUser = false
+
+                // Pequeño delay para que el tab termine de cambiar
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    // Colocar marcador en el mapa
+                    searchMarkers = [merchant]
+
+                    // Centrar cámara en el negocio
+                    withAnimation(.easeInOut(duration: 1.0)) {
+                        cameraCenter = merchant.coordinate
+                        cameraZoom = 16.0
+                    }
+
+                    // Mostrar panel de direcciones con botón "Ir"
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            selectedMarker = merchant
+                            showDirections = true
+                        }
+
+                        // Calcular tiempo estimado
+                        if let userLocation = locationManager.currentLocation,
+                           let coord = merchant.coordinate {
+                            calculateEstimatedTravelTime(from: userLocation, to: coord)
+                        }
+                    }
+
+                    // Limpiar para permitir re-selección del mismo merchant
+                    pendingMerchantPlace = nil
                 }
             }
             .sheet(isPresented: $showVenuesView) {
                 NavigationView {
                     VenuesListView()
                 }
+            }
+            .sheet(isPresented: $navigationStateManager.merchantLocationEditMode) {
+                MerchantLocationEditView(isPresented: $navigationStateManager.merchantLocationEditMode)
+                    .presentationDetents([.medium])
+                    .presentationDragIndicator(.hidden)
+                    .presentationBackground(.clear)
             }
             .sheet(isPresented: $showAccessibilityView) {
                 VisualAccessibilitySettingsView()
@@ -380,11 +427,8 @@ struct MainMapView: View {
                 // Botón para desactivar modo de emergencia (solo visible en modo emergencia)
                 if emergencyManager.isEmergencyActive {
                     Button(action: {
-                        // Animar botón
                         let generator = UINotificationFeedbackGenerator()
                         generator.notificationOccurred(.success)
-
-                        // Desactivar modo de emergencia
                         EmergencyModeManager.shared.deactivateEmergency()
                     }) {
                         HStack(spacing: 8) {
@@ -412,60 +456,53 @@ struct MainMapView: View {
                 // Botones normales (ocultar en modo emergencia)
                 if !emergencyManager.isEmergencyActive {
                     HStack(spacing: 12) {
-                        // Botón de emergencia (solo visible cuando el sheet está colapsado o escondido)
-                        if modalState == SheetState.collapsed || modalState == SheetState.hidden {
+                        // Botón SOS — siempre visible en modo normal
                         Button(action: {
                             showEmergencyModal = true
                         }) {
                             ZStack {
                                 Circle()
                                     .fill(Color.red)
-                                    .frame(width: 50, height: 50)
+                                    .frame(width: 44, height: 44)
                                     .shadow(color: Color.red.opacity(0.4), radius: 8, x: 0, y: 4)
 
                                 Image(systemName: "exclamationmark.triangle.fill")
-                                    .font(.system(size: CGFloat(22)))
+                                    .font(.system(size: 18))
                                     .foregroundColor(.white)
                             }
                         }
                         .padding(.leading, 20)
-                        .transition(.move(edge: .leading).combined(with: .opacity))
-                    }
 
-                    Spacer()
+                        Spacer()
 
-                    // Botón de ubicación
-                    Button(action: {
-                        // Centrar el mapa en la ubicación actual y reactivar seguimiento
-                        if locationManager.currentLocation != nil {
-                            // Desactivar modo de navegación AR
-                            isARNavigationMode = false
-                            shouldFollowUser = true
-                            searchMarkers = []  // Limpiar marcadores de categorías
-                            cameraCenter = nil  // Limpiar centro de cámara
-                            selectedChipId = nil  // Deseleccionar chip
-                            centerOnLocation.toggle()
-                            print("📍 Centrando mapa en ubicación actual y activando seguimiento")
-                            print("🔓 Modo navegación AR desactivado")
+                        // Botón de ubicación
+                        Button(action: {
+                            if locationManager.currentLocation != nil {
+                                isARNavigationMode = false
+                                shouldFollowUser = true
+                                searchMarkers = []
+                                cameraCenter = nil
+                                selectedChipId = nil
+                                centerOnLocation.toggle()
+                            }
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.white)
+                                    .frame(width: 44, height: 44)
+                                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+
+                                Image(systemName: "location.fill")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(.blue)
+                            }
                         }
-                    }) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 50, height: 50)
-                                .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
-
-                            Image(systemName: "location.fill")
-                                .font(.system(size: CGFloat(22)))
-                                .foregroundColor(.blue)
-                        }
+                        .padding(.trailing, 20)
                     }
-                    .padding(.trailing, 20)
-                }
-                .padding(.bottom, locationButtonOffset)
-                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: sheetHeight)
-                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: modalState)
-                .animation(.spring(response: 0.35, dampingFraction: 0.8), value: menuState.showMenu)
+                    .padding(.bottom, locationButtonOffset)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: sheetHeight)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: modalState)
+                    .animation(.spring(response: 0.35, dampingFraction: 0.8), value: menuState.showMenu)
                 }
             }
 
@@ -1514,12 +1551,11 @@ struct MainMapView: View {
 
     // Calcular el offset del botón de ubicación
     private var locationButtonOffset: CGFloat {
+        // Tab bar (~70pt) + botón flotante $ (~56pt) + margen = ~140pt mínimo
         if sheetHeight <= 164 {
-            // Modal colapsado u oculto - seguir al modal
-            return max(sheetHeight, 90) + 20
+            return max(sheetHeight, 140) + 20
         } else {
-            // Modal expandido - quedarse en posición fija baja
-            return 110
+            return 160
         }
     }
 

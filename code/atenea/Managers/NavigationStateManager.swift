@@ -13,6 +13,7 @@ class NavigationStateManager: ObservableObject {
 
     @Published var isNavigationActive: Bool = false
     @Published var shouldOpenNavigation: Bool = false
+    @Published var merchantLocationEditMode: Bool = false
 
     private init() {}
 

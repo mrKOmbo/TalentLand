@@ -38,4 +38,26 @@ class APIConfiguration {
     var hasClaudeAPIKey: Bool {
         return !claudeAPIKey.isEmpty
     }
+
+    // MARK: - Stripe Secret Key
+    // WARNING: Demo only — secret key in client is NOT safe for production
+
+    var stripeSecretKey: String {
+        get {
+            if let savedKey = UserDefaults.standard.string(forKey: "stripeSecretKey"), !savedKey.isEmpty {
+                return savedKey
+            }
+            if let key = Bundle.main.object(forInfoDictionaryKey: "STRIPE_SECRET_KEY") as? String, !key.isEmpty {
+                return key
+            }
+            return ""
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "stripeSecretKey")
+        }
+    }
+
+    var hasStripeKey: Bool {
+        return !stripeSecretKey.isEmpty
+    }
 }

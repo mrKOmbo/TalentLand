@@ -16,97 +16,99 @@ struct ContentView: View {
     @State private var showOnboarding = false  // Temporalmente oculto para desarrollo
     @State private var isLoggedIn: Bool = UserDefaults.standard.bool(forKey: "isUserLoggedIn")
     @State private var selectedTab = 0
+    @State private var pendingMerchantPlace: SearchPlace? = nil
     @State private var lastCollectedVenue: WorldCupVenue?
     @State private var showCollectionAnimation = false
+    @State private var showSaleSheet = false
 
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                if showSplash {
-                    // Show splash screen
-                    SplashScreenView(showSplash: $showSplash)
-                        .environmentObject(languageManager)
-                } else if showOnboarding {
-                    // Show onboarding after splash
-                    OnboardingView(showOnboarding: $showOnboarding)
-                        .environmentObject(languageManager)
-                } else if !isLoggedIn {
-                    // Show login after onboarding
-                    LoginView(isLoggedIn: $isLoggedIn)
-                        .environmentObject(languageManager)
-                        .transition(.move(edge: .bottom))
-                        .onChange(of: isLoggedIn) { _, newValue in
-                            // Persistir el estado de login
-                            UserDefaults.standard.set(newValue, forKey: "isUserLoggedIn")
-                        }
-                } else {
-                    // Main app content with tab bar
-                    ZStack {
-                        Group {
-                            switch selectedTab {
-                            case 0:
-                                HomeView(selectedTab: $selectedTab)
-                                    .environmentObject(languageManager)
-                            case 1:
-                                MainMapView(selectedTab: $selectedTab, isLoggedIn: $isLoggedIn)
-                                    .environmentObject(languageManager)
-                            case 2:
-                                CommunityView(selectedTab: $selectedTab)
-                                    .environmentObject(languageManager)
-                            case 3:
-                                StickerAlbumView(
-                                    selectedTab: $selectedTab,
-                                    collectionManager: collectionManager,
-                                    lastCollectedVenue: $lastCollectedVenue,
-                                    showCollectionAnimation: $showCollectionAnimation
-                                )
-                                .environmentObject(languageManager)
-                            default:
-                                HomeView(selectedTab: $selectedTab)
-                                    .environmentObject(languageManager)
-                            }
-                        }
-                        .transition(.opacity)
-                        .zIndex(menuState.showMenu ? 100 : 0) // Mayor zIndex cuando el menú está abierto
-
-                        // Tab Bar global en todos los tabs (ocultar en modo emergencia)
-                        if !emergencyManager.isEmergencyActive {
-                            VStack {
-                                Spacer()
-
-                                SimpleTabBar(selectedTab: $selectedTab)
-                                    .environmentObject(languageManager)
-                            }
-                            .zIndex(10) // Tab bar tiene zIndex 10
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                            .rotation3DEffect(
-                                .degrees(menuState.showMenu && selectedTab == 1 ? 25 : 0),
-                                axis: (x: 0, y: 1, z: 0),
-                                anchor: .trailing,
-                                perspective: 0.4
-                            )
-                            .offset(x: menuState.showMenu && selectedTab == 1 ? -300 : 0)
-                            .scaleEffect(menuState.showMenu && selectedTab == 1 ? CGFloat(0.78) : CGFloat(1.0))
-                            .animation(.spring(response: 0.35, dampingFraction: 0.8), value: menuState.showMenu)
-                        }
-
-                        // Resplandor rojo ultrathink en todos los bordes (modo emergencia)
-                        if emergencyManager.isEmergencyActive {
-                            EmergencyGlowOverlay()
-                                .zIndex(1000)
-                                .allowsHitTesting(false)
-                                .transition(.opacity)
-                        }
-                    }
+        ZStack {
+            if showSplash {
+                // Show splash screen
+                SplashScreenView(showSplash: $showSplash)
+                    .environmentObject(languageManager)
+            } else if showOnboarding {
+                // Show onboarding after splash
+                OnboardingView(showOnboarding: $showOnboarding)
+                    .environmentObject(languageManager)
+            } else if !isLoggedIn {
+                // Show login after onboarding
+                LoginView(isLoggedIn: $isLoggedIn)
+                    .environmentObject(languageManager)
+                    .transition(.move(edge: .bottom))
                     .onChange(of: isLoggedIn) { _, newValue in
                         // Persistir el estado de login
                         UserDefaults.standard.set(newValue, forKey: "isUserLoggedIn")
                     }
+            } else {
+                // Main app content with tab bar
+                ZStack {
+                    Group {
+                        switch selectedTab {
+                        case 0:
+                            HomeView(selectedTab: $selectedTab, pendingMerchantPlace: $pendingMerchantPlace)
+                                .environmentObject(languageManager)
+                        case 1:
+                            MainMapView(selectedTab: $selectedTab, isLoggedIn: $isLoggedIn, pendingMerchantPlace: $pendingMerchantPlace)
+                                .environmentObject(languageManager)
+                        case 2:
+                            CommunityView(selectedTab: $selectedTab)
+                                .environmentObject(languageManager)
+                        case 3:
+                            StickerAlbumView(
+                                selectedTab: $selectedTab,
+                                collectionManager: collectionManager,
+                                lastCollectedVenue: $lastCollectedVenue,
+                                showCollectionAnimation: $showCollectionAnimation
+                            )
+                            .environmentObject(languageManager)
+                        default:
+                            HomeView(selectedTab: $selectedTab, pendingMerchantPlace: $pendingMerchantPlace)
+                                .environmentObject(languageManager)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .transition(.opacity)
+                    .zIndex(menuState.showMenu ? 100 : 0)
+
+                    // Tab Bar global en todos los tabs (ocultar en modo emergencia)
+                    if !emergencyManager.isEmergencyActive {
+                        VStack {
+                            Spacer()
+
+                            SimpleTabBar(selectedTab: $selectedTab, showSaleSheet: $showSaleSheet)
+                                .environmentObject(languageManager)
+                        }
+                        .zIndex(10)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .rotation3DEffect(
+                            .degrees(menuState.showMenu && selectedTab == 1 ? 25 : 0),
+                            axis: (x: 0, y: 1, z: 0),
+                            anchor: .trailing,
+                            perspective: 0.4
+                        )
+                        .offset(x: menuState.showMenu && selectedTab == 1 ? -300 : 0)
+                        .scaleEffect(menuState.showMenu && selectedTab == 1 ? CGFloat(0.78) : CGFloat(1.0))
+                        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: menuState.showMenu)
+                    }
+
+                    // Resplandor rojo ultrathink en todos los bordes (modo emergencia)
+                    if emergencyManager.isEmergencyActive {
+                        EmergencyGlowOverlay()
+                            .zIndex(1000)
+                            .allowsHitTesting(false)
+                            .transition(.opacity)
+                    }
+                }
+                .onChange(of: isLoggedIn) { _, newValue in
+                    UserDefaults.standard.set(newValue, forKey: "isUserLoggedIn")
+                }
+                .fullScreenCover(isPresented: $showSaleSheet) {
+                    SaleFlowView()
                 }
             }
-            .ignoresSafeArea()
         }
         .environment(\.layoutDirection, languageManager.layoutDirection)
         .animation(.easeInOut(duration: 0.5), value: showSplash)

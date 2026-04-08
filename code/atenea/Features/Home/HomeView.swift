@@ -6,9 +6,28 @@
 //
 
 import SwiftUI
+import CoreLocation
+
+// MARK: - Nearby Merchant Model
+
+struct NearbyMerchant: Identifiable {
+    let id = UUID()
+    let emoji: String
+    let name: String
+    let distance: String
+    let isActive: Bool
+    let isStatic: Bool
+    let category: String
+    let coordinate: CLLocationCoordinate2D
+}
+
+// Mock location del usuario (Centro de CDMX) — se reemplazará con LocationManager real
+let mockUserLatitude = 19.4326
+let mockUserLongitude = -99.1332
 
 struct HomeView: View {
     @Binding var selectedTab: Int
+    @Binding var pendingMerchantPlace: SearchPlace?
     @ObservedObject private var userManager = UserManager.shared
     @EnvironmentObject var languageManager: LanguageManager
 
@@ -19,11 +38,11 @@ struct HomeView: View {
                     MerchantHomeView(selectedTab: $selectedTab, user: user)
                         .environmentObject(languageManager)
                 } else {
-                    CustomerHomeView(selectedTab: $selectedTab, user: user)
+                    CustomerHomeView(selectedTab: $selectedTab, pendingMerchantPlace: $pendingMerchantPlace, user: user)
                         .environmentObject(languageManager)
                 }
             } else {
-                CustomerHomeView(selectedTab: $selectedTab, user: User(email: "", name: "Visitante", role: .user))
+                CustomerHomeView(selectedTab: $selectedTab, pendingMerchantPlace: $pendingMerchantPlace, user: User(email: "", name: "Visitante", role: .user))
                     .environmentObject(languageManager)
             }
         }
@@ -36,11 +55,26 @@ struct MerchantHomeView: View {
     @Binding var selectedTab: Int
     let user: User
 
-    @State private var isBusinessActive = true
-    @State private var nearbyClients = 14
+    @ObservedObject private var merchantManager = MerchantManager.shared
+    @ObservedObject private var timbreManager = TimbreManager.shared
+    @ObservedObject private var presenceManager = PresenceManager.shared
+    @ObservedObject private var demandManager = DemandZoneManager.shared
+    @ObservedObject private var radarService = RadarService.shared
     @State private var profileViews = 87
-    @State private var messagesReceived = 3
     @State private var animateCards = false
+    @State private var showTimbreHistory = false
+    @State private var showDemandInsights = false
+
+    private var isBusinessActive: Binding<Bool> {
+        Binding(
+            get: { merchantManager.currentMerchantProfile?.isActive ?? false },
+            set: { _ in
+                if let id = merchantManager.currentMerchantProfile?.id {
+                    merchantManager.toggleActive(merchantId: id)
+                }
+            }
+        )
+    }
 
     var body: some View {
         ZStack {
@@ -70,14 +104,53 @@ struct MerchantHomeView: View {
 
                     Spacer(minLength: 100)
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, 20)
                 .padding(.top, 60)
+            }
+
+            // Notificación de timbre
+            if let timbre = timbreManager.newTimbreReceived {
+                VStack {
+                    TimbreNotificationView(
+                        timbre: timbre,
+                        onRespond: { responseType in
+                            timbreManager.respond(to: timbre.id, with: responseType)
+                            timbreManager.newTimbreReceived = nil
+                        },
+                        onDismiss: {
+                            timbreManager.newTimbreReceived = nil
+                        }
+                    )
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    Spacer()
+                }
+                .padding(.top, 50)
+                .zIndex(100)
             }
         }
         .onAppear {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.1)) {
                 animateCards = true
             }
+            // Iniciar broadcasting si el negocio está activo
+            if let merchant = merchantManager.currentMerchantProfile, merchant.isActive {
+                PresenceManager.shared.startBroadcasting(merchant: merchant)
+                RadarService.shared.startAdvertising(merchant: merchant)
+            }
+            // Escanear siempre (ver otros merchants)
+            RadarService.shared.startScanning()
+        }
+        .onChange(of: merchantManager.currentMerchantProfile?.isActive) { _, isActive in
+            if let merchant = merchantManager.currentMerchantProfile, isActive == true {
+                PresenceManager.shared.startBroadcasting(merchant: merchant)
+                RadarService.shared.startAdvertising(merchant: merchant)
+            } else {
+                PresenceManager.shared.stopBroadcasting()
+                RadarService.shared.stopAdvertising()
+            }
+        }
+        .sheet(isPresented: $showTimbreHistory) {
+            TimbreHistoryView()
         }
     }
 
@@ -116,23 +189,23 @@ struct MerchantHomeView: View {
     private var businessStatusCard: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text(isBusinessActive ? "Negocio activo" : "Negocio pausado")
+                Text(isBusinessActive.wrappedValue ? "Negocio activo" : "Negocio pausado")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white)
-                Text(isBusinessActive ? "Los clientes pueden encontrarte" : "No apareces en el mapa")
+                Text(isBusinessActive.wrappedValue ? "Los clientes pueden encontrarte" : "No apareces en el mapa")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.6))
             }
             Spacer()
-            Toggle("", isOn: $isBusinessActive)
+            Toggle("", isOn: isBusinessActive)
                 .labelsHidden()
                 .tint(.green)
         }
         .padding(16)
-        .background(glassCard(color: isBusinessActive ? .green.opacity(0.15) : .red.opacity(0.1)))
+        .background(glassCard(color: isBusinessActive.wrappedValue ? .green.opacity(0.15) : .red.opacity(0.1)))
         .opacity(animateCards ? 1 : 0)
         .offset(y: animateCards ? 0 : 20)
-        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: isBusinessActive)
+        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: isBusinessActive.wrappedValue)
     }
 
     // MARK: - Metrics Grid
@@ -147,8 +220,8 @@ struct MerchantHomeView: View {
             HStack(spacing: 12) {
                 MetricCard(
                     icon: "person.fill",
-                    value: "\(nearbyClients)",
-                    label: "Clientes cercanos",
+                    value: "\(presenceManager.activeMerchantCount)",
+                    label: "Vendedores zona",
                     color: .blue
                 )
                 MetricCard(
@@ -157,12 +230,15 @@ struct MerchantHomeView: View {
                     label: "Vistas de perfil",
                     color: .purple
                 )
-                MetricCard(
-                    icon: "message.fill",
-                    value: "\(messagesReceived)",
-                    label: "Mensajes",
-                    color: messagesReceived > 0 ? .orange : .gray
-                )
+                Button { showTimbreHistory = true } label: {
+                    MetricCard(
+                        icon: "bell.fill",
+                        value: "\(timbreManager.unreadCount)",
+                        label: "Timbres",
+                        color: timbreManager.unreadCount > 0 ? .orange : .gray
+                    )
+                }
+                .buttonStyle(.plain)
             }
         }
         .opacity(animateCards ? 1 : 0)
@@ -185,23 +261,18 @@ struct MerchantHomeView: View {
                     subtitle: "Deja que los clientes te encuentren",
                     color: .blue
                 ) {
+                    NavigationStateManager.shared.merchantLocationEditMode = true
                     selectedTab = 1
                 }
 
-                MerchantActionRow(
-                    icon: "megaphone.fill",
-                    title: "Lanzar promoción",
-                    subtitle: "Atrae clientes con una oferta",
-                    color: .orange
-                ) { }
 
                 MerchantActionRow(
                     icon: "map.fill",
                     title: "Ver zonas de demanda",
-                    subtitle: "Dónde hay más clientes ahora",
+                    subtitle: "\(demandManager.totalDemandLastHour()) búsquedas en la última hora",
                     color: .green
                 ) {
-                    selectedTab = 1
+                    showDemandInsights = true
                 }
             }
         }
@@ -212,28 +283,47 @@ struct MerchantHomeView: View {
     // MARK: - Demand Tip
 
     private var demandTipCard: some View {
-        HStack(spacing: 14) {
-            Image(systemName: "chart.line.uptrend.xyaxis")
-                .font(.system(size: 22))
-                .foregroundStyle(LinearGradient(colors: [.yellow, .orange], startPoint: .top, endPoint: .bottom))
-                .frame(width: 44, height: 44)
-                .background(Color.yellow.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+        let topZone = demandManager.topZones(limit: 1).first
+        let tipTitle = topZone != nil
+            ? "Demanda \(topZone!.intensity.displayName.lowercased()) de \(topZone!.topCategory?.displayName ?? "comida")"
+            : "Sin datos de demanda aún"
+        let tipSubtitle = topZone != nil
+            ? "\(topZone!.demandScore) búsquedas en zona \(topZone!.geohash.prefix(5))… · Toca para ver más"
+            : "Las búsquedas y timbres de clientes aparecerán aquí"
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Pico de demanda en 2h")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.white)
-                Text("El estadio Azteca termina partido a las 6pm. Posiciónate cerca.")
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.6))
-                    .lineLimit(2)
+        return Button { showDemandInsights = true } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .font(.system(size: 22))
+                    .foregroundStyle(LinearGradient(colors: [.yellow, .orange], startPoint: .top, endPoint: .bottom))
+                    .frame(width: 44, height: 44)
+                    .background(Color.yellow.opacity(0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(tipTitle)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.white)
+                    Text(tipSubtitle)
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.6))
+                        .lineLimit(2)
+                }
+
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.3))
             }
+            .padding(14)
+            .background(glassCard(color: topZone?.intensity.color.opacity(0.08) ?? .yellow.opacity(0.08)))
         }
-        .padding(14)
-        .background(glassCard(color: .yellow.opacity(0.08)))
+        .buttonStyle(.plain)
         .opacity(animateCards ? 1 : 0)
         .offset(y: animateCards ? 0 : 20)
+        .sheet(isPresented: $showDemandInsights) {
+            DemandInsightsView(selectedTab: $selectedTab)
+        }
     }
 }
 
@@ -241,9 +331,18 @@ struct MerchantHomeView: View {
 
 struct CustomerHomeView: View {
     @Binding var selectedTab: Int
+    @Binding var pendingMerchantPlace: SearchPlace?
     let user: User
 
+    @ObservedObject private var merchantManager = MerchantManager.shared
+    @ObservedObject private var radarService = RadarService.shared
     @State private var animateCards = false
+    @State private var selectedMerchantForTimbre: Merchant?
+    @State private var showRadar = false
+
+    private var nearbyMerchants: [NearbyMerchant] {
+        merchantManager.nearbyMerchantsList(fromLatitude: mockUserLatitude, longitude: mockUserLongitude)
+    }
 
     var body: some View {
         ZStack {
@@ -257,6 +356,9 @@ struct CustomerHomeView: View {
                 VStack(spacing: 20) {
                     // Header
                     customerHeader
+
+                    // Radar P2P — merchants detectados en vivo
+                    radarSection
 
                     // Comerciantes activos cerca
                     nearbyMerchantsSection
@@ -272,7 +374,7 @@ struct CustomerHomeView: View {
 
                     Spacer(minLength: 100)
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, 20)
                 .padding(.top, 60)
             }
         }
@@ -280,10 +382,159 @@ struct CustomerHomeView: View {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.1)) {
                 animateCards = true
             }
+            // Iniciar radar automáticamente
+            RadarService.shared.startScanning()
+        }
+        .fullScreenCover(isPresented: $showRadar) {
+            RadarView()
+        }
+        .sheet(item: $selectedMerchantForTimbre) { merchant in
+            VStack(spacing: 20) {
+                VStack(spacing: 8) {
+                    Text(merchant.emoji)
+                        .font(.system(size: 48))
+                    Text(merchant.businessName)
+                        .font(.system(size: 20, weight: .bold))
+                    Text(merchant.category.displayName)
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                    if !merchant.description.isEmpty {
+                        Text(merchant.description)
+                            .font(.system(size: 13))
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+                }
+                .padding(.top, 24)
+
+                if !merchant.products.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("PRODUCTOS")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.secondary)
+                            .kerning(1.2)
+                        ForEach(merchant.products) { product in
+                            HStack {
+                                Text(product.emoji)
+                                Text(product.name)
+                                    .font(.system(size: 14))
+                                Spacer()
+                                Text(product.formattedPrice)
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.orange)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                }
+
+                Spacer()
+
+                TimbreButtonView(merchant: merchant)
+                    .padding(.bottom, 30)
+            }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
     }
 
     // MARK: - Header
+
+    // MARK: - Radar P2P Section
+
+    private var radarSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                HStack(spacing: 6) {
+                    Image(systemName: "antenna.radiowaves.left.and.right")
+                        .font(.system(size: 12))
+                        .foregroundColor(radarService.isScanning ? .green : .gray)
+                    Text("RADAR P2P")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.5))
+                        .kerning(1.5)
+                }
+                Spacer()
+                if radarService.activeMerchantCount > 0 {
+                    Text("\(radarService.activeMerchantCount) detectados")
+                        .font(.system(size: 12))
+                        .foregroundColor(.green)
+                }
+                Button("Ver radar") {
+                    showRadar = true
+                }
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(LinearGradient(colors: [.green, .cyan], startPoint: .leading, endPoint: .trailing))
+            }
+
+            if radarService.discoveredMerchants.isEmpty {
+                HStack(spacing: 10) {
+                    ProgressView()
+                        .tint(.green)
+                        .scaleEffect(CGFloat(0.8))
+                    Text("Buscando comerciantes por Bluetooth/WiFi...")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.5))
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.ultraThinMaterial)
+                        RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.green.opacity(0.03))
+                    }
+                )
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(radarService.discoveredMerchants.filter { !$0.isStale }) { peer in
+                            Button {
+                                if let merchant = MerchantManager.shared.merchants.first(where: { $0.businessName == peer.businessName }) {
+                                    selectedMerchantForTimbre = merchant
+                                }
+                            } label: {
+                                VStack(spacing: 6) {
+                                    ZStack(alignment: .bottomTrailing) {
+                                        Text(peer.emoji)
+                                            .font(.system(size: 28))
+                                            .frame(width: 52, height: 52)
+                                            .background(Color.white.opacity(0.08))
+                                            .clipShape(Circle())
+                                            .overlay(
+                                                Circle()
+                                                    .stroke(peer.signalStrength.color.opacity(0.4), lineWidth: 1.5)
+                                            )
+
+                                        Circle()
+                                            .fill(peer.signalStrength.color)
+                                            .frame(width: 10, height: 10)
+                                            .overlay(Circle().strokeBorder(Color(hex: "#0A0A1A"), lineWidth: 1.5))
+                                    }
+
+                                    Text(peer.businessName)
+                                        .font(.system(size: 11, weight: .medium))
+                                        .foregroundColor(.white)
+                                        .lineLimit(1)
+
+                                    Text("EN VIVO")
+                                        .font(.system(size: 8, weight: .bold))
+                                        .foregroundColor(.green)
+                                        .padding(.horizontal, 5)
+                                        .padding(.vertical, 2)
+                                        .background(Capsule().fill(Color.green.opacity(0.15)))
+                                }
+                                .frame(width: 72)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+        }
+        .opacity(animateCards ? 1 : 0)
+        .offset(y: animateCards ? 0 : 20)
+    }
 
     private var customerHeader: some View {
         HStack(alignment: .top) {
@@ -323,7 +574,7 @@ struct CustomerHomeView: View {
                     .kerning(1.5)
                 Spacer()
                 Button("Ver mapa") {
-                    selectedTab = 0
+                    selectedTab = 1
                 }
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(LinearGradient(colors: [.blue, .cyan], startPoint: .leading, endPoint: .trailing))
@@ -331,10 +582,25 @@ struct CustomerHomeView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    NearbyMerchantChip(emoji: "🌮", name: "Don Taco", distance: "120m", isActive: true)
-                    NearbyMerchantChip(emoji: "🍦", name: "Paletas", distance: "340m", isActive: true)
-                    NearbyMerchantChip(emoji: "🥤", name: "Jugos Mary", distance: "500m", isActive: false)
-                    NearbyMerchantChip(emoji: "🫔", name: "Tamales", distance: "210m", isActive: true)
+                    ForEach(nearbyMerchants) { merchant in
+                        if merchant.isStatic {
+                            Button {
+                                pendingMerchantPlace = SearchPlace(
+                                    name: merchant.name,
+                                    subtitle: "\(merchant.category) · \(merchant.distance)",
+                                    category: merchant.category,
+                                    icon: "mappin.circle.fill",
+                                    coordinate: merchant.coordinate
+                                )
+                                selectedTab = 1
+                            } label: {
+                                NearbyMerchantChip(emoji: merchant.emoji, name: merchant.name, distance: merchant.distance, isActive: merchant.isActive, isStatic: true)
+                            }
+                            .buttonStyle(.plain)
+                        } else {
+                            NearbyMerchantChip(emoji: merchant.emoji, name: merchant.name, distance: merchant.distance, isActive: merchant.isActive, isStatic: false)
+                        }
+                    }
                 }
             }
         }
@@ -389,14 +655,16 @@ struct CustomerHomeView: View {
                 .kerning(1.5)
 
             HStack(spacing: 12) {
+                CustomerActionButton(icon: "bell.fill", label: "Timbrar\ncercano", color: .orange) {
+                    if let first = merchantManager.activeMerchants().first {
+                        selectedMerchantForTimbre = first
+                    }
+                }
                 CustomerActionButton(icon: "mappin.and.ellipse", label: "Buscar\ncomercio", color: .blue) {
                     selectedTab = 1
                 }
                 CustomerActionButton(icon: "camera.viewfinder", label: "Escáner\nAR", color: .purple) {
                     selectedTab = 1
-                }
-                CustomerActionButton(icon: "square.grid.3x3.fill", label: "Mi\nálbum", color: .orange) {
-                    selectedTab = 3
                 }
             }
         }
@@ -516,6 +784,7 @@ struct NearbyMerchantChip: View {
     let name: String
     let distance: String
     let isActive: Bool
+    var isStatic: Bool = true
 
     var body: some View {
         VStack(spacing: 6) {
@@ -538,6 +807,16 @@ struct NearbyMerchantChip: View {
             Text(distance)
                 .font(.system(size: 11))
                 .foregroundColor(.white.opacity(0.5))
+
+            Text(isStatic ? "Fijo" : "Nómada")
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundColor(isStatic ? .blue : .orange)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(
+                    Capsule()
+                        .fill(isStatic ? Color.blue.opacity(0.15) : Color.orange.opacity(0.15))
+                )
         }
         .frame(width: 72)
     }

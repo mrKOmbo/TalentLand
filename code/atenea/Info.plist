@@ -31,11 +31,15 @@
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Atenea uses local network to connect staff with users in emergency situations using NearbyInteraction for precise distance and direction.</string>
+	<string>Atenea uses local network to discover nearby merchants and connect staff with users in emergency situations.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_atenea-sos._tcp</string>
 		<string>_atenea-sos._udp</string>
+		<string>_atenea-rdr._tcp</string>
+		<string>_atenea-rdr._udp</string>
 	</array>
+	<key>STRIPE_SECRET_KEY</key>
+	<string>sk_test_51T8Tg3GjXvm4xCpRLnNqVXIXePLUTzw8N4oUmAZ15LHTv6REUKmaafY3KBz8zBk09lbRuJswXRLcHWBKOjjjT4FV00fEDnxcDk</string>
 </dict>
 </plist>
