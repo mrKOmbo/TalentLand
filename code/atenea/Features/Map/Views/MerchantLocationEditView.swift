@@ -3,7 +3,7 @@ import CoreLocation
 
 struct MerchantLocationEditView: View {
     @Binding var isPresented: Bool
-    var currentLocation: CLLocation?
+    var currentLocation: CLLocationCoordinate2D?
 
     @State private var pinOffset: CGSize = .zero
     @State private var isDragging = false
@@ -190,7 +190,8 @@ struct MerchantLocationEditView: View {
     }
 
     private func geocodeCurrentLocation() {
-        let location = currentLocation ?? CLLocation(latitude: 19.4326, longitude: -99.1332)
+        let coord = currentLocation ?? CLLocationCoordinate2D(latitude: 19.4326, longitude: -99.1332)
+        let location = CLLocation(latitude: coord.latitude, longitude: coord.longitude)
         CLGeocoder().reverseGeocodeLocation(location) { placemarks, _ in
             if let place = placemarks?.first {
                 let name   = place.name ?? ""

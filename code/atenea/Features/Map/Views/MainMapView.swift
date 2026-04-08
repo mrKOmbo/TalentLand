@@ -103,6 +103,22 @@ struct MainMapView: View {
                     }
                 }
             }
+            .onChange(of: navigationStateManager.pendingDemandZoneCoord) { _, coord in
+                guard let coord else { return }
+                withAnimation(.easeInOut(duration: 0.9)) {
+                    cameraCenter = coord
+                    cameraZoom = 15.0
+                }
+                navigationStateManager.pendingDemandZoneCoord = nil
+            }
+            .onChange(of: navigationStateManager.merchantLocationEditMode) { _, isEditing in
+                if isEditing, let coord = locationManager.currentLocation {
+                    withAnimation(.easeInOut(duration: 0.8)) {
+                        cameraCenter = coord
+                        cameraZoom = 17.0
+                    }
+                }
+            }
             .onChange(of: navigationStateManager.shouldOpenNavigation) { oldValue, newValue in
                 if newValue && preparedNavigation != nil {
                     print("🧭 [DEEP LINK] Navegación ya está abierta")
@@ -157,10 +173,13 @@ struct MainMapView: View {
                 }
             }
             .sheet(isPresented: $navigationStateManager.merchantLocationEditMode) {
-                MerchantLocationEditView(isPresented: $navigationStateManager.merchantLocationEditMode)
-                    .presentationDetents([.medium])
-                    .presentationDragIndicator(.hidden)
-                    .presentationBackground(.clear)
+                MerchantLocationEditView(
+                    isPresented: $navigationStateManager.merchantLocationEditMode,
+                    currentLocation: locationManager.currentLocation
+                )
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.hidden)
+                .presentationBackground(.clear)
             }
             .sheet(isPresented: $showAccessibilityView) {
                 VisualAccessibilitySettingsView()

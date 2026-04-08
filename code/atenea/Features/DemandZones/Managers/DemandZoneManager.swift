@@ -18,7 +18,14 @@ class DemandZoneManager: ObservableObject {
     private var events: [DemandEvent] = []
 
     private init() {
-        loadMockDemandData()
+        loadMockDemandData(around: (19.4326, -99.1332)) // fallback CDMX
+        demandZones = calculateDemandZones()
+    }
+
+    /// Regenera el mock data centrado en la ubicación actual (para simulador/testing)
+    func refreshMockData(around center: (lat: Double, lon: Double)) {
+        events = []
+        loadMockDemandData(around: center)
         demandZones = calculateDemandZones()
     }
 
@@ -88,34 +95,30 @@ class DemandZoneManager: ObservableObject {
 
     // MARK: - Mock Data
 
-    private func loadMockDemandData() {
-        // Coordenadas reales de CDMX con demanda simulada
-        let mockPoints: [(lat: Double, lon: Double, cat: MerchantCategory, count: Int)] = [
-            // Zona Azteca — alta demanda de tacos (pre-partido)
-            (19.3029, -99.1506, .tacos, 8),
-            (19.3035, -99.1510, .bebidas, 4),
-            // Zócalo — tamales y antojitos
-            (19.4326, -99.1332, .tamales, 6),
-            (19.4330, -99.1340, .antojitos, 3),
-            // Coyoacán — helados
-            (19.3492, -99.1617, .helados, 5),
-            // Roma Norte — jugos
-            (19.4185, -99.1654, .jugos, 3),
-            // Chapultepec — elotes
-            (19.4204, -99.1895, .elotes, 7),
-            (19.4210, -99.1890, .bebidas, 2),
-            // Condesa
-            (19.4115, -99.1748, .tacos, 4),
+    private func loadMockDemandData(around center: (lat: Double, lon: Double)) {
+        // Offsets relativos al centro (en grados ≈ cuadras/colonias)
+        let mockOffsets: [(dLat: Double, dLon: Double, cat: MerchantCategory, count: Int)] = [
+            (0.000,  0.000,  .tacos,    8),
+            (0.001, -0.001,  .bebidas,  4),
+            (0.012,  0.017,  .tamales,  6),
+            (0.013,  0.016,  .antojitos,3),
+            (-0.008, 0.005,  .helados,  5),
+            (0.010, -0.003,  .jugos,    3),
+            (0.009, -0.025,  .elotes,   7),
+            (0.010, -0.024,  .bebidas,  2),
+            (0.008, -0.014,  .tacos,    4),
         ]
 
-        for point in mockPoints {
-            for i in 0..<point.count {
+        for offset in mockOffsets {
+            let lat = center.lat + offset.dLat
+            let lon = center.lon + offset.dLon
+            for _ in 0..<offset.count {
                 let minutesAgo = Double.random(in: 0...50)
-                let geohash = Geohash.encode(latitude: point.lat, longitude: point.lon, precision: GeohashChannelLevel.neighborhood.precision)
+                let geohash = Geohash.encode(latitude: lat, longitude: lon, precision: GeohashChannelLevel.neighborhood.precision)
                 events.append(DemandEvent(
                     geohash: geohash,
                     source: [.timbre, .search, .browse].randomElement()!,
-                    category: point.cat,
+                    category: offset.cat,
                     timestamp: Date().addingTimeInterval(-minutesAgo * 60)
                 ))
             }

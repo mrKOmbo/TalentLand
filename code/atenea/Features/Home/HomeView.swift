@@ -132,6 +132,10 @@ struct MerchantHomeView: View {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.1)) {
                 animateCards = true
             }
+            // Centrar zonas de demanda en la ubicación actual del dispositivo
+            if let loc = CLLocationManager().location {
+                demandManager.refreshMockData(around: (loc.coordinate.latitude, loc.coordinate.longitude))
+            }
             // Iniciar broadcasting si el negocio está activo
             if let merchant = merchantManager.currentMerchantProfile, merchant.isActive {
                 PresenceManager.shared.startBroadcasting(merchant: merchant)

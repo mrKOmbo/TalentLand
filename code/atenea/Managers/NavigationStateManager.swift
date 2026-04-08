@@ -7,6 +7,7 @@
 
 import Foundation
 internal import Combine
+import CoreLocation
 
 class NavigationStateManager: ObservableObject {
     static let shared = NavigationStateManager()
@@ -14,6 +15,7 @@ class NavigationStateManager: ObservableObject {
     @Published var isNavigationActive: Bool = false
     @Published var shouldOpenNavigation: Bool = false
     @Published var merchantLocationEditMode: Bool = false
+    @Published var pendingDemandZoneCoord: CLLocationCoordinate2D? = nil
 
     private init() {}
 

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreLocation
 
 struct DemandInsightsView: View {
     @ObservedObject private var demandManager = DemandZoneManager.shared
@@ -101,6 +102,10 @@ struct DemandInsightsView: View {
 
             ForEach(Array(demandManager.topZones(limit: 5).enumerated()), id: \.element.id) { index, zone in
                 DemandZoneRow(zone: zone, rank: index + 1) {
+                    NavigationStateManager.shared.pendingDemandZoneCoord = CLLocationCoordinate2D(
+                        latitude: zone.center.lat,
+                        longitude: zone.center.lon
+                    )
                     dismiss()
                     selectedTab = 1
                 }
