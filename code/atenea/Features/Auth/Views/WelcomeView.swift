@@ -19,8 +19,8 @@ struct WelcomeView: View {
                         .init(color: Color.coppelBlue, location: 0.0),
                         .init(color: Color.coppelDarkBlue, location: 1.0)
                     ]),
-                    startPoint: .topCenter,
-                    endPoint: .bottomCenter
+                    startPoint: .top,
+                    endPoint: .bottom
                 )
                 .ignoresSafeArea()
 
