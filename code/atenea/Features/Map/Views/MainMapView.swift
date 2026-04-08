@@ -832,10 +832,7 @@ struct MainMapView: View {
                 searchViewModel: searchViewModel,
                 isExpanded: $isSearchBarExpanded,
                 isSearchFocused: $isSearchFocused,
-                isWorldCupToday: $isWorldCupToday,
-                onMenuTap: {
-                    menuState.toggleMenu()
-                }
+                isWorldCupToday: $isWorldCupToday
             )
 
             // Filtro de categorías desplegable (solo visible cuando el buscador NO está expandido)

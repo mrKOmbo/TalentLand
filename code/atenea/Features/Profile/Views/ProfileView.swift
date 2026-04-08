@@ -2,7 +2,7 @@
 //  ProfileView.swift
 //  atenea
 //
-//  Ultra-modern profile view with glassmorphism design
+//  Coppel Brand Toolkit 2024 — Ultra-clean profile view
 //
 
 import SwiftUI
@@ -13,240 +13,83 @@ struct UserProfileView: View {
     @State private var isEditMode = false
     @State private var editedName = ""
     @State private var editedEmail = ""
-    @State private var showSuccessMessage = false
+    @State private var showSuccess = false
 
     var body: some View {
         ZStack {
-            // Background gradient
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(red: 0.95, green: 0.97, blue: 1.0),
-                    Color(red: 0.98, green: 0.95, blue: 1.0)
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            Color(.systemBackground)
+                .ignoresSafeArea()
 
-            ScrollView {
+            ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 24) {
-                    // Header con botón de cerrar
+                    // Header
                     HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Profile")
+                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .foregroundColor(Color.coppelDarkBlue)
+
+                            Text("Manage your account")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(.gray)
+                        }
+
                         Spacer()
 
-                        Button(action: {
-                            dismiss()
-                        }) {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.white)
-                                    .frame(width: 36, height: 36)
-                                    .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
-
-                                Image(systemName: "xmark")
-                                    .font(.system(size: 14, weight: .bold))
-                                    .foregroundColor(.gray)
-                            }
+                        Button(action: { dismiss() }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 24, weight: .semibold))
+                                .foregroundColor(.gray.opacity(0.4))
                         }
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, 8)
+                    .padding(.top, 16)
 
-                    // Avatar Section
+                    // Avatar
                     VStack(spacing: 16) {
                         ZStack {
-                            // Glow effect
                             Circle()
-                                .fill(
-                                    RadialGradient(
-                                        gradient: Gradient(colors: [
-                                            Color.blue.opacity(0.4),
-                                            Color.purple.opacity(0.2),
-                                            Color.clear
-                                        ]),
-                                        center: .center,
-                                        startRadius: 40,
-                                        endRadius: 80
-                                    )
-                                )
-                                .frame(width: 140, height: 140)
-                                .blur(radius: 20)
-
-                            // Avatar
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [
-                                            Color.blue,
-                                            Color.purple.opacity(0.8),
-                                            Color.pink.opacity(0.6)
-                                        ]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 120, height: 120)
-                                .overlay(
-                                    Circle()
-                                        .stroke(Color.white, lineWidth: 4)
-                                )
-                                .shadow(color: Color.blue.opacity(0.3), radius: 20, x: 0, y: 10)
+                                .fill(Color.coppelBlue)
+                                .frame(width: 100, height: 100)
 
                             Image(systemName: "person.fill")
-                                .font(.system(size: 50, weight: .medium))
+                                .font(.system(size: 48, weight: .semibold))
                                 .foregroundColor(.white)
                         }
+                        .overlay(
+                            Circle()
+                                .stroke(Color(red: 0.11, green: 0.26, blue: 0.91).opacity(0.2), lineWidth: 3)
+                        )
 
                         if !isEditMode {
-                            VStack(spacing: 8) {
-                                Text(userManager.currentUser?.name ?? "Usuario")
-                                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                                    .foregroundStyle(
-                                        LinearGradient(
-                                            gradient: Gradient(colors: [Color.blue, Color.purple]),
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
-                                    )
+                            VStack(spacing: 4) {
+                                Text(userManager.currentUser?.name ?? "User")
+                                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                                    .foregroundColor(Color.coppelDarkBlue)
 
-                                Text(userManager.currentUser?.email ?? "usuario@email.com")
-                                    .font(.system(size: 16, weight: .medium))
+                                Text(userManager.currentUser?.email ?? "user@atenea.com")
+                                    .font(.system(size: 14, weight: .medium))
                                     .foregroundColor(.gray)
                             }
                         }
                     }
 
-                    // Stats Cards
-                    HStack(spacing: 12) {
-                        statCard(
-                            icon: "map.fill",
-                            title: "Viajes",
-                            value: "24",
-                            gradient: [Color.green, Color.mint]
-                        )
-
-                        statCard(
-                            icon: "star.fill",
-                            title: "Puntos",
-                            value: "1.2K",
-                            gradient: [Color.orange, Color.yellow]
-                        )
-
-                        statCard(
-                            icon: "flag.fill",
-                            title: "Logros",
-                            value: "12",
-                            gradient: [Color.purple, Color.pink]
-                        )
+                    // Stats Grid
+                    VStack(spacing: 12) {
+                        HStack(spacing: 12) {
+                            statItem(icon: "location.fill", label: "Routes", value: "24", color: Color(red: 0.11, green: 0.26, blue: 0.91))
+                            statItem(icon: "star.fill", label: "Points", value: "1.2K", color: Color(red: 0.99, green: 0.73, blue: 0.18))
+                            statItem(icon: "badge.fill", label: "Badges", value: "8", color: Color(red: 0.05, green: 0.75, blue: 0.31))
+                        }
                     }
                     .padding(.horizontal, 20)
 
-                    // Info Section
+                    // Content Section
                     VStack(spacing: 16) {
                         if isEditMode {
-                            // Edit Mode
-                            modernTextField(
-                                icon: "person.fill",
-                                placeholder: "Nombre",
-                                text: $editedName,
-                                gradient: [Color.blue, Color.cyan]
-                            )
-
-                            modernTextField(
-                                icon: "envelope.fill",
-                                placeholder: "Email",
-                                text: $editedEmail,
-                                gradient: [Color.purple, Color.pink]
-                            )
-
-                            // Save Button
-                            Button(action: {
-                                saveChanges()
-                            }) {
-                                HStack(spacing: 12) {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .font(.system(size: 20, weight: .bold))
-
-                                    Text("Guardar Cambios")
-                                        .font(.system(size: 17, weight: .bold))
-                                }
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 16)
-                                .background(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [Color.blue, Color.purple]),
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .cornerRadius(16)
-                                .shadow(color: Color.blue.opacity(0.4), radius: 12, x: 0, y: 6)
-                            }
-
-                            // Cancel Button
-                            Button(action: {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                    isEditMode = false
-                                }
-                            }) {
-                                Text("Cancelar")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.gray)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 14)
-                            }
+                            editModeContent
                         } else {
-                            // View Mode
-                            infoCard(
-                                icon: "person.fill",
-                                title: "Nombre",
-                                value: userManager.currentUser?.name ?? "Usuario",
-                                gradient: [Color.blue, Color.cyan]
-                            )
-
-                            infoCard(
-                                icon: "envelope.fill",
-                                title: "Email",
-                                value: userManager.currentUser?.email ?? "usuario@email.com",
-                                gradient: [Color.purple, Color.pink]
-                            )
-
-                            infoCard(
-                                icon: "calendar",
-                                title: "Miembro desde",
-                                value: "Enero 2024",
-                                gradient: [Color.green, Color.mint]
-                            )
-
-                            // Edit Button
-                            Button(action: {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                    editedName = userManager.currentUser?.name ?? ""
-                                    editedEmail = userManager.currentUser?.email ?? ""
-                                    isEditMode = true
-                                }
-                            }) {
-                                HStack(spacing: 12) {
-                                    Image(systemName: "pencil.circle.fill")
-                                        .font(.system(size: 20, weight: .bold))
-
-                                    Text("Editar Perfil")
-                                        .font(.system(size: 17, weight: .bold))
-                                }
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 16)
-                                .background(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [Color.blue, Color.purple]),
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .cornerRadius(16)
-                                .shadow(color: Color.blue.opacity(0.4), radius: 12, x: 0, y: 6)
-                            }
+                            viewModeContent
                         }
                     }
                     .padding(.horizontal, 20)
@@ -255,168 +98,200 @@ struct UserProfileView: View {
                 }
             }
 
-            // Success Message
-            if showSuccessMessage {
+            // Success Toast
+            if showSuccess {
                 VStack {
                     Spacer()
 
                     HStack(spacing: 12) {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 24))
-                            .foregroundColor(.green)
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.white)
 
-                        Text("Cambios guardados")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.primary)
+                        Text("Changes saved")
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white)
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
                     .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.white)
-                            .shadow(color: Color.black.opacity(0.15), radius: 20, x: 0, y: 10)
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color.coppelGreen)
                     )
-                    .padding(.bottom, 40)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 32)
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .navigationBarHidden(true)
     }
 
-    // MARK: - Components
+    private var viewModeContent: some View {
+        VStack(spacing: 12) {
+            infoRow(icon: "person.fill", label: "Name", value: userManager.currentUser?.name ?? "User")
+            infoRow(icon: "envelope.fill", label: "Email", value: userManager.currentUser?.email ?? "user@atenea.com")
+            infoRow(icon: "calendar.circle.fill", label: "Member since", value: "January 2024")
 
-    private func statCard(icon: String, title: String, value: String, gradient: [Color]) -> some View {
+            Button(action: {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    editedName = userManager.currentUser?.name ?? ""
+                    editedEmail = userManager.currentUser?.email ?? ""
+                    isEditMode = true
+                }
+            }) {
+                HStack(spacing: 10) {
+                    Image(systemName: "pencil.circle.fill")
+                        .font(.system(size: 18, weight: .semibold))
+
+                    Text("Edit profile")
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+
+                    Spacer()
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.coppelBlue)
+                )
+            }
+            .padding(.top, 8)
+        }
+    }
+
+    private var editModeContent: some View {
+        VStack(spacing: 12) {
+            inputField(icon: "person.fill", placeholder: "Name", text: $editedName)
+            inputField(icon: "envelope.fill", placeholder: "Email", text: $editedEmail)
+
+            HStack(spacing: 12) {
+                Button(action: saveChanges) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 18, weight: .semibold))
+
+                        Text("Save")
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+
+                        Spacer()
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color.coppelGreen)
+                    )
+                }
+
+                Button(action: {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        isEditMode = false
+                    }
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.gray.opacity(0.5))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                }
+            }
+        }
+    }
+
+    private func statItem(icon: String, label: String, value: String, color: Color) -> some View {
         VStack(spacing: 8) {
             ZStack {
                 Circle()
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: gradient.map { $0.opacity(0.15) }),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(color.opacity(0.1))
                     .frame(width: 44, height: 44)
 
                 Image(systemName: icon)
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(
-                        LinearGradient(
-                            gradient: Gradient(colors: gradient),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(color)
             }
 
             Text(value)
-                .font(.system(size: 20, weight: .bold))
-                .foregroundColor(.primary)
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .foregroundColor(Color(red: 0.05, green: 0.09, blue: 0.33))
 
-            Text(title)
+            Text(label)
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(.gray)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
+        .padding(.vertical, 14)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(.systemBackground))
+                .stroke(Color.gray.opacity(0.1), lineWidth: 1)
         )
     }
 
-    private func infoCard(icon: String, title: String, value: String, gradient: [Color]) -> some View {
-        HStack(spacing: 16) {
+    private func infoRow(icon: String, label: String, value: String) -> some View {
+        HStack(spacing: 14) {
             ZStack {
                 Circle()
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: gradient.map { $0.opacity(0.15) }),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 50, height: 50)
+                    .fill(Color(red: 0.11, green: 0.26, blue: 0.91).opacity(0.1))
+                    .frame(width: 40, height: 40)
 
                 Image(systemName: icon)
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(
-                        LinearGradient(
-                            gradient: Gradient(colors: gradient),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(Color(red: 0.11, green: 0.26, blue: 0.91))
             }
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.system(size: 13, weight: .medium))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                    .font(.system(size: 12, weight: .medium))
                     .foregroundColor(.gray)
 
                 Text(value)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.primary)
+                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .foregroundColor(Color(red: 0.05, green: 0.09, blue: 0.33))
             }
 
             Spacer()
         }
-        .padding(16)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(.systemBackground))
+                .stroke(Color.gray.opacity(0.1), lineWidth: 1)
         )
     }
 
-    private func modernTextField(icon: String, placeholder: String, text: Binding<String>, gradient: [Color]) -> some View {
-        HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: gradient.map { $0.opacity(0.15) }),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 50, height: 50)
-
-                Image(systemName: icon)
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(
-                        LinearGradient(
-                            gradient: Gradient(colors: gradient),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-            }
+    private func inputField(icon: String, placeholder: String, text: Binding<String>) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(Color(red: 0.11, green: 0.26, blue: 0.91))
+                .frame(width: 24)
 
             TextField(placeholder, text: text)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.primary)
+                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .foregroundColor(Color(red: 0.05, green: 0.09, blue: 0.33))
         }
-        .padding(16)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(.systemBackground))
+                .stroke(Color.gray.opacity(0.1), lineWidth: 1)
         )
     }
 
     private func saveChanges() {
-        // Simulate save
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
             isEditMode = false
-            showSuccessMessage = true
+            showSuccess = true
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             withAnimation {
-                showSuccessMessage = false
+                showSuccess = false
             }
         }
     }

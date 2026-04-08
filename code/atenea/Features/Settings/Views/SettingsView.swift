@@ -2,7 +2,7 @@
 //  SettingsView.swift
 //  atenea
 //
-//  Ultra-modern settings view with glassmorphism design
+//  Coppel Brand Toolkit 2024 — Clean settings view
 //
 
 import SwiftUI
@@ -11,7 +11,6 @@ struct SettingsView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var languageManager: LanguageManager
     @AppStorage("notificationsEnabled") private var notificationsEnabled = true
-    @AppStorage("darkModeEnabled") private var darkModeEnabled = false
     @AppStorage("soundEnabled") private var soundEnabled = true
     @AppStorage("hapticEnabled") private var hapticEnabled = true
     @AppStorage("autoNavigation") private var autoNavigation = false
@@ -23,342 +22,217 @@ struct SettingsView: View {
 
     var body: some View {
         ZStack {
-            // Background gradient
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(red: 0.95, green: 0.97, blue: 1.0),
-                    Color(red: 0.98, green: 0.95, blue: 1.0)
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            Color(.systemBackground)
+                .ignoresSafeArea()
 
-            ScrollView {
+            ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 24) {
                     // Header
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Configuración")
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [Color.purple, Color.pink]),
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
+                            Text("Settings")
+                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .foregroundColor(Color.coppelDarkBlue)
 
-                            Text("Personaliza tu experiencia")
-                                .font(.system(size: 15, weight: .medium))
+                            Text("Personalize your experience")
+                                .font(.system(size: 13, weight: .medium))
                                 .foregroundColor(.gray)
                         }
 
                         Spacer()
 
-                        Button(action: {
-                            dismiss()
-                        }) {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.white)
-                                    .frame(width: 40, height: 40)
-                                    .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
-
-                                Image(systemName: "xmark")
-                                    .font(.system(size: 14, weight: .bold))
-                                    .foregroundColor(.gray)
-                            }
+                        Button(action: { dismiss() }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 24, weight: .semibold))
+                                .foregroundColor(.gray.opacity(0.4))
                         }
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, 20)
+                    .padding(.top, 16)
 
-                    // Notificaciones
-                    settingSection(
-                        title: "Notificaciones",
-                        icon: "bell.fill",
-                        gradient: [Color.blue, Color.cyan]
-                    ) {
-                        VStack(spacing: 12) {
-                            toggleRow(
-                                icon: "bell.badge.fill",
-                                title: "Notificaciones Push",
-                                subtitle: "Recibe alertas importantes",
-                                isOn: $notificationsEnabled,
-                                gradient: [Color.blue, Color.cyan]
-                            )
+                    // Notifications
+                    settingSection(title: "Notifications", icon: "bell.fill") {
+                        toggleItem(
+                            icon: "bell.badge.fill",
+                            title: "Push notifications",
+                            subtitle: "Stay updated with alerts",
+                            isOn: $notificationsEnabled
+                        )
 
-                            toggleRow(
-                                icon: "speaker.wave.3.fill",
-                                title: "Sonidos",
-                                subtitle: "Efectos de sonido en la app",
-                                isOn: $soundEnabled,
-                                gradient: [Color.purple, Color.pink]
-                            )
+                        toggleItem(
+                            icon: "speaker.wave.2.fill",
+                            title: "Sounds",
+                            subtitle: "App sound effects",
+                            isOn: $soundEnabled
+                        )
 
-                            toggleRow(
-                                icon: "waveform",
-                                title: "Hápticos",
-                                subtitle: "Vibraciones al tocar",
-                                isOn: $hapticEnabled,
-                                gradient: [Color.orange, Color.yellow]
-                            )
-                        }
-                    }
-
-                    // Apariencia
-                    settingSection(
-                        title: "Apariencia",
-                        icon: "paintbrush.fill",
-                        gradient: [Color.purple, Color.pink]
-                    ) {
-                        VStack(spacing: 12) {
-                            toggleRow(
-                                icon: "moon.fill",
-                                title: "Modo Oscuro",
-                                subtitle: "Tema oscuro automático",
-                                isOn: $darkModeEnabled,
-                                gradient: [Color.indigo, Color.purple]
-                            )
-
-                            // Language Selector
-                            HStack(spacing: 16) {
-                                ZStack {
-                                    Circle()
-                                        .fill(
-                                            LinearGradient(
-                                                gradient: Gradient(colors: [Color.orange.opacity(0.15), Color.yellow.opacity(0.1)]),
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            )
-                                        )
-                                        .frame(width: 50, height: 50)
-
-                                    Image(systemName: "globe")
-                                        .font(.system(size: 20, weight: .bold))
-                                        .foregroundStyle(
-                                            LinearGradient(
-                                                gradient: Gradient(colors: [Color.orange, Color.yellow]),
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            )
-                                        )
-                                }
-
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("Idioma")
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(.primary)
-
-                                    Text(LanguageManager.availableLanguages[languageManager.currentLanguage] ?? "Español")
-                                        .font(.system(size: 13, weight: .medium))
-                                        .foregroundColor(.gray)
-                                }
-
-                                Spacer()
-
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 14, weight: .bold))
-                                    .foregroundColor(.gray.opacity(0.5))
-                            }
-                            .padding(16)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color.white)
-                                    .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
-                            )
-                        }
-                    }
-
-                    // Navegación
-                    settingSection(
-                        title: "Navegación",
-                        icon: "location.fill",
-                        gradient: [Color.green, Color.mint]
-                    ) {
-                        toggleRow(
-                            icon: "arrow.triangle.turn.up.right.circle.fill",
-                            title: "Navegación Automática",
-                            subtitle: "Inicia rutas automáticamente",
-                            isOn: $autoNavigation,
-                            gradient: [Color.green, Color.mint]
+                        toggleItem(
+                            icon: "waveform.circle.fill",
+                            title: "Haptics",
+                            subtitle: "Vibration feedback",
+                            isOn: $hapticEnabled
                         )
                     }
 
-                    // Privacidad
-                    settingSection(
-                        title: "Privacidad",
-                        icon: "lock.fill",
-                        gradient: [Color.red, Color.pink]
-                    ) {
-                        VStack(spacing: 12) {
-                            actionRow(
-                                icon: "hand.raised.fill",
-                                title: "Política de Privacidad",
-                                subtitle: "Lee nuestra política",
-                                gradient: [Color.blue, Color.cyan]
-                            ) {
-                                // Action
+                    // Navigation
+                    settingSection(title: "Navigation", icon: "location.fill") {
+                        toggleItem(
+                            icon: "arrow.triangle.turn.up.right.circle.fill",
+                            title: "Auto-navigate",
+                            subtitle: "Start routes automatically",
+                            isOn: $autoNavigation
+                        )
+                    }
+
+                    // Language
+                    settingSection(title: "Language", icon: "globe.fill") {
+                        HStack(spacing: 14) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color(red: 0.99, green: 0.73, blue: 0.18).opacity(0.1))
+                                    .frame(width: 40, height: 40)
+
+                                Image(systemName: "globe.fill")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(Color(red: 0.99, green: 0.73, blue: 0.18))
                             }
 
-                            actionRow(
-                                icon: "doc.text.fill",
-                                title: "Términos y Condiciones",
-                                subtitle: "Lee los términos de uso",
-                                gradient: [Color.purple, Color.pink]
-                            ) {
-                                // Action
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Current language")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(.gray)
+
+                                Text(LanguageManager.availableLanguages[languageManager.currentLanguage] ?? "English")
+                                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                    .foregroundColor(Color.coppelDarkBlue)
                             }
+
+                            Spacer()
+
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.gray.opacity(0.4))
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(Color(.systemBackground))
+                                .stroke(Color.gray.opacity(0.1), lineWidth: 1)
+                        )
+                    }
+
+                    // About
+                    settingSection(title: "About", icon: "info.circle.fill") {
+                        VStack(spacing: 12) {
+                            infoItem(label: "Version", value: "1.0.0")
+                            infoItem(label: "Built", value: "Genius Arena 2026")
                         }
                     }
 
-                    // Peligro
-                    VStack(spacing: 16) {
-                        Button(action: {
-                            showResetAlert = true
-                        }) {
-                            HStack(spacing: 14) {
+                    // Danger Zone
+                    VStack(spacing: 12) {
+                        Button(action: { showResetAlert = true }) {
+                            HStack(spacing: 12) {
                                 ZStack {
                                     Circle()
-                                        .fill(Color.red.opacity(0.12))
-                                        .frame(width: 50, height: 50)
+                                        .fill(Color(red: 1, green: 0.35, blue: 0.3).opacity(0.1))
+                                        .frame(width: 40, height: 40)
 
-                                    Image(systemName: "arrow.counterclockwise")
-                                        .font(.system(size: 20, weight: .bold))
-                                        .foregroundColor(.red)
+                                    Image(systemName: "arrow.counterclockwise.circle.fill")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(Color.coppelRed)
                                 }
 
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("Restablecer Configuración")
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(.red)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Reset settings")
+                                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                        .foregroundColor(Color.coppelRed)
 
-                                    Text("Volver a valores predeterminados")
-                                        .font(.system(size: 13, weight: .medium))
+                                    Text("Restore defaults")
+                                        .font(.system(size: 12, weight: .medium))
                                         .foregroundColor(.gray)
                                 }
 
                                 Spacer()
                             }
-                            .padding(16)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 12)
                             .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color.white)
-                                    .shadow(color: Color.red.opacity(0.1), radius: 12, x: 0, y: 4)
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(Color(.systemBackground))
+                                    .stroke(Color.coppelRed.opacity(0.2), lineWidth: 1)
                             )
                         }
                     }
                     .padding(.horizontal, 20)
 
-                    // Version Info
-                    VStack(spacing: 8) {
-                        Text("Atenea v1.0.0")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.gray)
-
-                        Text("Made with ❤️ in Mexico")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.gray.opacity(0.7))
-                    }
-                    .padding(.vertical, 20)
+                    // Footer
+                    Text("Made with care in Mexico")
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .foregroundColor(.gray.opacity(0.6))
+                        .padding(.vertical, 20)
 
                     Spacer(minLength: 40)
                 }
             }
         }
-        .navigationBarHidden(true)
-        .alert("Restablecer Configuración", isPresented: $showResetAlert) {
-            Button("Cancelar", role: .cancel) { }
-            Button("Restablecer", role: .destructive) {
+        .alert("Reset settings?", isPresented: $showResetAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Reset", role: .destructive) {
                 resetSettings()
             }
         } message: {
-            Text("¿Estás seguro de que quieres restablecer todas las configuraciones a sus valores predeterminados?")
+            Text("All settings will be restored to defaults.")
         }
     }
 
-    // MARK: - Components
-
-    private func settingSection<Content: View>(
-        title: String,
-        icon: String,
-        gradient: [Color],
-        @ViewBuilder content: @escaping () -> Content
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 10) {
+    private func settingSection<Content: View>(title: String, icon: String, @ViewBuilder content: @escaping () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
                 ZStack {
                     Circle()
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(colors: gradient.map { $0.opacity(0.15) }),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(Color(red: 0.11, green: 0.26, blue: 0.91).opacity(0.1))
                         .frame(width: 36, height: 36)
 
                     Image(systemName: icon)
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(
-                            LinearGradient(
-                                gradient: Gradient(colors: gradient),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(Color.coppelBlue)
                 }
 
                 Text(title)
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.primary)
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundColor(Color.coppelDarkBlue)
 
                 Spacer()
             }
 
-            content()
+            VStack(spacing: 10) {
+                content()
+            }
         }
         .padding(.horizontal, 20)
     }
 
-    private func toggleRow(
-        icon: String,
-        title: String,
-        subtitle: String,
-        isOn: Binding<Bool>,
-        gradient: [Color]
-    ) -> some View {
-        HStack(spacing: 16) {
+    private func toggleItem(icon: String, title: String, subtitle: String, isOn: Binding<Bool>) -> some View {
+        HStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: gradient.map { $0.opacity(0.15) }),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 50, height: 50)
+                    .fill(Color(red: 0.11, green: 0.26, blue: 0.91).opacity(0.1))
+                    .frame(width: 40, height: 40)
 
                 Image(systemName: icon)
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(
-                        LinearGradient(
-                            gradient: Gradient(colors: gradient),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(Color.coppelBlue)
             }
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.primary)
+                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .foregroundColor(Color.coppelDarkBlue)
 
                 Text(subtitle)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 12, weight: .medium))
                     .foregroundColor(.gray)
             }
 
@@ -366,79 +240,42 @@ struct SettingsView: View {
 
             Toggle("", isOn: isOn)
                 .labelsHidden()
-                .tint(
-                    Color(
-                        gradient.first ?? .blue
-                    )
-                )
+                .tint(Color.coppelBlue)
         }
-        .padding(16)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(.systemBackground))
+                .stroke(Color.gray.opacity(0.1), lineWidth: 1)
         )
     }
 
-    private func actionRow(
-        icon: String,
-        title: String,
-        subtitle: String,
-        gradient: [Color],
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            HStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(colors: gradient.map { $0.opacity(0.15) }),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 50, height: 50)
+    private func infoItem(label: String, value: String) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.gray)
 
-                    Image(systemName: icon)
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundStyle(
-                            LinearGradient(
-                                gradient: Gradient(colors: gradient),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(title)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.primary)
-
-                    Text(subtitle)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.gray)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.gray.opacity(0.5))
+                Text(value)
+                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .foregroundColor(Color.coppelDarkBlue)
             }
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white)
-                    .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
-            )
+
+            Spacer()
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(.systemBackground))
+                .stroke(Color.gray.opacity(0.1), lineWidth: 1)
+        )
     }
 
     private func resetSettings() {
         notificationsEnabled = true
-        darkModeEnabled = false
         soundEnabled = true
         hapticEnabled = true
         autoNavigation = false
