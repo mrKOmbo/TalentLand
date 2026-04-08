@@ -2,6 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
 	<key>MBXAccessToken</key>
 	<string>pk.eyJ1IjoibXJrb21ibyIsImEiOiJjbWg0MTJ2bm0wZmFtMm9xMGIybmR1emk5In0.2u-K5dCzznXlCQRlxtQ6QA</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
@@ -34,6 +42,8 @@
 	<true/>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Atenea usa Bluetooth para pagos de proximidad entre dispositivos, sin necesidad de internet ni WiFi.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Atenea uses local network to discover nearby merchants and connect staff with users in emergency situations.</string>
 	<key>NSBonjourServices</key>
@@ -45,7 +55,9 @@
 		<string>_atenea-pay._tcp</string>
 		<string>_atenea-pay._udp</string>
 	</array>
+	<key>CLAUDE_API_KEY</key>
+	<string>$(CLAUDE_API_KEY)</string>
 	<key>STRIPE_SECRET_KEY</key>
-	<string>sk_test_51T8Tg3GjXvm4xCpRLnNqVXIXePLUTzw8N4oUmAZ15LHTv6REUKmaafY3KBz8zBk09lbRuJswXRLcHWBKOjjjT4FV00fEDnxcDk</string>
+	<string>$(STRIPE_SECRET_KEY)</string>
 </dict>
 </plist>

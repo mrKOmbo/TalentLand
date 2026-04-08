@@ -5,3 +5,4 @@ code/build/
 *.xcodeproj/xcuserdata/
 DerivedData/
 .DS_Store
+Secrets.xcconfig

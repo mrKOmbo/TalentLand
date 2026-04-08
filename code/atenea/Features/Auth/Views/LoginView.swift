@@ -512,21 +512,20 @@ struct LoginView: View {
         if userManager.loginUser(withEmail: emailToLogin) {
             if let loggedUser = userManager.currentUser {
                 print("✅ Usuario logueado: \(loggedUser.name) (\(loggedUser.role.displayName))")
-
-                // Guardar nombre del usuario para OnboardingWelcomeView
                 UserDefaults.standard.set(loggedUser.name, forKey: "currentUserName")
+                UserDefaults.standard.set(loggedUser.email, forKey: "currentUserEmail")
             }
 
-            // Guardar estado del Mundial
             UserDefaults.standard.set(isWorldCupToday, forKey: "isWorldCupToday")
             print("⚽ Hoy es el Mundial: \(isWorldCupToday ? "SÍ" : "NO")")
 
-            // Marcar como logueado
-            withAnimation {
-                isLoggedIn = true
+            // Diferir cambio de estado para evitar Publishing changes durante animación
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation {
+                    isLoggedIn = true
+                }
             }
         } else {
-            // Show error - user not found
             print("❌ Usuario no encontrado con email: \(emailToLogin)")
         }
     }
