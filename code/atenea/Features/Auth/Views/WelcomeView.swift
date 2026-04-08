@@ -1,7 +1,7 @@
 //  WelcomeView.swift
 //  atenea
 //
-//  Vista de bienvenida optimizada con Apple HIG
+//  Vista de bienvenida optimizada con Coppel Brand Toolkit 2024
 
 import SwiftUI
 
@@ -12,14 +12,20 @@ struct WelcomeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // 1. Fondo con Gradiente y Elementos Decorativos
+                // 1. Fondo con Gradiente Radial
                 backgroundView
 
                 // 2. Contenido Principal
                 VStack(spacing: 0) {
+                    // Sponsor Logos Section (Fundación Coppel + Divisor + Coppel Emprende)
+                    sponsorLogosSection
+                        .frame(height: 55)
+                        .padding(.top, 12)
+                        .padding(.horizontal, 20)
+
                     Spacer()
 
-                    // Logo y Títulos
+                    // Logo ATR y Títulos
                     VStack(spacing: 28) {
                         brandIcon
 
@@ -54,15 +60,19 @@ struct WelcomeView: View {
 
     private var backgroundView: some View {
         ZStack {
-            Color.coppelDarkBlue // Color base
-
-            LinearGradient(
-                colors: [Color.coppelBlue.opacity(0.6), Color.coppelDarkBlue],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+            // Fondo gradiente radial (coppelBlue al centro, darkBlue en bordes)
+            RadialGradient(
+                gradient: Gradient(colors: [
+                    Color.coppelBlue.opacity(0.8),
+                    Color.coppelBlue.opacity(0.4),
+                    Color.coppelDarkBlue
+                ]),
+                center: .center,
+                startRadius: 0,
+                endRadius: 500
             )
 
-            // Círculos decorativos más sutiles para no ensuciar el texto
+            // Círculos decorativos sutiles
             Circle()
                 .fill(Color.coppelYellow.opacity(0.12))
                 .frame(width: 300)
@@ -75,6 +85,37 @@ struct WelcomeView: View {
                 .blur(radius: 90)
                 .offset(x: -150, y: 300)
         }
+    }
+
+    private var sponsorLogosSection: some View {
+        HStack(spacing: 0) {
+            // Fundación Coppel (izquierda)
+            Image("Fundacion-Coppel-Logo")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 35)
+                .padding(.leading, 8)
+
+            Spacer()
+
+            // Divisor vertical
+            VStack {
+                Rectangle()
+                    .fill(Color.white.opacity(0.6))
+                    .frame(width: 1, height: 35)
+            }
+
+            Spacer()
+
+            // Coppel Emprende (derecha)
+            Image("Coppel-Emprende-Logo")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 35)
+                .padding(.trailing, 8)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 55)
     }
 
     private var brandIcon: some View {
@@ -95,12 +136,12 @@ struct WelcomeView: View {
             NavigationLink(destination: LoginView(isLoggedIn: $isLoggedIn)
                 .environmentObject(languageManager)
             ) {
-                HStack {
+                HStack(spacing: 8) {
                     Text("Iniciar sesión")
                     Image(systemName: "arrow.right")
                 }
                 .font(.system(size: 18, weight: .bold))
-                .foregroundColor(.black) // Texto oscuro para máximo contraste
+                .foregroundColor(.black)
                 .frame(maxWidth: .infinity)
                 .frame(height: 58)
                 .background(
