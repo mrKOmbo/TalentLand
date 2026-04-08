@@ -1,1 +1,7 @@
 Docs/Media/videos/
+build/
+code/build/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+DerivedData/
+.DS_Store
