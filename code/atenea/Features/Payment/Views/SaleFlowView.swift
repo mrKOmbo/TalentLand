@@ -19,6 +19,10 @@ struct SaleFlowView: View {
                 CashPaymentView(viewModel: viewModel) {
                     viewModel.reset()
                 }
+            case .tapToPay:
+                TapToPaySimulationView(viewModel: viewModel) {
+                    viewModel.reset()
+                }
             case .confirmed:
                 PaymentConfirmedView(viewModel: viewModel) {
                     // Nuevo cobro

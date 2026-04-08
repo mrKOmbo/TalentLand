@@ -16,7 +16,9 @@ class MerchantManager: ObservableObject {
     @Published var currentMerchantProfile: Merchant?
 
     private init() {
-        loadMockMerchants()
+        DispatchQueue.main.async { [self] in
+            loadMockMerchants()
+        }
     }
 
     // MARK: - Queries

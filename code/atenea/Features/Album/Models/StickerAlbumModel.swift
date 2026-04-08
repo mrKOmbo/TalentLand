@@ -504,12 +504,10 @@ class StickerCollectionManager: ObservableObject {
     @Published var duplicateStickers: [Int: Int] = [:] // StickerID : cantidad de duplicados
 
     private init() {
-        // Inicializar con algunos stickers de ejemplo para demostración
-        // Stickers de introducción
-        collectedStickers = Set([1, 2, 4, 5, 8, 10, 12, 15, 18, 20, 23, 25, 28, 30, 33, 35, 38, 40, 42, 45])
-
-        // Sincronizar con UserDefaults para App Intents
-        syncToUserDefaults()
+        DispatchQueue.main.async { [self] in
+            collectedStickers = Set([1, 2, 4, 5, 8, 10, 12, 15, 18, 20, 23, 25, 28, 30, 33, 35, 38, 40, 42, 45])
+            syncToUserDefaults()
+        }
     }
 
     func collectSticker(_ stickerId: Int) {

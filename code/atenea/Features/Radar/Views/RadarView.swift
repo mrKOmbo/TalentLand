@@ -2,53 +2,157 @@
 //  RadarView.swift
 //  atenea
 //
-//  Vista de radar que muestra merchants descubiertos via BLE/WiFi en tiempo real
+//  Radar real con dirección GPS + brújula.
+//  Muestra merchants posicionados por bearing y distancia reales.
 //
 
 import SwiftUI
+import CoreLocation
+
+// MARK: - Radar Merchant Model
+
+struct RadarMerchant: Identifiable {
+    let id: UUID
+    let name: String
+    let emoji: String
+    let category: String
+    let isStatic: Bool
+    let coordinate: CLLocationCoordinate2D
+    let distance: Double        // metros
+    let bearing: Double         // grados (0 = norte, 90 = este)
+    let mpcPeer: RadarPeer?     // nil si viene solo de GPS
+    let merchant: Merchant?
+
+    var formattedDistance: String {
+        if distance < 1000 {
+            return "\(Int(distance))m"
+        } else {
+            return String(format: "%.1fkm", distance / 1000)
+        }
+    }
+}
+
+// MARK: - Bearing Utilities
+
+/// Bearing geográfico de un punto a otro (en grados, 0=norte, 90=este)
+func bearingBetween(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D) -> Double {
+    let lat1 = from.latitude * .pi / 180
+    let lat2 = to.latitude * .pi / 180
+    let dLon = (to.longitude - from.longitude) * .pi / 180
+
+    let y = sin(dLon) * cos(lat2)
+    let x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLon)
+    let bearing = atan2(y, x) * 180 / .pi
+    return (bearing + 360).truncatingRemainder(dividingBy: 360)
+}
+
+/// Convierte (bearing, distance) en (x, y) relativo al centro del radar
+func radarOffset(bearing: Double, distance: Double, heading: Double, maxRadius: CGFloat, maxDistance: Double) -> CGPoint {
+    let relativeBearing = (bearing - heading + 360).truncatingRemainder(dividingBy: 360)
+    let angle = relativeBearing * .pi / 180 - .pi / 2 // -π/2 porque 0° es arriba (norte)
+    let normalizedDist = min(distance / maxDistance, 1.0)
+    let r = Double(maxRadius) * normalizedDist
+
+    return CGPoint(x: cos(angle) * r, y: sin(angle) * r)
+}
+
+// MARK: - Main Radar View
 
 struct RadarView: View {
     @ObservedObject private var radarService = RadarService.shared
+    @ObservedObject private var merchantManager = MerchantManager.shared
     @ObservedObject private var userManager = UserManager.shared
+    @StateObject private var locationManager = LocationManager()
+
     @State private var radarRotation: Double = 0
-    @State private var selectedPeer: RadarPeer?
-    @State private var showMerchantDetail = false
+    @State private var selectedMerchant: RadarMerchant?
+    @State private var showDirectionArrow = false
+    @State private var maxDistance: Double = 500 // metros
+
+    @Environment(\.dismiss) private var dismiss
+
+    private var heading: Double {
+        locationManager.currentHeading?.trueHeading ?? 0
+    }
+
+    private var userLocation: CLLocationCoordinate2D {
+        locationManager.currentLocation ?? CLLocationCoordinate2D(latitude: mockUserLatitude, longitude: mockUserLongitude)
+    }
+
+    /// Merchants con ubicación conocida, con bearing y distancia calculados
+    private var radarMerchants: [RadarMerchant] {
+        let activeMerchants = merchantManager.merchants.filter { $0.isActive && $0.currentLocation != nil }
+
+        return activeMerchants.compactMap { merchant in
+            guard let loc = merchant.currentLocation else { return nil }
+            let coord = loc.coordinate
+            let dist = MerchantManager.haversineDistance(
+                lat1: userLocation.latitude, lon1: userLocation.longitude,
+                lat2: coord.latitude, lon2: coord.longitude
+            )
+            // Solo mostrar merchants dentro del rango del radar
+            guard dist <= maxDistance * 1.2 else { return nil }
+
+            let bear = bearingBetween(from: userLocation, to: coord)
+
+            // Buscar si este merchant también fue descubierto por MPC
+            let mpcPeer = radarService.discoveredMerchants.first {
+                $0.businessName == merchant.businessName
+            }
+
+            return RadarMerchant(
+                id: merchant.id,
+                name: merchant.businessName,
+                emoji: merchant.emoji,
+                category: merchant.category.displayName,
+                isStatic: merchant.isStatic,
+                coordinate: coord,
+                distance: dist,
+                bearing: bear,
+                mpcPeer: mpcPeer,
+                merchant: merchant
+            )
+        }
+        .sorted { $0.distance < $1.distance }
+    }
 
     var body: some View {
         ZStack {
-            // Fondo
             LinearGradient(
                 colors: [Color(hex: "#0A0A1A"), Color(hex: "#0D1B2A")],
                 startPoint: .top, endPoint: .bottom
             )
             .ignoresSafeArea()
 
-            VStack(spacing: 20) {
-                // Header
-                radarHeader
-
-                // Radar visual
-                radarDisplay
-                    .frame(height: 320)
-
-                // Lista de descubiertos
-                discoveredList
-
-                Spacer(minLength: 100)
+            if showDirectionArrow, let merchant = selectedMerchant {
+                DirectionArrowView(
+                    merchant: merchant,
+                    heading: heading,
+                    userLocation: userLocation,
+                    onBack: {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            showDirectionArrow = false
+                        }
+                    }
+                )
+                .transition(.move(edge: .trailing).combined(with: .opacity))
+            } else {
+                VStack(spacing: 16) {
+                    radarHeader
+                    radarDisplay
+                        .frame(height: 320)
+                    distanceSelector
+                    merchantList
+                    Spacer(minLength: 80)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 60)
+                .transition(.move(edge: .leading).combined(with: .opacity))
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 60)
         }
+        .animation(.spring(response: 0.4, dampingFraction: 0.85), value: showDirectionArrow)
         .onAppear {
             startRadar()
-        }
-        .onDisappear {
-            // No detener el radar al salir — sigue en background
-        }
-        .sheet(item: $selectedPeer) { peer in
-            RadarPeerDetailSheet(peer: peer)
-                .presentationDetents([.medium])
-                .presentationDragIndicator(.visible)
         }
     }
 
@@ -60,29 +164,35 @@ struct RadarView: View {
                 Text("Radar")
                     .font(.system(size: 28, weight: .bold))
                     .foregroundColor(.white)
-                Text(radarService.radarStatus)
-                    .font(.system(size: 13))
-                    .foregroundColor(radarService.isScanning || radarService.isAdvertising ? .green : .white.opacity(0.5))
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(radarService.isScanning ? Color.green : Color.gray)
+                        .frame(width: 6, height: 6)
+                    Text("\(radarMerchants.count) comerciantes en rango")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.6))
+                }
             }
 
             Spacer()
 
-            // Toggle on/off
-            Button {
-                if radarService.isScanning || radarService.isAdvertising {
-                    radarService.stopAll()
-                } else {
-                    startRadar()
-                }
-            } label: {
-                Image(systemName: radarService.isScanning || radarService.isAdvertising ? "antenna.radiowaves.left.and.right" : "antenna.radiowaves.left.and.right.slash")
-                    .font(.system(size: 20))
-                    .foregroundColor(radarService.isScanning || radarService.isAdvertising ? .green : .gray)
-                    .frame(width: 44, height: 44)
-                    .background(
-                        Circle()
-                            .fill(radarService.isScanning || radarService.isAdvertising ? Color.green.opacity(0.15) : Color.gray.opacity(0.1))
-                    )
+            // Indicador de brújula
+            VStack(spacing: 2) {
+                Image(systemName: "location.north.fill")
+                    .font(.system(size: 16))
+                    .foregroundColor(.cyan)
+                    .rotationEffect(.degrees(-heading))
+                Text("\(Int(heading))°")
+                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .foregroundColor(.cyan.opacity(0.7))
+            }
+
+            Button { dismiss() } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.white.opacity(0.5))
+                    .frame(width: 36, height: 36)
+                    .background(Circle().fill(Color.white.opacity(0.1)))
             }
         }
     }
@@ -92,74 +202,67 @@ struct RadarView: View {
     private var radarDisplay: some View {
         GeometryReader { geo in
             let center = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
-            let maxRadius = min(geo.size.width, geo.size.height) / 2 - 10
+            let maxRadius = min(geo.size.width, geo.size.height) / 2 - 16
 
             ZStack {
-                // Círculos concéntricos
-                ForEach(1...3, id: \.self) { ring in
+                // Anillos concéntricos
+                ForEach([0.33, 0.66, 1.0], id: \.self) { scale in
                     Circle()
-                        .stroke(Color.green.opacity(0.15), lineWidth: 1)
-                        .frame(width: maxRadius * 2 * CGFloat(ring) / 3,
-                               height: maxRadius * 2 * CGFloat(ring) / 3)
+                        .stroke(Color.green.opacity(0.12), lineWidth: 0.5)
+                        .frame(width: maxRadius * 2 * scale, height: maxRadius * 2 * scale)
                 }
 
-                // Cruz central
-                Path { path in
-                    path.move(to: CGPoint(x: center.x, y: center.y - maxRadius))
-                    path.addLine(to: CGPoint(x: center.x, y: center.y + maxRadius))
-                }
-                .stroke(Color.green.opacity(0.1), lineWidth: 0.5)
+                // Cruz cardinal
+                cardinalLines(center: center, radius: maxRadius)
 
-                Path { path in
-                    path.move(to: CGPoint(x: center.x - maxRadius, y: center.y))
-                    path.addLine(to: CGPoint(x: center.x + maxRadius, y: center.y))
-                }
-                .stroke(Color.green.opacity(0.1), lineWidth: 0.5)
+                // Labels N/S/E/O (rotan con heading para mantener norte arriba)
+                cardinalLabels(center: center, radius: maxRadius)
 
-                // Línea de barrido (sweep)
-                if radarService.isScanning {
+                // Sweep
+                if radarService.isScanning || !radarMerchants.isEmpty {
                     RadarSweepLine(center: center, radius: maxRadius, rotation: radarRotation)
                 }
 
-                // Punto central (yo)
-                Circle()
-                    .fill(Color.blue)
-                    .frame(width: 12, height: 12)
-                    .shadow(color: .blue.opacity(0.5), radius: 6)
-                    .position(center)
+                // Labels de distancia
+                distanceLabels(center: center, maxRadius: maxRadius)
 
-                // Peers descubiertos como blips
-                ForEach(Array(radarService.discoveredMerchants.enumerated()), id: \.element.id) { index, peer in
-                    let angle = Double(index) * (360.0 / max(Double(radarService.discoveredMerchants.count), 1)) * .pi / 180
-                    let ringFraction: CGFloat = peer.signalStrength == .strong ? 0.35 : peer.signalStrength == .medium ? 0.55 : 0.75
-                    let x = center.x + cos(angle) * maxRadius * ringFraction
-                    let y = center.y + sin(angle) * maxRadius * ringFraction
+                // Blips de merchants
+                ForEach(radarMerchants) { merchant in
+                    let offset = radarOffset(
+                        bearing: merchant.bearing,
+                        distance: merchant.distance,
+                        heading: heading,
+                        maxRadius: maxRadius,
+                        maxDistance: maxDistance
+                    )
 
                     Button {
-                        selectedPeer = peer
+                        selectedMerchant = merchant
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            showDirectionArrow = true
+                        }
                     } label: {
-                        RadarBlip(peer: peer)
+                        RadarBlip(
+                            emoji: merchant.emoji,
+                            isLive: merchant.mpcPeer != nil,
+                            distance: merchant.distance
+                        )
                     }
                     .buttonStyle(.plain)
-                    .position(x: x, y: y)
-                    .transition(.scale.combined(with: .opacity))
+                    .position(x: center.x + offset.x, y: center.y + offset.y)
                 }
 
-                // Etiquetas de distancia
-                Text("~30m")
-                    .font(.system(size: 9))
-                    .foregroundColor(.green.opacity(0.3))
-                    .position(x: center.x + maxRadius / 3, y: center.y - 8)
-
-                Text("~60m")
-                    .font(.system(size: 9))
-                    .foregroundColor(.green.opacity(0.3))
-                    .position(x: center.x + maxRadius * 2 / 3, y: center.y - 8)
-
-                Text("~100m")
-                    .font(.system(size: 9))
-                    .foregroundColor(.green.opacity(0.3))
-                    .position(x: center.x + maxRadius - 5, y: center.y - 8)
+                // Punto central (yo)
+                ZStack {
+                    Circle()
+                        .fill(Color.blue.opacity(0.2))
+                        .frame(width: 20, height: 20)
+                    Circle()
+                        .fill(Color.blue)
+                        .frame(width: 10, height: 10)
+                }
+                .shadow(color: .blue.opacity(0.5), radius: 6)
+                .position(center)
             }
         }
         .onAppear {
@@ -169,124 +272,209 @@ struct RadarView: View {
         }
     }
 
-    // MARK: - Discovered List
+    // MARK: - Cardinal Lines & Labels
 
-    private var discoveredList: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            if !radarService.discoveredMerchants.isEmpty {
-                Text("DETECTADOS EN VIVO")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.5))
+    private func cardinalLines(center: CGPoint, radius: CGFloat) -> some View {
+        let headingRad = -heading * .pi / 180
+
+        return ZStack {
+            // Línea N-S
+            Path { path in
+                path.move(to: CGPoint(
+                    x: center.x + sin(headingRad) * radius,
+                    y: center.y - cos(headingRad) * radius
+                ))
+                path.addLine(to: CGPoint(
+                    x: center.x - sin(headingRad) * radius,
+                    y: center.y + cos(headingRad) * radius
+                ))
+            }
+            .stroke(Color.green.opacity(0.08), lineWidth: 0.5)
+
+            // Línea E-O
+            Path { path in
+                path.move(to: CGPoint(
+                    x: center.x + cos(headingRad) * radius,
+                    y: center.y + sin(headingRad) * radius
+                ))
+                path.addLine(to: CGPoint(
+                    x: center.x - cos(headingRad) * radius,
+                    y: center.y - sin(headingRad) * radius
+                ))
+            }
+            .stroke(Color.green.opacity(0.08), lineWidth: 0.5)
+        }
+    }
+
+    private func cardinalLabels(center: CGPoint, radius: CGFloat) -> some View {
+        let labels: [(String, Double)] = [("N", 0), ("E", 90), ("S", 180), ("O", 270)]
+        let headingRad = -heading * .pi / 180
+
+        return ZStack {
+            ForEach(labels, id: \.0) { label, angle in
+                let rad = (angle * .pi / 180) + headingRad
+                let labelRadius = radius + 12
+                Text(label)
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .foregroundColor(label == "N" ? .red.opacity(0.6) : .green.opacity(0.25))
+                    .position(
+                        x: center.x + sin(rad) * labelRadius,
+                        y: center.y - cos(rad) * labelRadius
+                    )
+            }
+        }
+    }
+
+    private func distanceLabels(center: CGPoint, maxRadius: CGFloat) -> some View {
+        let distances: [(String, CGFloat)] = [
+            ("\(Int(maxDistance / 3))m", 0.33),
+            ("\(Int(maxDistance * 2 / 3))m", 0.66),
+            ("\(Int(maxDistance))m", 1.0)
+        ]
+
+        return ZStack {
+            ForEach(distances, id: \.0) { label, fraction in
+                Text(label)
+                    .font(.system(size: 8, design: .monospaced))
+                    .foregroundColor(.green.opacity(0.25))
+                    .position(x: center.x + maxRadius * fraction - 4, y: center.y - 8)
+            }
+        }
+    }
+
+    // MARK: - Distance Selector
+
+    private var distanceSelector: some View {
+        HStack(spacing: 0) {
+            ForEach([500.0, 1000.0, 2000.0], id: \.self) { dist in
+                Button {
+                    withAnimation(.spring(response: 0.3)) {
+                        maxDistance = dist
+                    }
+                } label: {
+                    Text(dist < 1000 ? "\(Int(dist))m" : "\(Int(dist / 1000))km")
+                        .font(.system(size: 13, weight: maxDistance == dist ? .semibold : .regular))
+                        .foregroundColor(maxDistance == dist ? .white : .white.opacity(0.4))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(
+                            maxDistance == dist
+                                ? RoundedRectangle(cornerRadius: 8).fill(Color.green.opacity(0.2))
+                                : nil
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(3)
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.06)))
+    }
+
+    // MARK: - Merchant List
+
+    private var merchantList: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if !radarMerchants.isEmpty {
+                Text("COMERCIANTES EN RANGO")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.4))
                     .kerning(1.5)
 
-                ForEach(radarService.discoveredMerchants.filter { !$0.isStale }) { peer in
+                ForEach(radarMerchants.prefix(5)) { merchant in
                     Button {
-                        selectedPeer = peer
+                        selectedMerchant = merchant
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            showDirectionArrow = true
+                        }
                     } label: {
                         HStack(spacing: 12) {
-                            Text(peer.emoji)
-                                .font(.system(size: 24))
+                            Text(merchant.emoji)
+                                .font(.system(size: 22))
 
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(peer.businessName)
-                                    .font(.system(size: 15, weight: .semibold))
+                                Text(merchant.name)
+                                    .font(.system(size: 14, weight: .semibold))
                                     .foregroundColor(.white)
                                 HStack(spacing: 4) {
-                                    Circle()
-                                        .fill(peer.signalStrength.color)
-                                        .frame(width: 6, height: 6)
-                                    Text(signalText(peer.signalStrength))
-                                        .font(.system(size: 12))
-                                        .foregroundColor(.white.opacity(0.6))
+                                    Text(merchant.formattedDistance)
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundColor(.cyan)
                                     Text("·")
                                         .foregroundColor(.white.opacity(0.3))
-                                    Text(peer.isStatic ? "Fijo" : "Nómada")
+                                    Text(directionLabel(merchant.bearing))
                                         .font(.system(size: 12))
-                                        .foregroundColor(peer.isStatic ? .blue : .orange)
+                                        .foregroundColor(.white.opacity(0.5))
+                                    if merchant.mpcPeer != nil {
+                                        Text("· EN VIVO")
+                                            .font(.system(size: 9, weight: .bold))
+                                            .foregroundColor(.green)
+                                    }
                                 }
                             }
 
                             Spacer()
 
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 12))
-                                .foregroundColor(.white.opacity(0.3))
+                            // Mini flecha de dirección
+                            Image(systemName: "location.north.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(.green.opacity(0.6))
+                                .rotationEffect(.degrees(merchant.bearing - heading))
                         }
                         .padding(12)
                         .background(
                             ZStack {
-                                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .fill(.ultraThinMaterial)
-                                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .fill(Color.white.opacity(0.03))
+                                RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.ultraThinMaterial)
+                                RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.white.opacity(0.03))
                             }
                         )
                     }
                     .buttonStyle(.plain)
                 }
-            } else if radarService.isScanning {
-                HStack {
-                    Spacer()
-                    VStack(spacing: 8) {
-                        ProgressView()
-                            .tint(.green)
-                        Text("Buscando comerciantes cerca...")
-                            .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.5))
-                    }
-                    Spacer()
-                }
-                .padding(.vertical, 20)
             }
         }
     }
 
-    // MARK: - Actions
+    // MARK: - Helpers
 
     private func startRadar() {
-        if let user = userManager.currentUser, user.isMerchant {
-            if let merchant = MerchantManager.shared.currentMerchantProfile {
-                radarService.startAdvertising(merchant: merchant)
-            }
+        if let user = userManager.currentUser, user.isMerchant,
+           let merchant = MerchantManager.shared.currentMerchantProfile {
+            radarService.startAdvertising(merchant: merchant)
         }
-        // Todos escanean (merchants también ven a otros merchants)
         radarService.startScanning()
     }
 
-    private func signalText(_ strength: RadarPeer.SignalStrength) -> String {
-        switch strength {
-        case .strong: return "Muy cerca"
-        case .medium: return "Cerca"
-        case .weak: return "Alejándose"
-        }
+    private func directionLabel(_ bearing: Double) -> String {
+        let dirs = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"]
+        let index = Int((bearing + 22.5) / 45) % 8
+        return dirs[index]
     }
 }
 
 // MARK: - Radar Blip
 
 struct RadarBlip: View {
-    let peer: RadarPeer
+    let emoji: String
+    let isLive: Bool
+    let distance: Double
     @State private var pulse = false
 
     var body: some View {
         ZStack {
-            // Pulse
             Circle()
-                .fill(peer.signalStrength.color.opacity(0.2))
-                .frame(width: 36, height: 36)
+                .fill(isLive ? Color.green.opacity(0.15) : Color.orange.opacity(0.1))
+                .frame(width: 38, height: 38)
                 .scaleEffect(pulse ? CGFloat(1.3) : CGFloat(1.0))
-                .opacity(pulse ? 0.0 : 0.4)
+                .opacity(pulse ? 0.0 : 0.5)
 
-            // Emoji
-            Text(peer.emoji)
-                .font(.system(size: 20))
-                .frame(width: 28, height: 28)
+            Text(emoji)
+                .font(.system(size: 18))
+                .frame(width: 30, height: 30)
                 .background(
                     Circle()
                         .fill(Color(hex: "#0A0A1A"))
                         .overlay(
-                            Circle()
-                                .stroke(peer.signalStrength.color, lineWidth: 1.5)
+                            Circle().stroke(isLive ? Color.green : Color.orange.opacity(0.5), lineWidth: 1.5)
                         )
                 )
         }
@@ -306,26 +494,20 @@ struct RadarSweepLine: View {
     let rotation: Double
 
     var body: some View {
+        // Línea principal
         Path { path in
             path.move(to: center)
-            let endX = center.x + cos(rotation * .pi / 180) * radius
-            let endY = center.y + sin(rotation * .pi / 180) * radius
+            let endX = center.x + cos(rotation * .pi / 180 - .pi / 2) * radius
+            let endY = center.y + sin(rotation * .pi / 180 - .pi / 2) * radius
             path.addLine(to: CGPoint(x: endX, y: endY))
         }
-        .stroke(
-            LinearGradient(
-                colors: [.green.opacity(0.6), .green.opacity(0.0)],
-                startPoint: .leading,
-                endPoint: .trailing
-            ),
-            lineWidth: 2
-        )
+        .stroke(Color.green.opacity(0.5), lineWidth: 1.5)
 
-        // Cone detrás del sweep
+        // Cono de barrido
         Path { path in
             path.move(to: center)
-            let startAngle = (rotation - 30) * .pi / 180
-            let endAngle = rotation * .pi / 180
+            let startAngle = (rotation - 30) * .pi / 180 - .pi / 2
+            let endAngle = rotation * .pi / 180 - .pi / 2
             path.addArc(center: center, radius: radius,
                        startAngle: .radians(startAngle),
                        endAngle: .radians(endAngle),
@@ -334,7 +516,7 @@ struct RadarSweepLine: View {
         }
         .fill(
             AngularGradient(
-                colors: [.green.opacity(0.0), .green.opacity(0.08)],
+                colors: [.green.opacity(0.0), .green.opacity(0.06)],
                 center: UnitPoint(x: center.x / (radius * 2 + 20), y: center.y / (radius * 2 + 20)),
                 startAngle: .degrees(rotation - 30),
                 endAngle: .degrees(rotation)
@@ -343,88 +525,135 @@ struct RadarSweepLine: View {
     }
 }
 
-// MARK: - Peer Detail Sheet
+// MARK: - Direction Arrow View
 
-struct RadarPeerDetailSheet: View {
-    let peer: RadarPeer
+struct DirectionArrowView: View {
+    let merchant: RadarMerchant
+    let heading: Double
+    let userLocation: CLLocationCoordinate2D
+    let onBack: () -> Void
+
+    @State private var pulseScale: CGFloat = 1.0
+    @State private var hapticTimer: Timer?
+
+    private var relativeBearing: Double {
+        let bearing = bearingBetween(from: userLocation, to: merchant.coordinate)
+        return (bearing - heading + 360).truncatingRemainder(dividingBy: 360)
+    }
+
+    private var currentDistance: Double {
+        MerchantManager.haversineDistance(
+            lat1: userLocation.latitude, lon1: userLocation.longitude,
+            lat2: merchant.coordinate.latitude, lon2: merchant.coordinate.longitude
+        )
+    }
 
     var body: some View {
-        VStack(spacing: 16) {
-            // Emoji + nombre
-            Text(peer.emoji)
-                .font(.system(size: 56))
-
-            Text(peer.businessName)
-                .font(.system(size: 22, weight: .bold))
-
-            // Info
-            HStack(spacing: 12) {
-                // Signal
-                HStack(spacing: 4) {
-                    Circle()
-                        .fill(peer.signalStrength.color)
-                        .frame(width: 8, height: 8)
-                    Text(signalText(peer.signalStrength))
-                        .font(.system(size: 13))
-                        .foregroundColor(peer.signalStrength.color)
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Button(action: onBack) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                        Text("Radar")
+                    }
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(.cyan)
                 }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(Capsule().fill(peer.signalStrength.color.opacity(0.1)))
-
-                // Tipo
-                HStack(spacing: 4) {
-                    Image(systemName: peer.isStatic ? "mappin.circle.fill" : "figure.walk")
-                        .font(.system(size: 11))
-                    Text(peer.isStatic ? "Puesto fijo" : "Ambulante")
-                        .font(.system(size: 13))
-                }
-                .foregroundColor(peer.isStatic ? .blue : .orange)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(Capsule().fill(peer.isStatic ? Color.blue.opacity(0.1) : Color.orange.opacity(0.1)))
-
-                // Categoría
-                Text(peer.category.capitalized)
-                    .font(.system(size: 13))
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(Capsule().fill(Color.gray.opacity(0.1)))
+                Spacer()
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 60)
 
-            Divider()
+            Spacer()
 
-            // Status
-            VStack(spacing: 6) {
-                HStack {
-                    Image(systemName: "antenna.radiowaves.left.and.right")
-                        .foregroundColor(.green)
-                    Text("Detectado via Bluetooth/WiFi")
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
-                }
-                Text("Sin internet · Conexión directa P2P")
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary.opacity(0.7))
+            // Info del merchant
+            VStack(spacing: 8) {
+                Text(merchant.emoji)
+                    .font(.system(size: 48))
+                Text(merchant.name)
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(.white)
+                Text(merchant.category)
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.5))
             }
 
             Spacer()
 
-            // Buscar en el mapa si tiene merchant registrado
-            if let merchant = MerchantManager.shared.merchants.first(where: { $0.businessName == peer.businessName }) {
-                TimbreButtonView(merchant: merchant)
-                    .padding(.bottom, 20)
+            // Flecha grande
+            ZStack {
+                // Anillo exterior pulsante
+                Circle()
+                    .stroke(Color.green.opacity(0.1), lineWidth: 2)
+                    .frame(width: 220, height: 220)
+                    .scaleEffect(pulseScale)
+
+                Circle()
+                    .stroke(Color.green.opacity(0.06), lineWidth: 1)
+                    .frame(width: 260, height: 260)
+
+                // Flecha
+                Image(systemName: "location.north.fill")
+                    .font(.system(size: 80, weight: .ultraLight))
+                    .foregroundStyle(
+                        LinearGradient(colors: [.green, .cyan], startPoint: .top, endPoint: .bottom)
+                    )
+                    .rotationEffect(.degrees(relativeBearing))
+                    .shadow(color: .green.opacity(0.4), radius: 20)
+                    .animation(.easeInOut(duration: 0.3), value: relativeBearing)
+            }
+
+            Spacer()
+
+            // Distancia
+            VStack(spacing: 4) {
+                Text(merchant.formattedDistance)
+                    .font(.system(size: 56, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+                Text(directionLabel(bearingBetween(from: userLocation, to: merchant.coordinate)))
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white.opacity(0.5))
+            }
+
+            Spacer()
+
+            // Botón timbrar si hay merchant
+            if let fullMerchant = merchant.merchant {
+                TimbreButtonView(merchant: fullMerchant)
+                    .padding(.bottom, 30)
             }
         }
-        .padding(.top, 24)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                pulseScale = 1.08
+            }
+            startHaptics()
+        }
+        .onDisappear {
+            hapticTimer?.invalidate()
+        }
     }
 
-    private func signalText(_ strength: RadarPeer.SignalStrength) -> String {
-        switch strength {
-        case .strong: return "Muy cerca"
-        case .medium: return "Cerca"
-        case .weak: return "Alejándose"
+    private func startHaptics() {
+        // Haptic feedback cada X segundos — más frecuente si más cerca
+        hapticTimer = Timer.scheduledTimer(withTimeInterval: hapticInterval(), repeats: false) { [self] _ in
+            let generator = UIImpactFeedbackGenerator(style: currentDistance < 100 ? .heavy : .light)
+            generator.impactOccurred()
+            startHaptics() // Re-schedule con intervalo actualizado
         }
+    }
+
+    private func hapticInterval() -> TimeInterval {
+        if currentDistance < 50 { return 0.5 }
+        if currentDistance < 150 { return 1.5 }
+        if currentDistance < 300 { return 3.0 }
+        return 5.0
+    }
+
+    private func directionLabel(_ bearing: Double) -> String {
+        let dirs = ["Norte", "Noreste", "Este", "Sureste", "Sur", "Suroeste", "Oeste", "Noroeste"]
+        let index = Int((bearing + 22.5) / 45) % 8
+        return "Hacia el \(dirs[index])"
     }
 }

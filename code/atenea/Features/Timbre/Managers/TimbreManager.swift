@@ -107,6 +107,13 @@ class TimbreManager: ObservableObject {
         }
 
         lastResponse = response
+
+        // Si respondió "Ya voy", iniciar LiveTrack para el cliente
+        if responseType == .onMyWay,
+           let merchant = MerchantManager.shared.currentMerchantProfile,
+           let timbre = pendingTimbres.first(where: { $0.id == timbreId }) {
+            LiveTrackManager.shared.startTracking(timbre: timbre, merchant: merchant)
+        }
     }
 
     // MARK: - Computed

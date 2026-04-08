@@ -25,7 +25,9 @@ class PresenceManager: ObservableObject {
     private var isBroadcasting = false
 
     private init() {
-        loadMockPresences()
+        DispatchQueue.main.async { [self] in
+            loadMockPresences()
+        }
     }
 
     // MARK: - Merchant side

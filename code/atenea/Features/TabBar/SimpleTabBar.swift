@@ -67,10 +67,8 @@ struct SimpleTabBar: View {
                 .padding(.bottom, 4)
             }
             .frame(maxWidth: .infinity)
-            .background(
-                liquidGlassBackground
-                    .ignoresSafeArea(.container, edges: .bottom)
-            )
+            .background(liquidGlassBackground)
+            .padding(.bottom, 24)
             .animation(.spring(response: 0.4, dampingFraction: 0.85), value: selectedTab)
         }
     }

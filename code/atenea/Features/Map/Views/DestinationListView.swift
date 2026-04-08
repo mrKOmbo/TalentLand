@@ -13,25 +13,36 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var currentHeading: CLHeading?
 
     // Initializes the CLLocationManager and starts updating location
+    // Expo Santa Fe, CDMX — ubicación de demostración para el simulador
+    private static let expoSantaFe = CLLocationCoordinate2D(latitude: 19.3601, longitude: -99.2592)
+
     override init() {
         super.init()
+        #if targetEnvironment(simulator)
+        currentLocation = Self.expoSantaFe
+        print("📍 [Simulator] Ubicación forzada: Expo Santa Fe CDMX")
+        #endif
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
-        manager.headingFilter = 5 // Actualizar cuando cambie 5 grados o más
-        manager.requestWhenInUseAuthorization() // Request location access permission from the user
-        manager.startUpdatingLocation() // Start receiving location updates
-        manager.startUpdatingHeading() // Start receiving heading (compass) updates
-        print("✅ LocationManager: Iniciado con ubicación y brújula")
+        manager.headingFilter = 5
+        manager.requestWhenInUseAuthorization()
+        manager.startUpdatingLocation()
+        manager.startUpdatingHeading()
     }
 
-    // Delegate method called when location is updated
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        // Only update if we have a valid coordinate (not 0,0 and is valid)
+        #if targetEnvironment(simulator)
+        // En simulador ignoramos actualizaciones del sistema (San Francisco) y mantenemos Expo Santa Fe
+        if currentLocation == nil {
+            currentLocation = Self.expoSantaFe
+        }
+        #else
         if let location = locations.last?.coordinate,
            CLLocationCoordinate2DIsValid(location),
            !(location.latitude == 0.0 && location.longitude == 0.0) {
             currentLocation = location
         }
+        #endif
     }
 
     // Delegate method called when heading (compass) is updated

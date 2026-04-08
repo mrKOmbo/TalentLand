@@ -116,6 +116,10 @@ struct ContentView: View {
                                 .animation(.spring(response: 0.4, dampingFraction: 0.8), value: navigationStateManager.showDirections)
                             }
 
+                            // LiveTrack Dynamic Island — "Uber al revés"
+                            LiveTrackIslandView()
+                                .zIndex(50)
+
                             // Resplandor rojo ultrathink en todos los bordes (modo emergencia)
                             if emergencyManager.isEmergencyActive {
                                 EmergencyGlowOverlay()

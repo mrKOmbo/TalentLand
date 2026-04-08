@@ -30,6 +30,18 @@ class SalesHistoryManager: ObservableObject {
         return Double(cents) / 100.0
     }
 
+    func salesForMerchant(_ merchantId: UUID) -> [SaleRecord] {
+        sales.filter { $0.merchantId == merchantId }
+    }
+
+    func totalForMerchant(_ merchantId: UUID, days: Int = 30) -> Double {
+        let cutoff = Calendar.current.date(byAdding: .day, value: -days, to: Date())!
+        let cents = salesForMerchant(merchantId)
+            .filter { $0.createdAt > cutoff }
+            .reduce(0) { $0 + $1.amount }
+        return Double(cents) / 100.0
+    }
+
     // MARK: - Persistence
 
     private func saveSales() {
