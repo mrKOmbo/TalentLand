@@ -78,16 +78,8 @@ struct LoginView: View {
     }
 
     private var backgroundGradient: some View {
-        LinearGradient(
-            colors: [
-                Color.coppelBlue.opacity(0.05),
-                Color.white,
-                Color.coppelYellow.opacity(0.03)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-        .ignoresSafeArea()
+        Color.white
+            .ignoresSafeArea()
     }
 
     private var mainContent: some View {
@@ -113,7 +105,7 @@ struct LoginView: View {
             Spacer()
 
             Rectangle()
-                .fill(Color.gray.opacity(0.3))
+                .fill(Color.coppelDarkBlue.opacity(0.15))
                 .frame(width: 1, height: 32)
 
             Spacer()
@@ -165,16 +157,8 @@ struct LoginView: View {
                     .font(.system(size: 16, weight: .medium))
                     .foregroundStyle(
                         isWorldCupToday ?
-                            LinearGradient(
-                                colors: [.purple, .blue, .green],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ) :
-                            LinearGradient(
-                                colors: [.secondary, .secondary],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            LinearGradient(colors: [Color.coppelBlue, Color.coppelBlue]) :
+                            LinearGradient(colors: [Color.coppelDarkBlue, Color.coppelDarkBlue])
                     )
                     .rotationEffect(.degrees(isWorldCupToday ? 360 : 0))
                     .animation(.spring(response: 0.6, dampingFraction: 0.5), value: isWorldCupToday)
@@ -188,11 +172,7 @@ struct LoginView: View {
                                 startPoint: .leading,
                                 endPoint: .trailing
                             ) :
-                            LinearGradient(
-                                colors: [.secondary, .secondary],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
+                            LinearGradient(colors: [Color.coppelDarkBlue, Color.coppelDarkBlue])
                     )
             }
             .padding(.horizontal, 12)
@@ -302,7 +282,7 @@ struct LoginView: View {
                     .background(
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
                             .fill(selectedTab == 0 ? Color.white : Color.clear)
-                            .shadow(color: selectedTab == 0 ? Color.black.opacity(0.1) : Color.clear, radius: 4, x: 0, y: 2)
+                            .shadow(color: selectedTab == 0 ? Color.coppelDarkBlue.opacity(0.1) : Color.clear, radius: 4, x: 0, y: 2)
                     )
                 }
 
@@ -325,7 +305,7 @@ struct LoginView: View {
                     .background(
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
                             .fill(selectedTab == 1 ? Color.white : Color.clear)
-                            .shadow(color: selectedTab == 1 ? Color.black.opacity(0.1) : Color.clear, radius: 4, x: 0, y: 2)
+                            .shadow(color: selectedTab == 1 ? Color.coppelDarkBlue.opacity(0.1) : Color.clear, radius: 4, x: 0, y: 2)
                     )
                 }
             }
@@ -408,7 +388,7 @@ struct LoginView: View {
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+                    .shadow(color: Color.coppelDarkBlue.opacity(0.05), radius: 8, x: 0, y: 2)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -530,10 +510,10 @@ struct LoginView: View {
                 handleAppleLogin(result: result)
             }
         )
-        .signInWithAppleButtonStyle(.black)
+        .signInWithAppleButtonStyle(.white)
         .frame(height: 54)
         .cornerRadius(14)
-        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+        .shadow(color: .coppelDarkBlue.opacity(0.1), radius: 8, x: 0, y: 4)
         .accessibilityLabel(LocalizedString("login.appleSignIn"))
         .accessibilityHint(LocalizedString("login.appleSignInHint"))
     }
@@ -714,7 +694,7 @@ struct UserSelectionCard: View {
     }
 
     private var shadowColor: Color {
-        isSelected ? Color.coppelBlue.opacity(0.2) : Color.black.opacity(0.05)
+        isSelected ? Color.coppelBlue.opacity(0.2) : Color.coppelDarkBlue.opacity(0.05)
     }
 
     private var shadowRadius: CGFloat {
