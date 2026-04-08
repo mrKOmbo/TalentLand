@@ -135,87 +135,42 @@ struct LoginView: View {
                 isWorldCupToday.toggle()
             }
 
-            // Activar confetis cuando se marca como "Today is World Cup"
             if isWorldCupToday {
                 showConfetti = true
                 initializeConfetti()
                 startConfettiAnimation()
 
-                // Haptic feedback
                 let impact = UINotificationFeedbackGenerator()
                 impact.notificationOccurred(.success)
 
-                // Ocultar confetis después de 4 segundos
                 DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
                     showConfetti = false
                 }
             }
         }) {
             HStack(spacing: 6) {
-                // Animated checkmark with rotation
-                Image(systemName: isWorldCupToday ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(
-                        isWorldCupToday ?
-                            LinearGradient(colors: [Color.coppelBlue, Color.coppelBlue]) :
-                            LinearGradient(colors: [Color.coppelDarkBlue, Color.coppelDarkBlue])
-                    )
-                    .rotationEffect(.degrees(isWorldCupToday ? 360 : 0))
-                    .animation(.spring(response: 0.6, dampingFraction: 0.5), value: isWorldCupToday)
-
+                worldCupCheckmarkIcon
+                
                 Text(LocalizedString("login.worldCupToday"))
                     .font(.system(size: 13, weight: isWorldCupToday ? .semibold : .medium))
-                    .foregroundStyle(
-                        isWorldCupToday ?
-                            LinearGradient(
-                                colors: [.purple, .blue],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            ) :
-                            LinearGradient(colors: [Color.coppelDarkBlue, Color.coppelDarkBlue])
-                    )
+                    .foregroundColor(isWorldCupToday ? Color.coppelBlue : Color.coppelDarkBlue)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(
-                Capsule()
-                    .fill(isWorldCupToday ?
-                        LinearGradient(
-                            colors: [
-                                Color.purple.opacity(0.12),
-                                Color.blue.opacity(0.12),
-                                Color.green.opacity(0.12)
-                            ],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ) :
-                        LinearGradient(
-                            colors: [Color.gray.opacity(0.08), Color.gray.opacity(0.08)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-            )
-            .overlay(
-                ZStack {
-                    // Animated rainbow border
-                    if isWorldCupToday {
-                        RainbowBorderView()
-                            .clipShape(Capsule())
-                    } else {
-                        Capsule()
-                            .stroke(Color.clear, lineWidth: 1.5)
-                    }
-                }
-            )
-            .shadow(color: isWorldCupToday ? Color.purple.opacity(0.3) : Color.clear, radius: 8, x: 0, y: 2)
-            .shadow(color: isWorldCupToday ? Color.blue.opacity(0.2) : Color.clear, radius: 12, x: 0, y: 3)
+            .background(Color.coppelBlue.opacity(0.08))
+            .clipShape(Capsule())
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(LocalizedString("login.worldCupToday"))
         .accessibilityValue(isWorldCupToday ? LocalizedString("login.worldCupChecked") : LocalizedString("login.worldCupUnchecked"))
-        .accessibilityHint(LocalizedString("login.worldCupHint"))
-        .accessibilityAddTraits(.isButton)
+    }
+
+    private var worldCupCheckmarkIcon: some View {
+        Image(systemName: isWorldCupToday ? "checkmark.circle.fill" : "circle")
+            .font(.system(size: 16, weight: .medium))
+            .foregroundColor(isWorldCupToday ? Color.coppelBlue : Color.coppelDarkBlue)
+            .rotationEffect(.degrees(isWorldCupToday ? 360 : 0))
+            .animation(.spring(response: 0.6, dampingFraction: 0.5), value: isWorldCupToday)
     }
 
     private var utilityButtons: some View {
