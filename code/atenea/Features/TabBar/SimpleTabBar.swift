@@ -44,7 +44,7 @@ struct SimpleTabBar: View {
                 HStack(spacing: 8) {
                     TabBarItemCollapsible(
                         icon: "house.fill",
-                        label: LocalizedString("tab.home"),
+                        label: "Home",
                         isSelected: selectedTab == 0,
                         showLabel: showLabel && selectedTabForLabel == 0,
                         action: { handleTabTap(0) }
@@ -52,7 +52,7 @@ struct SimpleTabBar: View {
                     
                     TabBarItemCollapsible(
                         icon: "map.fill",
-                        label: LocalizedString("tab.map"),
+                        label: "Map",
                         isSelected: selectedTab == 1,
                         showLabel: showLabel && selectedTabForLabel == 1,
                         action: { handleTabTap(1) }
@@ -65,7 +65,7 @@ struct SimpleTabBar: View {
 
                     TabBarItemCollapsible(
                         icon: "person.3.fill",
-                        label: LocalizedString("tab.community"),
+                        label: "Community",
                         isSelected: selectedTab == 2,
                         showLabel: showLabel && selectedTabForLabel == 2,
                         action: { handleTabTap(2) }
@@ -73,7 +73,7 @@ struct SimpleTabBar: View {
                     
                     TabBarItemCollapsible(
                         icon: "square.grid.3x3.fill",
-                        label: LocalizedString("tab.more"),
+                        label: "More",
                         isSelected: selectedTab == 3,
                         showLabel: showLabel && selectedTabForLabel == 3,
                         action: { handleTabTap(3) }
@@ -160,8 +160,8 @@ struct TabBarItemCollapsible: View {
                 // Label (appears on tap)
                 if showLabel {
                     Text(label)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(activeGradient)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color(red: 0.051, green: 0.094, blue: 0.329))
                         .lineLimit(1)
                         .transition(.scale.combined(with: .opacity))
                 }
