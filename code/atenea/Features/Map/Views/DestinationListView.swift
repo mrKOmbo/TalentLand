@@ -56,6 +56,11 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("Failed to get location: \(error)") // Print error if location fails
     }
+
+    // Request location permission
+    func requestLocationPermission() {
+        manager.requestWhenInUseAuthorization()
+    }
 }
 
 // Represents a destination point with name and coordinates
