@@ -155,7 +155,7 @@ struct RegisterView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(LocalizedString("register.subtitle"))
                 .font(.coppelBody)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.coppelDarkBlue.opacity(0.6))
 
             Text(LocalizedString("register.title"))
                 .font(.coppelHeadline)
@@ -179,7 +179,7 @@ struct RegisterView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label)
                 .font(.coppelCaption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.coppelDarkBlue.opacity(0.6))
 
             TextField(placeholder, text: text)
                 .textFieldStyle(PlainTextFieldStyle())
@@ -207,7 +207,7 @@ struct RegisterView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(LocalizedString("register.age"))
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.coppelDarkBlue.opacity(0.6))
 
             Button(action: {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -221,13 +221,13 @@ struct RegisterView: View {
                 HStack {
                     Text(age.isEmpty ? LocalizedString("register.agePlaceholder") : age)
                         .font(.system(size: 16))
-                        .foregroundStyle(age.isEmpty ? .secondary : .primary)
+                        .foregroundStyle(age.isEmpty ? Color.coppelDarkBlue.opacity(0.6) : .primary)
 
                     Spacer()
 
                     Image(systemName: showingAgePicker ? "chevron.up" : "chevron.down")
                         .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.coppelDarkBlue.opacity(0.6))
                 }
                 .padding()
                 .background(
@@ -237,7 +237,7 @@ struct RegisterView: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(Color.gray.opacity(0.1), lineWidth: 1)
+                        .stroke(Color.coppelDarkBlue.opacity(0.1), lineWidth: 1)
                 )
             }
 
@@ -269,7 +269,7 @@ struct RegisterView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(LocalizedString("register.origin"))
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.coppelDarkBlue.opacity(0.6))
 
             Button(action: {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -289,7 +289,7 @@ struct RegisterView: View {
 
                     Image(systemName: showingCountryPicker ? "chevron.up" : "chevron.down")
                         .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.coppelDarkBlue.opacity(0.6))
                 }
                 .padding()
                 .background(
@@ -299,7 +299,7 @@ struct RegisterView: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(Color.gray.opacity(0.1), lineWidth: 1)
+                        .stroke(Color.coppelDarkBlue.opacity(0.1), lineWidth: 1)
                 )
             }
 
@@ -332,7 +332,7 @@ struct RegisterView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(LocalizedString("register.accessibility"))
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.coppelDarkBlue.opacity(0.6))
 
             Button(action: {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -362,7 +362,7 @@ struct RegisterView: View {
 
                     Image(systemName: showingAccessibilityPicker ? "chevron.up" : "chevron.down")
                         .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.coppelDarkBlue.opacity(0.6))
                 }
                 .padding()
                 .background(
@@ -372,7 +372,7 @@ struct RegisterView: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(Color.gray.opacity(0.1), lineWidth: 1)
+                        .stroke(Color.coppelDarkBlue.opacity(0.1), lineWidth: 1)
                 )
             }
 
@@ -452,7 +452,7 @@ struct RegisterView: View {
         HStack(spacing: 4) {
             Text(LocalizedString("register.alreadyHaveAccount"))
                 .font(.system(size: 15))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.coppelDarkBlue.opacity(0.6))
 
             Button(action: {
                 dismiss()
