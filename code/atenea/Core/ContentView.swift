@@ -31,6 +31,7 @@ struct ContentView: View {
     @State private var showARPosterScanner = false
     @State private var showScheduleModal = false
     @State private var showAccessibilityView = false
+    @State private var showSaleSheet = false
 
     @Environment(\.scenePhase) private var scenePhase
 
@@ -76,12 +77,15 @@ struct ContentView: View {
                             Group {
                                 switch selectedTab {
                                 case 0:
-                                    MainMapView(selectedTab: $selectedTab, isLoggedIn: $isLoggedIn)
+                                    HomeView(selectedTab: $selectedTab, pendingMerchantPlace: .constant(nil))
                                         .environmentObject(languageManager)
                                 case 1:
-                                    CommunityView(selectedTab: $selectedTab)
+                                    MainMapView(selectedTab: $selectedTab, isLoggedIn: $isLoggedIn)
                                         .environmentObject(languageManager)
                                 case 2:
+                                    CommunityView(selectedTab: $selectedTab)
+                                        .environmentObject(languageManager)
+                                case 3:
                                     StickerAlbumView(
                                         selectedTab: $selectedTab,
                                         collectionManager: collectionManager,
@@ -89,8 +93,10 @@ struct ContentView: View {
                                         showCollectionAnimation: $showCollectionAnimation
                                     )
                                     .environmentObject(languageManager)
+                                case 4:
+                                    MerchantStatsView()
                                 default:
-                                    MainMapView(selectedTab: $selectedTab, isLoggedIn: $isLoggedIn)
+                                    HomeView(selectedTab: $selectedTab, pendingMerchantPlace: .constant(nil))
                                         .environmentObject(languageManager)
                                 }
                             }
@@ -101,7 +107,7 @@ struct ContentView: View {
                                 VStack {
                                     Spacer()
 
-                                    SimpleTabBar(selectedTab: $selectedTab)
+                                    SimpleTabBar(selectedTab: $selectedTab, showSaleSheet: $showSaleSheet)
                                         .environmentObject(languageManager)
                                 }
                                 .zIndex(10)
@@ -165,6 +171,9 @@ struct ContentView: View {
                         NavigationView {
                             VenuesListView()
                         }
+                    }
+                    .sheet(isPresented: $showSaleSheet) {
+                        SaleFlowView()
                     }
                     .onChange(of: isLoggedIn) { _, newValue in
                         UserDefaults.standard.set(newValue, forKey: "isUserLoggedIn")
