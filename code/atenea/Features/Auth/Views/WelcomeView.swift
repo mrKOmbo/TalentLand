@@ -17,13 +17,17 @@ struct WelcomeView: View {
 
                 // 2. Contenido Principal
                 VStack(spacing: 0) {
+                    // Safe area superior (respeta Dynamic Island en iPhone 17)
+                    Spacer()
+                        .frame(height: 8)
+
                     // Sponsor Logos Section (Fundación Coppel + Divisor + Coppel Emprende)
                     sponsorLogosSection
                         .frame(height: 55)
-                        .padding(.top, 12)
                         .padding(.horizontal, 20)
 
                     Spacer()
+                        .frame(height: 24)
 
                     // Logo ATR y Títulos
                     VStack(spacing: 28) {
