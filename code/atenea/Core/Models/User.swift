@@ -10,12 +10,14 @@ import Foundation
 // MARK: - User Role
 enum UserRole: String, Codable {
     case admin = "admin"
+    case merchant = "merchant"
     case user = "user"
     case merchant = "merchant"
 
     var displayName: String {
         switch self {
         case .admin: return "Administrador"
+        case .merchant: return "Vendedor"
         case .user: return "Usuario"
         case .merchant: return "Comerciante"
         }

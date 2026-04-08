@@ -10,13 +10,37 @@ struct CollapsibleSearchBar: View {
 
     var body: some View {
         HStack(spacing: 0) {
+            // --- BOTÓN DE PERFIL ---
+            profileButton
+                .padding(.trailing, isExpanded ? 12 : 0)
+
+            // Este Spacer empuja la barra a la derecha cuando está colapsada
+            if !isExpanded { Spacer() }
+
             // --- CONTENEDOR PRINCIPAL DE BÚSQUEDA ---
-            ZStack(alignment: .leading) {
+            ZStack(alignment: .trailing) {
                 // Fondo que se expande: Al cambiar el frame, SwiftUI lo anima suavemente
                 liquidGlassBackground
                     .frame(width: isExpanded ? nil : 50, height: 50)
-                
+
                 HStack(spacing: 0) {
+                    // Elementos que aparecen solo al expandir
+                    if isExpanded {
+                        searchActionButtons
+                            .transition(.scale.combined(with: .opacity))
+                            .padding(.leading, 12)
+
+                        TextField("Buscar...", text: $searchViewModel.searchText)
+                            .textFieldStyle(.plain)
+                            .font(.system(size: 16))
+                            .focused($isSearchFocused)
+                            .autocorrectionDisabled()
+                            .transition(.opacity.combined(with: .move(edge: .trailing)))
+                            .onTapGesture {
+                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            }
+                    }
+
                     // Ícono de Lupa / Trofeo
                     // Usamos un frame fijo de 50 para que actúe como el "botón" cuando está colapsado
                     ZStack {
@@ -31,31 +55,8 @@ struct CollapsibleSearchBar: View {
                             toggleExpansion(true)
                         }
                     }
-
-                    // Elementos que aparecen solo al expandir
-                    if isExpanded {
-                        TextField("Buscar...", text: $searchViewModel.searchText)
-                            .textFieldStyle(.plain)
-                            .font(.system(size: 16))
-                            .focused($isSearchFocused)
-                            .autocorrectionDisabled()
-                            .transition(.opacity.combined(with: .move(edge: .leading)))
-                            .onTapGesture {
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                            }
-
-                        searchActionButtons
-                            .transition(.scale.combined(with: .opacity))
-                            .padding(.trailing, 12)
-                    }
                 }
             }
-            // Este Spacer empuja la barra a la izquierda cuando está colapsada
-            if !isExpanded { Spacer() }
-
-            // --- BOTÓN DE PERFIL ---
-            profileButton
-                .padding(.leading, isExpanded ? 12 : 0)
         }
         .padding(.horizontal, 16)
         .padding(.top, 56)

@@ -80,8 +80,9 @@ struct LoginView: View {
     private var backgroundGradient: some View {
         LinearGradient(
             colors: [
-                Color(red: 0.95, green: 0.97, blue: 1.0),
-                Color.white
+                Color.coppelBlue.opacity(0.05),
+                Color.white,
+                Color.coppelYellow.opacity(0.03)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -239,12 +240,12 @@ struct LoginView: View {
     private var titleSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(LocalizedString("login.welcome"))
-                .font(.system(size: 17, weight: .regular))
+                .font(.coppelBody)
                 .foregroundStyle(.secondary)
 
             Text(LocalizedString("login.appName"))
-                .font(.system(size: 40, weight: .bold))
-                .foregroundStyle(.primary)
+                .font(.coppelHeadline)
+                .foregroundStyle(Color.coppelDarkBlue)
         }
         .padding(.top, 20)
     }
@@ -357,7 +358,7 @@ struct LoginView: View {
             HStack(spacing: 12) {
                 Image(systemName: "envelope.fill")
                     .font(.system(size: 18))
-                    .foregroundStyle(.blue.opacity(0.7))
+                    .foregroundStyle(Color.coppelBlue.opacity(0.7))
 
                 ZStack(alignment: .leading) {
                     if searchEmail.isEmpty {
@@ -382,7 +383,7 @@ struct LoginView: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(searchEmail.isEmpty ? Color.clear : Color.blue.opacity(0.3), lineWidth: 1.5)
+                    .stroke(searchEmail.isEmpty ? Color.clear : Color.coppelBlue.opacity(0.3), lineWidth: 1.5)
             )
         }
         .padding(.top, 8)
@@ -422,7 +423,7 @@ struct LoginView: View {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: agreedToTerms ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 22))
-                    .foregroundStyle(agreedToTerms ? .blue : .secondary)
+                    .foregroundStyle(agreedToTerms ? Color.coppelBlue : .secondary)
                     .symbolRenderingMode(.hierarchical)
 
                 termsText
@@ -445,21 +446,21 @@ struct LoginView: View {
              Text(LocalizedString("login.and")) +
              Text(" ") +
              Text(LocalizedString("login.privacyLink")).bold())
-                .font(.system(size: 13))
+                .font(.coppelCaption)
                 .foregroundStyle(.secondary)
-                .tint(.blue)
+                .tint(.coppelBlue)
         }
     }
 
     private var continueButton: some View {
         Button(action: { handleEmailLogin() }) {
             Text(LocalizedString("login.continue"))
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(.white)
+                .font(.coppelCTA)
+                .foregroundStyle(Color.primaryTextInverted)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
                 .background(continueButtonBackground)
-                .shadow(color: canContinue ? Color.blue.opacity(0.3) : Color.clear, radius: 10, x: 0, y: 5)
+                .shadow(color: canContinue ? Color.coppelBlue.opacity(0.3) : Color.clear, radius: 10, x: 0, y: 5)
         }
         .disabled(!canContinue)
         .scaleEffect(CGFloat(canContinue ? 1.0 : 0.98))
@@ -470,8 +471,8 @@ struct LoginView: View {
     }
 
     private var continueButtonBackground: some View {
-        RoundedRectangle(cornerRadius: 14, style: .continuous)
-            .fill(canContinue ? Color.blue : Color.gray.opacity(0.3))
+        RoundedRectangle(cornerRadius: CoppelTheme.CornerRadius.lg, style: .continuous)
+            .fill(canContinue ? Color.coppelBlue : Color.coppelGrey.opacity(0.3))
     }
 
     private var divider: some View {
@@ -519,8 +520,8 @@ struct LoginView: View {
                 .navigationBarBackButtonHidden(false)
             ) {
                 Text(LocalizedString("login.signUp"))
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.blue)
+                    .font(.coppelCTA)
+                    .foregroundStyle(Color.coppelBlue)
             }
             .accessibilityLabel(LocalizedString("login.signUp"))
             .accessibilityHint(LocalizedString("login.signUpHint"))
@@ -547,6 +548,9 @@ struct LoginView: View {
         if userManager.loginUser(withEmail: emailToLogin) {
             if let loggedUser = userManager.currentUser {
                 print("✅ Usuario logueado: \(loggedUser.name) (\(loggedUser.role.displayName))")
+
+                // Guardar nombre del usuario para OnboardingWelcomeView
+                UserDefaults.standard.set(loggedUser.name, forKey: "currentUserName")
             }
 
             // Guardar estado del Mundial
@@ -576,9 +580,19 @@ struct LoginView: View {
                 if let email = email {
                     print("   Email: \(email)")
                 }
+
+                // Guardar nombre del usuario para OnboardingWelcomeView
+                var userName = "Usuario"
                 if let fullName = fullName {
-                    print("   Name: \(fullName.givenName ?? "") \(fullName.familyName ?? "")")
+                    let firstName = fullName.givenName ?? ""
+                    let lastName = fullName.familyName ?? ""
+                    userName = "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)
+                    if userName.isEmpty {
+                        userName = "Usuario"
+                    }
+                    print("   Name: \(userName)")
                 }
+                UserDefaults.standard.set(userName, forKey: "currentUserName")
 
                 // Save user info and log in
                 withAnimation {
@@ -632,17 +646,46 @@ struct UserSelectionCard: View {
     let action: () -> Void
 
     private var avatarGradient: LinearGradient {
-        LinearGradient(
-            colors: user.isAdmin ?
-                [Color.orange.opacity(0.8), Color.red.opacity(0.6)] :
-                [Color.blue.opacity(0.8), Color.cyan.opacity(0.6)],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
+        switch user.role {
+        case .admin:
+            return LinearGradient(
+                colors: [Color.coppelOrange.opacity(0.8), Color.coppelRed.opacity(0.6)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .merchant:
+            return LinearGradient(
+                colors: [Color.coppelPurple.opacity(0.8), Color.coppelPink.opacity(0.6)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .user:
+            return LinearGradient(
+                colors: [Color.coppelBlue.opacity(0.8), Color.coppelLightBlue.opacity(0.6)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
+
+    private var avatarColor: Color {
+        switch user.role {
+        case .admin: return .coppelOrange
+        case .merchant: return .coppelPurple
+        case .user: return .coppelBlue
+        }
+    }
+
+    private var roleIcon: String {
+        switch user.role {
+        case .admin: return "crown.fill"
+        case .merchant: return "bag.fill"
+        case .user: return "person.fill"
+        }
     }
 
     private var shadowColor: Color {
-        isSelected ? Color.blue.opacity(0.2) : Color.black.opacity(0.05)
+        isSelected ? Color.coppelBlue.opacity(0.2) : Color.black.opacity(0.05)
     }
 
     private var shadowRadius: CGFloat {
@@ -692,19 +735,10 @@ struct UserSelectionCard: View {
                     .clipShape(Circle())
                     .overlay(
                         Circle()
-                            .stroke(
-                                LinearGradient(
-                                    colors: user.isAdmin ?
-                                        [Color.orange.opacity(0.8), Color.red.opacity(0.6)] :
-                                        [Color.blue.opacity(0.8), Color.cyan.opacity(0.6)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 3
-                            )
+                            .stroke(avatarGradient, lineWidth: 3)
                     )
                     .shadow(
-                        color: (user.isAdmin ? Color.orange : Color.blue).opacity(0.3),
+                        color: avatarColor.opacity(0.3),
                         radius: 8,
                         x: 0,
                         y: 4
@@ -716,13 +750,13 @@ struct UserSelectionCard: View {
                         .fill(avatarGradient)
                         .frame(width: 56, height: 56)
                         .shadow(
-                            color: (user.isAdmin ? Color.orange : Color.blue).opacity(0.3),
+                            color: avatarColor.opacity(0.3),
                             radius: 8,
                             x: 0,
                             y: 4
                         )
 
-                    Image(systemName: user.isAdmin ? "crown.fill" : "person.fill")
+                    Image(systemName: roleIcon)
                         .font(.system(size: 24, weight: .semibold))
                         .foregroundStyle(.white)
                 }
@@ -747,19 +781,19 @@ struct UserSelectionCard: View {
     private var roleBadge: some View {
         Text(user.role.displayName)
             .font(.system(size: 12, weight: .medium))
-            .foregroundStyle(user.isAdmin ? .orange : .blue)
+            .foregroundStyle(avatarColor)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
             .background(
                 Capsule()
-                    .fill((user.isAdmin ? Color.orange : Color.blue).opacity(0.15))
+                    .fill(avatarColor.opacity(0.15))
             )
     }
 
     private var checkmarkView: some View {
         Image(systemName: "checkmark.circle.fill")
             .font(.system(size: 26))
-            .foregroundStyle(.blue)
+            .foregroundStyle(Color.coppelBlue)
             .transition(.scale.combined(with: .opacity))
     }
 
@@ -775,8 +809,8 @@ struct UserSelectionCard: View {
     }
 
     private var cardBorder: some View {
-        RoundedRectangle(cornerRadius: 16, style: .continuous)
-            .strokeBorder(isSelected ? Color.blue : Color.clear, lineWidth: 2)
+        RoundedRectangle(cornerRadius: CoppelTheme.CornerRadius.lg, style: .continuous)
+            .strokeBorder(isSelected ? Color.coppelBlue : Color.clear, lineWidth: 2)
     }
 }
 
