@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - Main Tab Bar
+// MARK: - Liquid Glass Bubble Tab Bar with Collapse Animation
 struct SimpleTabBar: View {
     @Binding var selectedTab: Int
     @Binding var showSaleSheet: Bool
@@ -8,10 +8,13 @@ struct SimpleTabBar: View {
     @ObservedObject private var userManager = UserManager.shared
 
     private var isMerchant: Bool { userManager.currentUser?.isMerchant == true || userManager.currentUser?.isAdmin == true }
+    
+    @State private var showLabel: Bool = false
+    @State private var selectedTabForLabel: Int = -1
 
     var body: some View {
         ZStack(alignment: .top) {
-            // Botón flotante de cobro (merchant/admin only)
+            // Floating action button (merchant/admin only)
             if isMerchant {
                 Button {
                     let generator = UIImpactFeedbackGenerator(style: .medium)
@@ -36,40 +39,56 @@ struct SimpleTabBar: View {
                 .zIndex(1)
             }
 
-            // Tab bar — se extiende hasta el fondo del safe area
+            // Compact bubble tab bar
             VStack(spacing: 0) {
-                HStack {
-                    SimpleTabBarItem(icon: "house.fill", isSelected: selectedTab == 0) {
-                        handleTabTap(0)
-                    }
-                    Spacer()
-                    SimpleTabBarItem(icon: "map.fill", isSelected: selectedTab == 1) {
-                        handleTabTap(1)
-                    }
-                    Spacer()
+                HStack(spacing: 8) {
+                    TabBarItemCollapsible(
+                        icon: "house.fill",
+                        label: "Home",
+                        isSelected: selectedTab == 0,
+                        showLabel: showLabel && selectedTabForLabel == 0,
+                        action: { handleTabTap(0) }
+                    )
+                    
+                    TabBarItemCollapsible(
+                        icon: "map.fill",
+                        label: "Map",
+                        isSelected: selectedTab == 1,
+                        showLabel: showLabel && selectedTabForLabel == 1,
+                        action: { handleTabTap(1) }
+                    )
 
                     // Espacio central para el botón flotante
                     if isMerchant {
                         Color.clear.frame(width: 56, height: 1)
-                        Spacer()
                     }
 
-                    SimpleTabBarItem(icon: "person.3.fill", isSelected: selectedTab == 2) {
-                        handleTabTap(2)
-                    }
-                    Spacer()
-                    SimpleTabBarItem(icon: "square.grid.3x3.fill", isSelected: selectedTab == 3) {
-                        handleTabTap(3)
-                    }
+                    TabBarItemCollapsible(
+                        icon: "person.3.fill",
+                        label: "Community",
+                        isSelected: selectedTab == 2,
+                        showLabel: showLabel && selectedTabForLabel == 2,
+                        action: { handleTabTap(2) }
+                    )
+                    
+                    TabBarItemCollapsible(
+                        icon: "square.grid.3x3.fill",
+                        label: "More",
+                        isSelected: selectedTab == 3,
+                        showLabel: showLabel && selectedTabForLabel == 3,
+                        action: { handleTabTap(3) }
+                    )
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 6)
-                .padding(.bottom, 4)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(liquidGlassBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
             }
             .frame(maxWidth: .infinity)
-            .background(liquidGlassBackground)
-            .padding(.bottom, 24)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
             .animation(.spring(response: 0.4, dampingFraction: 0.85), value: selectedTab)
+            .animation(.easeInOut(duration: 0.3), value: showLabel)
         }
     }
 
@@ -78,7 +97,17 @@ struct SimpleTabBar: View {
     private func handleTabTap(_ index: Int) {
         let generator = UIImpactFeedbackGenerator(style: .light)
         generator.impactOccurred()
+        
         selectedTab = index
+        selectedTabForLabel = index
+        
+        // Show label and collapse after delay
+        showLabel = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            withAnimation {
+                showLabel = false
+            }
+        }
     }
 
     // MARK: - Liquid Glass Background
@@ -86,7 +115,7 @@ struct SimpleTabBar: View {
     private var liquidGlassBackground: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 32, style: .continuous)
-                .fill(.ultraThickMaterial)
+                .fill(.ultraThinMaterial)
             
             RoundedRectangle(cornerRadius: 32, style: .continuous)
                 .fill(
@@ -105,32 +134,56 @@ struct SimpleTabBar: View {
                     lineWidth: 0.5
                 )
         }
-        .shadow(color: Color.black.opacity(0.12), radius: 16, x: 0, y: 8)
+        .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 4)
     }
 }
 
-// MARK: - Tab Item
-struct SimpleTabBarItem: View {
+// MARK: - Collapsible Tab Item
+struct TabBarItemCollapsible: View {
     let icon: String
+    let label: String
     let isSelected: Bool
+    let showLabel: Bool
     let action: () -> Void
+
+    @State private var isPressed = false
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: icon)
-                .font(.system(size: 22, weight: .medium))
-                .foregroundStyle(isSelected ? activeGradient : inactiveGradient)
-                .padding(10)
-                .background(
-                    Circle()
-                        .fill(isSelected ? Color.blue.opacity(0.12) : Color.clear)
-                )
+            ZStack {
+                // Icon
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(isSelected ? activeGradient : inactiveGradient)
+                    .opacity(showLabel ? 0 : 1)
+
+                // Label (appears on tap)
+                if showLabel {
+                    Text(label)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color(red: 0.051, green: 0.094, blue: 0.329))
+                        .lineLimit(1)
+                        .transition(.scale.combined(with: .opacity))
+                }
+            }
+            .frame(height: 40)
+            .frame(maxWidth: showLabel ? 80 : 40)
+            .background(
+                Capsule()
+                    .fill(isSelected ? Color.blue.opacity(0.12) : Color.clear)
+            )
+            .scaleEffect(CGSize(width: isPressed ? 0.9 : 1.0, height: isPressed ? 0.9 : 1.0))
         }
         .buttonStyle(.plain)
+        .onLongPressGesture(minimumDuration: 0.05, pressing: { pressing in
+            withAnimation(.easeInOut(duration: 0.1)) {
+                isPressed = pressing
+            }
+        }, perform: {})
     }
 
     private var activeGradient: LinearGradient {
-        LinearGradient(colors: [.blue, .cyan], startPoint: .topLeading, endPoint: .bottomTrailing)
+        LinearGradient(colors: [.coppelBlue, .coppelLightBlue], startPoint: .topLeading, endPoint: .bottomTrailing)
     }
 
     private var inactiveGradient: LinearGradient {

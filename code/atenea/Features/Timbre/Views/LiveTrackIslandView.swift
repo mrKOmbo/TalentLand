@@ -19,6 +19,8 @@ struct LiveTrackIslandView: View {
     var body: some View {
         if tracker.isTracking {
             VStack {
+                Spacer()
+
                 Button {
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
                         isExpanded.toggle()
@@ -31,10 +33,10 @@ struct LiveTrackIslandView: View {
                     }
                 }
                 .buttonStyle(.plain)
-
-                Spacer()
+                .padding(.horizontal, 16)
+                .padding(.bottom, 100)
             }
-            .padding(.top, 8)
+            .ignoresSafeArea()
             .transition(.move(edge: .top).combined(with: .opacity))
             .onAppear {
                 withAnimation(.easeOut(duration: 0.5).delay(0.2)) {
@@ -125,6 +127,16 @@ struct LiveTrackIslandView: View {
         VStack(spacing: 14) {
             // Header
             HStack(spacing: 12) {
+                Button {
+                    withAnimation { tracker.stopTracking() }
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 22))
+                        .foregroundColor(.white.opacity(0.3))
+                }
+
+                Spacer()
+
                 ZStack {
                     if !tracker.hasArrived {
                         Circle()
@@ -144,16 +156,6 @@ struct LiveTrackIslandView: View {
                     Text(tracker.merchantCategory)
                         .font(.system(size: 12))
                         .foregroundColor(.white.opacity(0.5))
-                }
-
-                Spacer()
-
-                Button {
-                    withAnimation { tracker.stopTracking() }
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 22))
-                        .foregroundColor(.white.opacity(0.3))
                 }
             }
 

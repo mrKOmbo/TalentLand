@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreLocation
 
 struct RoleSelectionView: View {
     @EnvironmentObject var languageManager: LanguageManager
@@ -15,18 +16,27 @@ struct RoleSelectionView: View {
 
     @State private var showMerchantRegistration = false
     @State private var showIdentityVerificationDialog = false
+    @StateObject private var locationManager = LocationManager()
 
     var body: some View {
         ZStack {
             backgroundGradient
 
-            VStack(spacing: 32) {
+            VStack(spacing: 0) {
+                progressBar
+                    .padding(.horizontal, 24)
+                    .padding(.top, 16)
+                    .padding(.bottom, 24)
+
                 headerSection
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 32)
+
                 roleCardsSection
+                    .padding(.horizontal, 24)
+
                 Spacer()
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 40)
         }
         .navigationBarBackButtonHidden(true)
         .navigationDestination(isPresented: $showMerchantRegistration) {
@@ -47,54 +57,64 @@ struct RoleSelectionView: View {
         } message: {
             Text("Para acceder a todas las funciones de Atenea, te recomendamos verificar tu identidad. ¿Deseas hacerlo ahora?")
         }
-            .safeAreaInset(edge: .top, spacing: 0) {
-                sponsorLogosSection
-                    .frame(height: 55)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-            }
     }
 
     // MARK: - View Components
 
-    private var sponsorLogosSection: some View {
-        HStack(spacing: 0) {
-            Image("Fundacion-Coppel-Logo")
-                .resizable()
-                .scaledToFit()
-                .frame(height: 32)
-
-            Spacer()
-
-            Rectangle()
-                .fill(Color.coppelDarkBlue.opacity(0.15))
-                .frame(width: 1, height: 32)
-
-            Spacer()
-
-            Image("Coppel-Emprende-Logo")
-                .resizable()
-                .scaledToFit()
-                .frame(height: 32)
-        }
-        .frame(maxWidth: .infinity)
+    private var backgroundGradient: some View {
+        LinearGradient(
+            gradient: Gradient(colors: [
+                Color.coppelBlue,
+                Color.coppelBlue.opacity(0.85)
+            ]),
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        .ignoresSafeArea()
     }
 
-    private var backgroundGradient: some View {
-        Color.white
-            .ignoresSafeArea()
+    private var progressBar: some View {
+        VStack(alignment: .center, spacing: 12) {
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    // Background track
+                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                        .fill(Color.white.opacity(0.25))
+
+                    // Progress fill (50% for step 1 of 2)
+                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    Color(red: 1.0, green: 0.824, blue: 0.141),
+                                    Color(red: 1.0, green: 0.549, blue: 0.306)
+                                ]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: geometry.size.width * 0.5)
+                }
+                .frame(height: 6)
+            }
+            .frame(height: 6)
+
+            Text("Paso 1 de 2")
+                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .foregroundStyle(Color.white.opacity(0.85))
+        }
     }
 
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("¿Cómo quieres usar Atenea?")
-                .font(.coppelHeader)
-                .foregroundStyle(Color.coppelDarkBlue)
+                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .foregroundStyle(Color.white)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text("Elige el perfil que mejor describa cómo planeas usar la aplicación. Podrás cambiar esto después en tu configuración.")
-                .font(.coppelBody)
-                .foregroundStyle(Color.coppelDarkBlue.opacity(0.6))
+                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .foregroundStyle(Color.white.opacity(0.85))
                 .fixedSize(horizontal: false, vertical: true)
                 .lineSpacing(4)
         }
@@ -105,29 +125,21 @@ struct RoleSelectionView: View {
         VStack(spacing: 20) {
             // User Role Card
             RoleCard(
-                title: "Soy Cliente",
-                description: "Quiero descubrir y encontrar comerciantes cerca de mí durante el Mundial",
+                title: "Soy cliente",
+                description: "Quiero descubrir y encontrar comerciantes cerca de mí durante el Mundial.",
                 features: ["Navega con AR", "Recomendaciones IA", "Mensajes directos"],
-                icon: "person.fill",
-                gradient: LinearGradient(
-                    colors: [Color.coppelBlue, Color.coppelLightBlue],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
+                icon: "person.crop.circle.fill",
+                accentColor: Color(red: 1.0, green: 0.824, blue: 0.141),
                 action: { handleUserRoleSelection() }
             )
 
             // Merchant Role Card
             RoleCard(
-                title: "Soy Comerciante",
-                description: "Quiero dar a conocer mi negocio y atraer más clientes",
+                title: "Soy comerciante",
+                description: "Quiero dar a conocer mi negocio y atraer más clientes.",
                 features: ["Ubicación en tiempo real", "Gestión de productos", "Zona de demanda"],
-                icon: "bag.fill",
-                gradient: LinearGradient(
-                    colors: [Color.coppelPurple, Color.coppelPink],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
+                icon: "briefcase.fill",
+                accentColor: Color(red: 0.112, green: 0.659, blue: 0.957),
                 action: { handleMerchantRoleSelection() }
             )
         }
@@ -141,15 +153,33 @@ struct RoleSelectionView: View {
     }
 
     private func completeUserRegistration() {
+        // Request location permission
+        locationManager.requestLocationPermission()
+
+        // Get current location
+        let currentLocation: UserLocation?
+        if let location = locationManager.currentLocation {
+            currentLocation = UserLocation(
+                latitude: location.latitude,
+                longitude: location.longitude,
+                timestamp: Date(),
+                address: nil
+            )
+        } else {
+            currentLocation = nil
+        }
+
         // Create user with user role
-        let newUser = User(
+        var newUser = User(
             email: userInfo.email,
             name: userInfo.fullName,
             role: .user,
             accessibilityOption: userInfo.accessibilityOption,
             age: userInfo.age,
             country: userInfo.country,
-            phoneNumber: userInfo.phoneNumber
+            phoneNumber: userInfo.phoneNumber,
+            currentLocation: currentLocation,
+            routeHistory: currentLocation != nil ? [currentLocation!] : []
         )
 
         // Save user
@@ -181,39 +211,37 @@ struct RoleCard: View {
     let description: String
     let features: [String]
     let icon: String
-    let gradient: LinearGradient
+    let accentColor: Color
     let action: () -> Void
 
     @State private var isPressed = false
 
     var body: some View {
-        Button(action: {
-            let generator = UIImpactFeedbackGenerator(style: .medium)
-            generator.impactOccurred()
-            action()
+        Button(role: .none, action: {
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) {
+                action()
+            }
         }) {
             VStack(alignment: .leading, spacing: 20) {
                 HStack(alignment: .top, spacing: 16) {
-                    ZStack {
-                        Circle()
-                            .fill(gradient)
-                            .frame(width: 64, height: 64)
-                            .shadow(color: Color.black.opacity(0.2), radius: 12, x: 0, y: 4)
-
-                        Image(systemName: icon)
-                            .font(.system(size: 30, weight: .semibold))
-                            .foregroundStyle(.white)
-                    }
+                    Image(systemName: icon)
+                        .font(.system(size: 44, weight: .semibold))
+                        .foregroundStyle(accentColor)
+                        .frame(width: 64, height: 64)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(accentColor.opacity(0.12))
+                        )
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text(title)
-                            .font(.coppelSubheader)
-                            .foregroundStyle(Color.coppelDarkBlue)
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundStyle(Color(red: 0.051, green: 0.094, blue: 0.329))
                             .fixedSize(horizontal: false, vertical: true)
 
                         Text(description)
-                            .font(.coppelBodySmall)
-                            .foregroundStyle(Color.coppelDarkBlue.opacity(0.6))
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundStyle(Color(red: 0.051, green: 0.094, blue: 0.329).opacity(0.65))
                             .fixedSize(horizontal: false, vertical: true)
                             .lineSpacing(2)
                     }
@@ -225,12 +253,12 @@ struct RoleCard: View {
                     ForEach(features, id: \.self) { feature in
                         HStack(spacing: 10) {
                             Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 16))
-                                .foregroundStyle(gradient)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(accentColor)
 
                             Text(feature)
-                                .font(.coppelBodySmall)
-                                .foregroundStyle(Color.primaryText.opacity(0.8))
+                                .font(.system(size: 13, weight: .medium, design: .rounded))
+                                .foregroundStyle(Color(red: 0.051, green: 0.094, blue: 0.329).opacity(0.75))
                         }
                     }
                 }
@@ -240,25 +268,22 @@ struct RoleCard: View {
                     Spacer()
                     HStack(spacing: 6) {
                         Text("Seleccionar")
-                            .font(.coppelCTA)
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundStyle(accentColor)
                         Image(systemName: "arrow.right")
                             .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(accentColor)
                     }
-                    .foregroundStyle(gradient)
                 }
             }
             .padding(24)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
-                RoundedRectangle(cornerRadius: CoppelTheme.CornerRadius.xl, style: .continuous)
-                    .fill(.white)
-                    .shadow(color: .black.opacity(0.08), radius: 16, x: 0, y: 6)
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(Color.white)
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: CoppelTheme.CornerRadius.xl, style: .continuous)
-                    .strokeBorder(gradient.opacity(0.3), lineWidth: 2)
-            )
-            .scaleEffect(CGSize(width: isPressed ? 0.98 : 1.0, height: isPressed ? 0.98 : 1.0))
+            .shadow(color: Color(red: 0.051, green: 0.094, blue: 0.329).opacity(0.12), radius: 12, x: 0, y: 6)
+            .scaleEffect(CGSize(width: isPressed ? 0.97 : 1.0, height: isPressed ? 0.97 : 1.0))
         }
         .buttonStyle(.plain)
         .simultaneousGesture(
@@ -275,17 +300,6 @@ struct RoleCard: View {
                 }
         )
     }
-}
-
-// MARK: - User Registration Info Model
-
-struct UserRegistrationInfo {
-    let fullName: String
-    let age: String
-    let country: String
-    let email: String
-    let phoneNumber: String
-    let accessibilityOption: AccessibilityOption
 }
 
 // MARK: - Preview
@@ -307,10 +321,3 @@ struct UserRegistrationInfo {
     }
 }
 
-// MARK: - Identity Verification Alert
-
-extension RoleSelectionView {
-    private func showIdentityVerificationAlert() {
-        // Placeholder for future identity verification implementation
-    }
-}

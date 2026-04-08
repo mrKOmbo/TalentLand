@@ -6,17 +6,8 @@ struct CollapsibleSearchBar: View {
     @FocusState.Binding var isSearchFocused: Bool
     @Binding var isWorldCupToday: Bool
 
-    let onMenuTap: () -> Void
-
     var body: some View {
         HStack(spacing: 0) {
-            // --- BOTÓN DE PERFIL ---
-            profileButton
-                .padding(.trailing, isExpanded ? 12 : 0)
-
-            // Este Spacer empuja la barra a la derecha cuando está colapsada
-            if !isExpanded { Spacer() }
-
             // --- CONTENEDOR PRINCIPAL DE BÚSQUEDA ---
             ZStack(alignment: .trailing) {
                 // Fondo que se expande: Al cambiar el frame, SwiftUI lo anima suavemente
@@ -24,25 +15,7 @@ struct CollapsibleSearchBar: View {
                     .frame(width: isExpanded ? nil : 50, height: 50)
 
                 HStack(spacing: 0) {
-                    // Elementos que aparecen solo al expandir
-                    if isExpanded {
-                        searchActionButtons
-                            .transition(.scale.combined(with: .opacity))
-                            .padding(.leading, 12)
-
-                        TextField("Buscar...", text: $searchViewModel.searchText)
-                            .textFieldStyle(.plain)
-                            .font(.system(size: 16))
-                            .focused($isSearchFocused)
-                            .autocorrectionDisabled()
-                            .transition(.opacity.combined(with: .move(edge: .trailing)))
-                            .onTapGesture {
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                            }
-                    }
-
-                    // Ícono de Lupa / Trofeo
-                    // Usamos un frame fijo de 50 para que actúe como el "botón" cuando está colapsado
+                    // Ícono de Lupa / Trofeo (siempre a la izquierda)
                     ZStack {
                         Image(systemName: isExpanded && isWorldCupToday ? "trophy.fill" : "magnifyingglass")
                             .font(.system(size: isExpanded ? 18 : 20, weight: .medium))
@@ -55,10 +28,31 @@ struct CollapsibleSearchBar: View {
                             toggleExpansion(true)
                         }
                     }
+
+                    // Elementos que aparecen solo al expandir
+                    if isExpanded {
+                        TextField("Buscar...", text: $searchViewModel.searchText)
+                            .textFieldStyle(.plain)
+                            .font(.system(size: 16))
+                            .focused($isSearchFocused)
+                            .autocorrectionDisabled()
+                            .transition(.opacity.combined(with: .move(edge: .trailing)))
+                            .onTapGesture {
+                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            }
+                            .padding(.leading, 8)
+
+                        Spacer()
+
+                        searchActionButtons
+                            .transition(.scale.combined(with: .opacity))
+                            .padding(.trailing, 12)
+                    }
                 }
             }
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, isExpanded ? 0 : 16)
+        .padding(.leading, isExpanded ? 16 : 0)
         .padding(.top, 56)
         // La clave de la fluidez: Una respuesta rápida (0.35) y sin rebote excesivo (0.85)
         .animation(.spring(response: 0.35, dampingFraction: 0.85), value: isExpanded)
@@ -153,34 +147,6 @@ struct CollapsibleSearchBar: View {
             }
         }
         .shadow(color: Color.black.opacity(0.12), radius: 16, x: 0, y: 8)
-    }
-
-    private var profileButton: some View {
-        Button(action: {
-            onMenuTap()
-            isSearchFocused = false
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        }) {
-            ZStack {
-                // Mismo efecto de fondo que la barra para consistencia
-                Circle()
-                    .fill(.ultraThickMaterial)
-                    .frame(width: 50, height: 50)
-                    .overlay(
-                        Circle()
-                            .strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5)
-                    )
-                
-                Circle()
-                    .fill(LinearGradient(colors: [.blue, .cyan], startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(width: 38, height: 38)
-
-                Image(systemName: "person.fill")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
-        }
-        .buttonStyle(.plain)
     }
 
     private var celebrationStarsOverlay: some View {

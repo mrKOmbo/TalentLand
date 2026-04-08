@@ -13,7 +13,7 @@ struct ContentView: View {
     @ObservedObject private var emergencyManager = EmergencyModeManager.shared
     @ObservedObject private var navigationStateManager = NavigationStateManager.shared
     @State private var menuState = MenuStateManager.shared
-    @State private var showSplash = true  // Mostrar SplashScreen al inicio
+    @State private var showSplash = false  // Mostrar SplashScreen al inicio
     @State private var showOnboarding = !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
     @State private var showOnboardingWelcome = false  // Pantalla de bienvenida personalizada
     @State private var isLoggedIn: Bool = UserDefaults.standard.bool(forKey: "isUserLoggedIn")
@@ -22,14 +22,12 @@ struct ContentView: View {
     @State private var lastCollectedVenue: WorldCupVenue?
     @State private var showCollectionAnimation = false
 
-    // Estados para modales del nuevo menú
+    // Estados para modales del menú
     @State private var showProfileView = false
     @State private var showSettingsView = false
     @State private var showFavoritesView = false
     @State private var showHelpView = false
     @State private var showVenuesView = false
-    @State private var showARPosterScanner = false
-    @State private var showScheduleModal = false
     @State private var showAccessibilityView = false
     @State private var showSaleSheet = false
 
@@ -145,12 +143,6 @@ struct ContentView: View {
                     }
                     .onShowVenues {
                         showVenuesView = true
-                    }
-                    .onShowARScanner {
-                        showARPosterScanner = true
-                    }
-                    .onShowSchedule {
-                        showScheduleModal = true
                     }
                     .onAccessibility {
                         showAccessibilityView = true

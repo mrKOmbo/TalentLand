@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CoreLocation
 
 // MARK: - User Role
 enum UserRole: String, Codable {
@@ -22,6 +23,14 @@ enum UserRole: String, Codable {
     }
 }
 
+// MARK: - User Location
+struct UserLocation: Codable {
+    let latitude: Double
+    let longitude: Double
+    let timestamp: Date
+    let address: String?
+}
+
 // MARK: - User Model
 struct User: Codable, Identifiable {
     let id: UUID
@@ -34,8 +43,10 @@ struct User: Codable, Identifiable {
     let country: String?
     let phoneNumber: String?
     let profileImage: String?
+    var currentLocation: UserLocation?
+    var routeHistory: [UserLocation]
 
-    init(id: UUID = UUID(), email: String, name: String, role: UserRole, createdAt: Date = Date(), accessibilityOption: AccessibilityOption = .none, age: String? = nil, country: String? = nil, phoneNumber: String? = nil, profileImage: String? = nil) {
+    init(id: UUID = UUID(), email: String, name: String, role: UserRole, createdAt: Date = Date(), accessibilityOption: AccessibilityOption = .none, age: String? = nil, country: String? = nil, phoneNumber: String? = nil, profileImage: String? = nil, currentLocation: UserLocation? = nil, routeHistory: [UserLocation] = []) {
         self.id = id
         self.email = email
         self.name = name
@@ -46,6 +57,8 @@ struct User: Codable, Identifiable {
         self.country = country
         self.phoneNumber = phoneNumber
         self.profileImage = profileImage
+        self.currentLocation = currentLocation
+        self.routeHistory = routeHistory
     }
 
     // Verificar si el usuario es administrador
