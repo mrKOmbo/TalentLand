@@ -12,24 +12,14 @@ struct WelcomeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // 1. Fondo con Gradiente Radial
+                // Fondo con Gradiente Radial
                 backgroundView
 
-                // 2. Contenido Principal
+                // Contenido Principal
                 VStack(spacing: 0) {
-                    // Safe area superior (respeta Dynamic Island en iPhone 17)
                     Spacer()
-                        .frame(height: 8)
 
-                    // Sponsor Logos Section (Fundación Coppel + Divisor + Coppel Emprende)
-                    sponsorLogosSection
-                        .frame(height: 55)
-                        .padding(.horizontal, 20)
-
-                    Spacer()
-                        .frame(height: 24)
-
-                    // Logo ATR y Títulos
+                    // Logo ATR y Títulos (centrado)
                     VStack(spacing: 28) {
                         brandIcon
 
@@ -57,6 +47,13 @@ struct WelcomeView: View {
                 .padding(.horizontal, 30)
             }
             .ignoresSafeArea()
+            // Sponsor Logos debajo de la Dynamic Island
+            .safeAreaInset(edge: .top, spacing: 0) {
+                sponsorLogosSection
+                    .frame(height: 55)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+            }
         }
     }
 
@@ -120,18 +117,15 @@ struct WelcomeView: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: 55)
+        .background(Color.coppelDarkBlue.opacity(0.3))
     }
 
     private var brandIcon: some View {
-        Text("ATR")
-            .font(.system(size: 22, weight: .black, design: .rounded))
-            .foregroundColor(.coppelBlue)
-            .frame(width: 80, height: 80)
-            .background(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(Color.coppelYellow)
-                    .shadow(color: Color.coppelYellow.opacity(0.3), radius: 20, x: 0, y: 10)
-            )
+        Image("Atenea-Logo")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 100, height: 100)
+            .shadow(color: Color.black.opacity(0.3), radius: 20, x: 0, y: 10)
     }
 
     private var actionSection: some View {
