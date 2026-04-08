@@ -95,6 +95,35 @@ struct LoginView: View {
             headerView
             scrollableContent
         }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            sponsorLogosSection
+                .frame(height: 55)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+        }
+    }
+
+    private var sponsorLogosSection: some View {
+        HStack(spacing: 0) {
+            Image("Fundacion-Coppel-Logo")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 32)
+
+            Spacer()
+
+            Rectangle()
+                .fill(Color.gray.opacity(0.3))
+                .frame(width: 1, height: 32)
+
+            Spacer()
+
+            Image("Coppel-Emprende-Logo")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 32)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     private var headerView: some View {
@@ -812,6 +841,34 @@ struct UserSelectionCard: View {
         RoundedRectangle(cornerRadius: CoppelTheme.CornerRadius.lg, style: .continuous)
             .strokeBorder(isSelected ? Color.coppelBlue : Color.clear, lineWidth: 2)
     }
+    private var sponsorLogosSection: some View {
+        HStack(spacing: 0) {
+            // Fundación Coppel (izquierda)
+            // [Asset: FundacionCoppelLogoWhite]
+            Image("Fundacion-Coppel-Logo")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 32)
+
+            Spacer()
+
+            // Divisor vertical fino en white
+            Rectangle()
+                .fill(Color.white.opacity(0.4))
+                .frame(width: 1, height: 32)
+
+            Spacer()
+
+            // Coppel Emprende (derecha)
+            // [Asset: CoppelEmprendeLogoWhite]
+            Image("Coppel-Emprende-Logo")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 48)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
 }
 
 // MARK: - Rainbow Border Component

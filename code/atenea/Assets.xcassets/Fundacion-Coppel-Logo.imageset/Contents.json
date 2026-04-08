@@ -1,27 +1,27 @@
 {
-  "images": [
+  "images" : [
     {
-      "filename": "Fundacion-Coppel-Logo.png",
-      "idiom": "universal",
-      "scale": "1x"
+      "filename" : "Fundacion Coppel- (2).png",
+      "idiom" : "universal",
+      "scale" : "1x"
     },
     {
-      "filename": "Fundacion-Coppel-Logo@2x.png",
-      "idiom": "universal",
-      "scale": "2x"
+      "filename" : "Fundacion Coppel- (2) 1.png",
+      "idiom" : "universal",
+      "scale" : "2x"
     },
     {
-      "filename": "Fundacion-Coppel-Logo@3x.png",
-      "idiom": "universal",
-      "scale": "3x"
+      "filename" : "Fundacion Coppel- (2) 2.png",
+      "idiom" : "universal",
+      "scale" : "3x"
     }
   ],
-  "info": {
-    "author": "xcode",
-    "version": 1
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
   },
-  "properties": {
-    "preserves-vector-representation": true,
-    "template-rendering-intent": "original"
+  "properties" : {
+    "preserves-vector-representation" : true,
+    "template-rendering-intent" : "original"
   }
 }
