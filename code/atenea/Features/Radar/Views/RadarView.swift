@@ -95,71 +95,11 @@ struct RadarView: View {
             let maxRadius = min(geo.size.width, geo.size.height) / 2 - 10
 
             ZStack {
-                // Círculos concéntricos
-                ForEach(1...3, id: \.self) { ring in
-                    Circle()
-                        .stroke(Color.green.opacity(0.15), lineWidth: 1)
-                        .frame(width: maxRadius * 2 * CGFloat(ring) / 3,
-                               height: maxRadius * 2 * CGFloat(ring) / 3)
-                }
-
-                // Cruz central
-                Path { path in
-                    path.move(to: CGPoint(x: center.x, y: center.y - maxRadius))
-                    path.addLine(to: CGPoint(x: center.x, y: center.y + maxRadius))
-                }
-                .stroke(Color.green.opacity(0.1), lineWidth: 0.5)
-
-                Path { path in
-                    path.move(to: CGPoint(x: center.x - maxRadius, y: center.y))
-                    path.addLine(to: CGPoint(x: center.x + maxRadius, y: center.y))
-                }
-                .stroke(Color.green.opacity(0.1), lineWidth: 0.5)
-
-                // Línea de barrido (sweep)
-                if radarService.isScanning {
-                    RadarSweepLine(center: center, radius: maxRadius, rotation: radarRotation)
-                }
-
-                // Punto central (yo)
-                Circle()
-                    .fill(Color.blue)
-                    .frame(width: 12, height: 12)
-                    .shadow(color: .blue.opacity(0.5), radius: 6)
-                    .position(center)
-
-                // Peers descubiertos como blips
-                ForEach(Array(radarService.discoveredMerchants.enumerated()), id: \.element.id) { index, peer in
-                    let angle = Double(index) * (360.0 / max(Double(radarService.discoveredMerchants.count), 1)) * .pi / 180
-                    let ringFraction: CGFloat = peer.signalStrength == .strong ? 0.35 : peer.signalStrength == .medium ? 0.55 : 0.75
-                    let x = center.x + cos(angle) * maxRadius * ringFraction
-                    let y = center.y + sin(angle) * maxRadius * ringFraction
-
-                    Button {
-                        selectedPeer = peer
-                    } label: {
-                        RadarBlip(peer: peer)
-                    }
-                    .buttonStyle(.plain)
-                    .position(x: x, y: y)
-                    .transition(.scale.combined(with: .opacity))
-                }
-
-                // Etiquetas de distancia
-                Text("~30m")
-                    .font(.system(size: 9))
-                    .foregroundColor(.green.opacity(0.3))
-                    .position(x: center.x + maxRadius / 3, y: center.y - 8)
-
-                Text("~60m")
-                    .font(.system(size: 9))
-                    .foregroundColor(.green.opacity(0.3))
-                    .position(x: center.x + maxRadius * 2 / 3, y: center.y - 8)
-
-                Text("~100m")
-                    .font(.system(size: 9))
-                    .foregroundColor(.green.opacity(0.3))
-                    .position(x: center.x + maxRadius - 5, y: center.y - 8)
+                radarGrid(center: center, maxRadius: maxRadius)
+                radarSweep(center: center, maxRadius: maxRadius)
+                radarCenterDot(center: center)
+                radarPeers(center: center, maxRadius: maxRadius)
+                radarLabels(center: center, maxRadius: maxRadius)
             }
         }
         .onAppear {
@@ -169,7 +109,104 @@ struct RadarView: View {
         }
     }
 
+    private func radarGrid(center: CGPoint, maxRadius: CGFloat) -> some View {
+        ZStack {
+            // Círculos concéntricos
+            ForEach([1,2,3], id: \.self) { ring in
+                Circle()
+                    .stroke(Color.green.opacity(0.15), lineWidth: 1)
+                    .frame(width: maxRadius * 2 * CGFloat(ring) / 3,
+                           height: maxRadius * 2 * CGFloat(ring) / 3)
+            }
+
+            // Cruz central vertical
+            Path { path in
+                path.move(to: CGPoint(x: center.x, y: center.y - maxRadius))
+                path.addLine(to: CGPoint(x: center.x, y: center.y + maxRadius))
+            }
+            .stroke(Color.green.opacity(0.1), lineWidth: 0.5)
+
+            // Cruz central horizontal
+            Path { path in
+                path.move(to: CGPoint(x: center.x - maxRadius, y: center.y))
+                path.addLine(to: CGPoint(x: center.x + maxRadius, y: center.y))
+            }
+            .stroke(Color.green.opacity(0.1), lineWidth: 0.5)
+        }
+    }
+
+    private func radarSweep(center: CGPoint, maxRadius: CGFloat) -> some View {
+        Group {
+            if radarService.isScanning {
+                RadarSweepLine(center: center, radius: maxRadius, rotation: radarRotation)
+            }
+        }
+    }
+
+    private func radarCenterDot(center: CGPoint) -> some View {
+        Circle()
+            .fill(Color.blue)
+            .frame(width: 12, height: 12)
+            .shadow(color: .blue.opacity(0.5), radius: 6)
+            .position(center)
+    }
+
+    private func radarPeers(center: CGPoint, maxRadius: CGFloat) -> some View {
+        let merchants = radarService.discoveredMerchants
+        let enumerated = Array(merchants.enumerated())
+
+        return ForEach(enumerated, id: \.element.id) { index, peer in
+            radarPeerBlip(peer: peer, index: index, center: center, maxRadius: maxRadius, totalCount: merchants.count)
+        }
+    }
+
+    private func radarPeerBlip(peer: RadarPeer, index: Int, center: CGPoint, maxRadius: CGFloat, totalCount: Int) -> some View {
+        let angle = Double(index) * (360.0 / max(Double(totalCount), 1)) * .pi / 180
+
+        let ringFraction: CGFloat
+        switch peer.signalStrength {
+        case .strong: ringFraction = 0.35
+        case .medium: ringFraction = 0.55
+        case .weak: ringFraction = 0.75
+        }
+
+        let x = center.x + cos(angle) * maxRadius * ringFraction
+        let y = center.y + sin(angle) * maxRadius * ringFraction
+
+        return Button {
+            selectedPeer = peer
+        } label: {
+            RadarBlip(peer: peer)
+        }
+        .buttonStyle(.plain)
+        .position(x: x, y: y)
+        .transition(.scale.combined(with: .opacity))
+    }
+
+    private func radarLabels(center: CGPoint, maxRadius: CGFloat) -> some View {
+        ZStack {
+            Text("~30m")
+                .font(.system(size: 9))
+                .foregroundColor(.green.opacity(0.3))
+                .position(x: center.x + maxRadius / 3, y: center.y - 8)
+
+            Text("~60m")
+                .font(.system(size: 9))
+                .foregroundColor(.green.opacity(0.3))
+                .position(x: center.x + maxRadius * 2 / 3, y: center.y - 8)
+
+            Text("~100m")
+                .font(.system(size: 9))
+                .foregroundColor(.green.opacity(0.3))
+                .position(x: center.x + maxRadius - 5, y: center.y - 8)
+        }
+    }
+
     // MARK: - Discovered List
+
+    private var activeMerchants: [RadarPeer] {
+        radarService.discoveredMerchants.filter { !$0.isStale }
+    }
 
     private var discoveredList: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -179,7 +216,7 @@ struct RadarView: View {
                     .foregroundColor(.white.opacity(0.5))
                     .kerning(1.5)
 
-                ForEach(radarService.discoveredMerchants.filter { !$0.isStale }) { peer in
+                ForEach(activeMerchants) { peer in
                     Button {
                         selectedPeer = peer
                     } label: {
@@ -335,7 +372,7 @@ struct RadarSweepLine: View {
         .fill(
             AngularGradient(
                 colors: [.green.opacity(0.0), .green.opacity(0.08)],
-                center: UnitPoint(x: center.x / (radius * 2 + 20), y: center.y / (radius * 2 + 20)),
+                center: .center,
                 startAngle: .degrees(rotation - 30),
                 endAngle: .degrees(rotation)
             )
@@ -428,3 +465,4 @@ struct RadarPeerDetailSheet: View {
         }
     }
 }
+

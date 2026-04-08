@@ -18,6 +18,7 @@ struct MerchantRegistrationView: View {
     @State private var hasCoppelAccount = false
     @State private var businessName = ""
     @State private var businessLocation: BusinessLocation?
+    @State private var routeWaypoints: [RouteWaypoint]?
     @State private var selectedBusinessType: BusinessType = .food
     @State private var selectedBusinessSize: BusinessSize = .individual
     @State private var selectedMobility: BusinessMobility = .mobile
@@ -26,12 +27,24 @@ struct MerchantRegistrationView: View {
     @State private var showBusinessTypePicker = false
     @State private var showBusinessSizePicker = false
     @State private var showLocationMap = false
+    @State private var isCalculatingRoute = false
 
     private var canContinue: Bool {
         if hasCoppelAccount {
             return true
         } else {
-            return !businessName.isEmpty && businessLocation != nil
+            let hasName = !businessName.isEmpty
+            let hasLocation: Bool
+
+            if selectedMobility == .mobile {
+                // Mobile business needs route waypoints
+                hasLocation = routeWaypoints != nil && routeWaypoints!.count >= 2
+            } else {
+                // Fixed business needs single location
+                hasLocation = businessLocation != nil
+            }
+
+            return hasName && hasLocation
         }
     }
 
@@ -60,7 +73,34 @@ struct MerchantRegistrationView: View {
         }
         .sheet(isPresented: $showLocationMap) {
             NavigationStack {
-                BusinessLocationMapView(selectedLocation: $businessLocation)
+                BusinessLocationMapView(
+                    selectedLocation: $businessLocation,
+                    isMobileBusinesse: selectedMobility == .mobile,
+                    routeWaypoints: $routeWaypoints
+                )
+            }
+        }
+        .overlay {
+            if isCalculatingRoute {
+                ZStack {
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(CGFloat(1.5))
+                            .tint(.white)
+
+                        Text("Calculando ruta...")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundStyle(.white)
+                    }
+                    .padding(32)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(.ultraThinMaterial)
+                    )
+                }
             }
         }
     }
@@ -465,7 +505,7 @@ struct MerchantRegistrationView: View {
 
     private var businessLocationButton: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Ubicación del negocio")
+            Text(selectedMobility == .mobile ? "Ruta del recorrido" : "Ubicación del negocio")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundStyle(.secondary)
 
@@ -473,25 +513,19 @@ struct MerchantRegistrationView: View {
                 showLocationMap = true
             }) {
                 HStack(spacing: 12) {
-                    Image(systemName: businessLocation != nil ? "mappin.circle.fill" : "mappin.circle")
+                    Image(systemName: hasLocationOrRoute ? "mappin.circle.fill" : "mappin.circle")
                         .font(.system(size: 20))
-                        .foregroundStyle(businessLocation != nil ? .purple : .secondary)
+                        .foregroundStyle(hasLocationOrRoute ? .purple : .secondary)
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(businessLocation != nil ? "Ubicación configurada" : "Configurar en mapa")
-                            .font(.system(size: 16, weight: businessLocation != nil ? .semibold : .regular))
-                            .foregroundStyle(businessLocation != nil ? .primary : .secondary)
+                        Text(locationButtonTitle)
+                            .font(.system(size: 16, weight: hasLocationOrRoute ? .semibold : .regular))
+                            .foregroundStyle(hasLocationOrRoute ? .primary : .secondary)
 
-                        if let location = businessLocation {
-                            Text(location.address)
-                                .font(.system(size: 13))
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                        } else {
-                            Text("Toca para abrir el mapa")
-                                .font(.system(size: 13))
-                                .foregroundStyle(.secondary)
-                        }
+                        Text(locationButtonSubtitle)
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
                     }
 
                     Spacer()
@@ -503,15 +537,47 @@ struct MerchantRegistrationView: View {
                 .padding(16)
                 .background(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(businessLocation != nil ? Color.purple.opacity(0.05) : Color.white)
+                        .fill(hasLocationOrRoute ? Color.purple.opacity(0.05) : Color.white)
                         .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(businessLocation != nil ? Color.purple.opacity(0.3) : Color.gray.opacity(0.2), lineWidth: 1.5)
+                        .stroke(hasLocationOrRoute ? Color.purple.opacity(0.3) : Color.gray.opacity(0.2), lineWidth: 1.5)
                 )
             }
             .buttonStyle(.plain)
+        }
+    }
+
+    private var hasLocationOrRoute: Bool {
+        if selectedMobility == .mobile {
+            return routeWaypoints != nil && routeWaypoints!.count >= 2
+        } else {
+            return businessLocation != nil
+        }
+    }
+
+    private var locationButtonTitle: String {
+        if selectedMobility == .mobile {
+            return routeWaypoints != nil ? "Ruta configurada" : "Configurar ruta"
+        } else {
+            return businessLocation != nil ? "Ubicación configurada" : "Configurar en mapa"
+        }
+    }
+
+    private var locationButtonSubtitle: String {
+        if selectedMobility == .mobile {
+            if let waypoints = routeWaypoints {
+                return "\(waypoints.count) puntos marcados"
+            } else {
+                return "Marca los puntos de tu recorrido"
+            }
+        } else {
+            if let location = businessLocation {
+                return location.address
+            } else {
+                return "Toca para abrir el mapa"
+            }
         }
     }
 
@@ -591,21 +657,88 @@ struct MerchantRegistrationView: View {
             phoneNumber: userInfo.phoneNumber
         )
 
-        // Create business
-        let business = hasCoppelAccount
-            ? BusinessModel.coppelEmprendeDefault(ownerId: newUser.id)
-            : BusinessModel(
-                ownerId: newUser.id,
-                name: businessName,
-                address: businessLocation?.address ?? "Sin dirección",
-                businessType: selectedBusinessType,
-                businessSize: selectedBusinessSize,
-                mobility: selectedMobility,
-                hasCoppelAccount: false
-            )
+        // Calculate and save route if mobile business
+        if selectedMobility == .mobile, let waypoints = routeWaypoints {
+            isCalculatingRoute = true
 
+            MapboxRoutingService.shared.calculateRoute(waypoints: waypoints, profile: .walking) { result in
+                DispatchQueue.main.async {
+                    isCalculatingRoute = false
+
+                    switch result {
+                    case .success(let response):
+                        guard let route = response.routes.first else { return }
+
+                        // Create merchant route with calculated data
+                        let merchantRoute = MerchantRoute(
+                            merchantId: newUser.id,
+                            waypoints: waypoints,
+                            routeGeometry: nil, // Store if needed
+                            estimatedDuration: route.duration,
+                            estimatedDistance: route.distance,
+                            isActive: true
+                        )
+
+                        // Create business with route
+                        let business = BusinessModel(
+                            ownerId: newUser.id,
+                            name: businessName,
+                            address: "Negocio ambulante",
+                            businessType: selectedBusinessType,
+                            businessSize: selectedBusinessSize,
+                            mobility: selectedMobility,
+                            hasCoppelAccount: false,
+                            route: merchantRoute
+                        )
+
+                        completeMerchantRegistration(user: newUser, business: business)
+
+                    case .failure(let error):
+                        print("❌ Error calculando ruta: \(error.localizedDescription)")
+
+                        // Save anyway without route optimization
+                        let merchantRoute = MerchantRoute(
+                            merchantId: newUser.id,
+                            waypoints: waypoints,
+                            isActive: true
+                        )
+
+                        let business = BusinessModel(
+                            ownerId: newUser.id,
+                            name: businessName,
+                            address: "Negocio ambulante",
+                            businessType: selectedBusinessType,
+                            businessSize: selectedBusinessSize,
+                            mobility: selectedMobility,
+                            hasCoppelAccount: false,
+                            route: merchantRoute
+                        )
+
+                        completeMerchantRegistration(user: newUser, business: business)
+                    }
+                }
+            }
+        } else {
+            // Fixed business or Coppel account
+            let business = hasCoppelAccount
+                ? BusinessModel.coppelEmprendeDefault(ownerId: newUser.id)
+                : BusinessModel(
+                    ownerId: newUser.id,
+                    name: businessName,
+                    address: businessLocation?.address ?? "Sin dirección",
+                    businessType: selectedBusinessType,
+                    businessSize: selectedBusinessSize,
+                    mobility: selectedMobility,
+                    hasCoppelAccount: false
+                )
+
+            completeMerchantRegistration(user: newUser, business: business)
+        }
+    }
+
+    private func completeMerchantRegistration(user: User, business: BusinessModel) {
         // Save user
-        userManager.currentUser = newUser
+        userManager.currentUser = user
 
         // Save business (you would typically save this to a BusinessManager)
         print("📦 Negocio registrado: \(business.name)")
@@ -614,10 +747,20 @@ struct MerchantRegistrationView: View {
         print("   Movilidad: \(business.mobility.displayName)")
         print("   Coppel: \(business.hasCoppelAccount ? "Sí" : "No")")
 
+        if let route = business.route {
+            print("   📍 Ruta: \(route.waypoints.count) puntos")
+            if let duration = route.estimatedDuration {
+                print("   ⏱️ Duración estimada: \(Int(duration / 60)) minutos")
+            }
+            if let distance = route.estimatedDistance {
+                print("   📏 Distancia estimada: \(Int(distance)) metros")
+            }
+        }
+
         // Announce if needed
-        if newUser.hasVisualDisability {
+        if user.hasVisualDisability {
             let accessibilityManager = AccessibilitySettingsManager.shared
-            accessibilityManager.announce("Bienvenido a Atenea, \(newUser.name). Tu negocio ha sido registrado exitosamente.")
+            accessibilityManager.announce("Bienvenido a Atenea, \(user.name). Tu negocio ha sido registrado exitosamente.")
             accessibilityManager.provideHapticFeedback(.success)
         }
 

@@ -107,6 +107,7 @@ struct Merchant: Identifiable, Codable, Equatable {
     var isActive: Bool
     let isStatic: Bool
     var currentLocation: MerchantLocation?
+    let route: MerchantRoute? // Route for mobile merchants
     let createdAt: Date
 
     init(
@@ -121,6 +122,7 @@ struct Merchant: Identifiable, Codable, Equatable {
         isActive: Bool = true,
         isStatic: Bool = true,
         currentLocation: MerchantLocation? = nil,
+        route: MerchantRoute? = nil,
         createdAt: Date = Date()
     ) {
         self.id = id
@@ -134,6 +136,7 @@ struct Merchant: Identifiable, Codable, Equatable {
         self.isActive = isActive
         self.isStatic = isStatic
         self.currentLocation = currentLocation
+        self.route = route
         self.createdAt = createdAt
     }
 

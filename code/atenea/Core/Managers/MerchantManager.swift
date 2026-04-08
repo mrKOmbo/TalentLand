@@ -119,7 +119,124 @@ class MerchantManager: ObservableObject {
         let donTacoUserId = UserManager.shared.getAllUsers()
             .first(where: { $0.email == "don.taco@atenea.com" })?.id ?? UUID()
 
+        // Expo Santa Fe coordinates: 19.3576, -99.2617
+        let expoSantaFe = (lat: 19.3576, lon: -99.2617)
+
         merchants = [
+            // COMERCIANTES CERCA DE EXPO SANTA FE (con rutas)
+            Merchant(
+                userId: UUID(),
+                businessName: "Tacos El Güero - Ruta Santa Fe",
+                category: .tacos,
+                description: "Tacos al pastor y de suadero. Recorro la zona de Santa Fe todos los días.",
+                products: [
+                    Product(name: "Taco al Pastor", price: 20, emoji: "🌮"),
+                    Product(name: "Taco de Suadero", price: 22, emoji: "🌮"),
+                    Product(name: "Gringa", price: 40, emoji: "🫓"),
+                    Product(name: "Refresco", price: 15, emoji: "🥤"),
+                ],
+                schedule: MerchantSchedule(openTime: "12:00", closeTime: "21:00", daysOfWeek: [1, 2, 3, 4, 5]),
+                isStatic: false,
+                currentLocation: MerchantLocation(latitude: 19.3576, longitude: -99.2617),
+                route: MerchantRoute(
+                    merchantId: UUID(),
+                    waypoints: [
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3576, longitude: -99.2617), order: 0, name: "Expo Santa Fe"),
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3600, longitude: -99.2640), order: 1, name: "Centro Comercial"),
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3620, longitude: -99.2670), order: 2, name: "Torre Corporativa"),
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3590, longitude: -99.2700), order: 3, name: "Parque"),
+                    ],
+                    estimatedDuration: 1800, // 30 min
+                    estimatedDistance: 2500, // 2.5 km
+                    isActive: true
+                )
+            ),
+            Merchant(
+                userId: UUID(),
+                businessName: "Café Móvil Andrea",
+                category: .bebidas,
+                emoji: "☕",
+                description: "Café de especialidad, cappuccinos y bebidas frías. Recorro oficinas de Santa Fe.",
+                products: [
+                    Product(name: "Cappuccino", price: 45, emoji: "☕"),
+                    Product(name: "Latte", price: 50, emoji: "☕"),
+                    Product(name: "Cold Brew", price: 55, emoji: "🧊"),
+                    Product(name: "Croissant", price: 35, emoji: "🥐"),
+                ],
+                schedule: MerchantSchedule(openTime: "07:00", closeTime: "11:00", daysOfWeek: [1, 2, 3, 4, 5]),
+                isStatic: false,
+                currentLocation: MerchantLocation(latitude: 19.3590, longitude: -99.2630),
+                route: MerchantRoute(
+                    merchantId: UUID(),
+                    waypoints: [
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3560, longitude: -99.2600), order: 0, name: "Metro Observatorio"),
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3576, longitude: -99.2617), order: 1, name: "Expo Santa Fe"),
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3595, longitude: -99.2650), order: 2, name: "Samara"),
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3610, longitude: -99.2680), order: 3, name: "Punta Santa Fe"),
+                    ],
+                    estimatedDuration: 1200, // 20 min
+                    estimatedDistance: 1800,
+                    isActive: true
+                )
+            ),
+            Merchant(
+                userId: UUID(),
+                businessName: "Frutas y Verduras Doña Lucha",
+                category: .frutas,
+                emoji: "🍉",
+                description: "Fruta picada, agua de frutas y ensaladas. Frescura garantizada.",
+                products: [
+                    Product(name: "Fruta Picada Chica", price: 30, emoji: "🍉"),
+                    Product(name: "Fruta Picada Grande", price: 50, emoji: "🍇"),
+                    Product(name: "Agua de Jamaica", price: 20, emoji: "🥤"),
+                    Product(name: "Ensalada de Fruta", price: 45, emoji: "🥗"),
+                ],
+                schedule: MerchantSchedule(openTime: "09:00", closeTime: "18:00", daysOfWeek: [1, 2, 3, 4, 5, 6]),
+                isStatic: false,
+                currentLocation: MerchantLocation(latitude: 19.3580, longitude: -99.2620),
+                route: MerchantRoute(
+                    merchantId: UUID(),
+                    waypoints: [
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3576, longitude: -99.2617), order: 0, name: "Expo Santa Fe"),
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3585, longitude: -99.2625), order: 1, name: "Plaza 1"),
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3595, longitude: -99.2635), order: 2, name: "Plaza 2"),
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3605, longitude: -99.2650), order: 3, name: "Samara"),
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3590, longitude: -99.2660), order: 4, name: "Regreso"),
+                    ],
+                    estimatedDuration: 2400, // 40 min
+                    estimatedDistance: 3200,
+                    isActive: true
+                )
+            ),
+            Merchant(
+                userId: UUID(),
+                businessName: "Gorditas Doña Meche",
+                category: .antojitos,
+                emoji: "🫓",
+                description: "Gorditas hechas a mano: chicharrón, picadillo, rajas. Zona Santa Fe.",
+                products: [
+                    Product(name: "Gordita de Chicharrón", price: 25, emoji: "🫓"),
+                    Product(name: "Gordita de Picadillo", price: 25, emoji: "🥩"),
+                    Product(name: "Gordita de Rajas", price: 22, emoji: "🌶️"),
+                    Product(name: "Atole", price: 15, emoji: "☕"),
+                ],
+                schedule: MerchantSchedule(openTime: "08:00", closeTime: "14:00", daysOfWeek: [1, 2, 3, 4, 5, 6, 7]),
+                isStatic: false,
+                currentLocation: MerchantLocation(latitude: 19.3570, longitude: -99.2610),
+                route: MerchantRoute(
+                    merchantId: UUID(),
+                    waypoints: [
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3565, longitude: -99.2605), order: 0, name: "Inicio"),
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3576, longitude: -99.2617), order: 1, name: "Expo Santa Fe"),
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3590, longitude: -99.2635), order: 2, name: "Centro"),
+                    ],
+                    estimatedDuration: 900, // 15 min
+                    estimatedDistance: 1200,
+                    isActive: true
+                )
+            ),
+
+            // COMERCIANTES ORIGINALES
             Merchant(
                 userId: donTacoUserId,
                 businessName: "Don Taco",
