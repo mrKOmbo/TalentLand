@@ -93,6 +93,7 @@ struct BusinessModel: Codable, Identifiable {
     let businessSize: BusinessSize
     let mobility: BusinessMobility
     let hasCoppelAccount: Bool
+    let route: MerchantRoute? // Route for mobile merchants
     let createdAt: Date
 
     init(
@@ -104,6 +105,7 @@ struct BusinessModel: Codable, Identifiable {
         businessSize: BusinessSize,
         mobility: BusinessMobility,
         hasCoppelAccount: Bool = false,
+        route: MerchantRoute? = nil,
         createdAt: Date = Date()
     ) {
         self.id = id
@@ -114,6 +116,7 @@ struct BusinessModel: Codable, Identifiable {
         self.businessSize = businessSize
         self.mobility = mobility
         self.hasCoppelAccount = hasCoppelAccount
+        self.route = route
         self.createdAt = createdAt
     }
 

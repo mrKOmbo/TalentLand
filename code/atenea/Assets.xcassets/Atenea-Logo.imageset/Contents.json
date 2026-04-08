@@ -1,0 +1,27 @@
+{
+  "images" : [
+    {
+      "filename" : "Gemini_Generated_Image_3hrbjg3hrbjg3hrb-removebg-preview.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "Gemini_Generated_Image_3hrbjg3hrbjg3hrb-removebg-preview 1.png",
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "Gemini_Generated_Image_3hrbjg3hrbjg3hrb-removebg-preview 2.png",
+      "idiom" : "universal",
+      "scale" : "3x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  },
+  "properties" : {
+    "preserves-vector-representation" : true,
+    "template-rendering-intent" : "original"
+  }
+}

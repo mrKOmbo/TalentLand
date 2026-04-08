@@ -78,16 +78,8 @@ struct LoginView: View {
     }
 
     private var backgroundGradient: some View {
-        LinearGradient(
-            colors: [
-                Color.coppelBlue.opacity(0.05),
-                Color.white,
-                Color.coppelYellow.opacity(0.03)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-        .ignoresSafeArea()
+        Color.white
+            .ignoresSafeArea()
     }
 
     private var mainContent: some View {
@@ -95,6 +87,35 @@ struct LoginView: View {
             headerView
             scrollableContent
         }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            sponsorLogosSection
+                .frame(height: 55)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+        }
+    }
+
+    private var sponsorLogosSection: some View {
+        HStack(spacing: 0) {
+            Image("Fundacion-Coppel-Logo")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 32)
+
+            Spacer()
+
+            Rectangle()
+                .fill(Color.coppelDarkBlue.opacity(0.15))
+                .frame(width: 1, height: 32)
+
+            Spacer()
+
+            Image("Coppel-Emprende-Logo")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 32)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     private var headerView: some View {
@@ -114,99 +135,42 @@ struct LoginView: View {
                 isWorldCupToday.toggle()
             }
 
-            // Activar confetis cuando se marca como "Today is World Cup"
             if isWorldCupToday {
                 showConfetti = true
                 initializeConfetti()
                 startConfettiAnimation()
 
-                // Haptic feedback
                 let impact = UINotificationFeedbackGenerator()
                 impact.notificationOccurred(.success)
 
-                // Ocultar confetis después de 4 segundos
                 DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
                     showConfetti = false
                 }
             }
         }) {
             HStack(spacing: 6) {
-                // Animated checkmark with rotation
-                Image(systemName: isWorldCupToday ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(
-                        isWorldCupToday ?
-                            LinearGradient(
-                                colors: [.purple, .blue, .green],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ) :
-                            LinearGradient(
-                                colors: [.secondary, .secondary],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                    )
-                    .rotationEffect(.degrees(isWorldCupToday ? 360 : 0))
-                    .animation(.spring(response: 0.6, dampingFraction: 0.5), value: isWorldCupToday)
-
+                worldCupCheckmarkIcon
+                
                 Text(LocalizedString("login.worldCupToday"))
                     .font(.system(size: 13, weight: isWorldCupToday ? .semibold : .medium))
-                    .foregroundStyle(
-                        isWorldCupToday ?
-                            LinearGradient(
-                                colors: [.purple, .blue],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            ) :
-                            LinearGradient(
-                                colors: [.secondary, .secondary],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                    )
+                    .foregroundColor(isWorldCupToday ? Color.coppelBlue : Color.coppelDarkBlue)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(
-                Capsule()
-                    .fill(isWorldCupToday ?
-                        LinearGradient(
-                            colors: [
-                                Color.purple.opacity(0.12),
-                                Color.blue.opacity(0.12),
-                                Color.green.opacity(0.12)
-                            ],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ) :
-                        LinearGradient(
-                            colors: [Color.gray.opacity(0.08), Color.gray.opacity(0.08)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-            )
-            .overlay(
-                ZStack {
-                    // Animated rainbow border
-                    if isWorldCupToday {
-                        RainbowBorderView()
-                            .clipShape(Capsule())
-                    } else {
-                        Capsule()
-                            .stroke(Color.clear, lineWidth: 1.5)
-                    }
-                }
-            )
-            .shadow(color: isWorldCupToday ? Color.purple.opacity(0.3) : Color.clear, radius: 8, x: 0, y: 2)
-            .shadow(color: isWorldCupToday ? Color.blue.opacity(0.2) : Color.clear, radius: 12, x: 0, y: 3)
+            .background(Color.coppelBlue.opacity(0.08))
+            .clipShape(Capsule())
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(LocalizedString("login.worldCupToday"))
         .accessibilityValue(isWorldCupToday ? LocalizedString("login.worldCupChecked") : LocalizedString("login.worldCupUnchecked"))
-        .accessibilityHint(LocalizedString("login.worldCupHint"))
-        .accessibilityAddTraits(.isButton)
+    }
+
+    private var worldCupCheckmarkIcon: some View {
+        Image(systemName: isWorldCupToday ? "checkmark.circle.fill" : "circle")
+            .font(.system(size: 16, weight: .medium))
+            .foregroundColor(isWorldCupToday ? Color.coppelBlue : Color.coppelDarkBlue)
+            .rotationEffect(.degrees(isWorldCupToday ? 360 : 0))
+            .animation(.spring(response: 0.6, dampingFraction: 0.5), value: isWorldCupToday)
     }
 
     private var utilityButtons: some View {
@@ -273,7 +237,7 @@ struct LoginView: View {
                     .background(
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
                             .fill(selectedTab == 0 ? Color.white : Color.clear)
-                            .shadow(color: selectedTab == 0 ? Color.black.opacity(0.1) : Color.clear, radius: 4, x: 0, y: 2)
+                            .shadow(color: selectedTab == 0 ? Color.coppelDarkBlue.opacity(0.1) : Color.clear, radius: 4, x: 0, y: 2)
                     )
                 }
 
@@ -296,7 +260,7 @@ struct LoginView: View {
                     .background(
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
                             .fill(selectedTab == 1 ? Color.white : Color.clear)
-                            .shadow(color: selectedTab == 1 ? Color.black.opacity(0.1) : Color.clear, radius: 4, x: 0, y: 2)
+                            .shadow(color: selectedTab == 1 ? Color.coppelDarkBlue.opacity(0.1) : Color.clear, radius: 4, x: 0, y: 2)
                     )
                 }
             }
@@ -379,7 +343,7 @@ struct LoginView: View {
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+                    .shadow(color: Color.coppelDarkBlue.opacity(0.05), radius: 8, x: 0, y: 2)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -501,10 +465,10 @@ struct LoginView: View {
                 handleAppleLogin(result: result)
             }
         )
-        .signInWithAppleButtonStyle(.black)
+        .signInWithAppleButtonStyle(.white)
         .frame(height: 54)
         .cornerRadius(14)
-        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+        .shadow(color: .coppelDarkBlue.opacity(0.1), radius: 8, x: 0, y: 4)
         .accessibilityLabel(LocalizedString("login.appleSignIn"))
         .accessibilityHint(LocalizedString("login.appleSignInHint"))
     }
@@ -685,7 +649,7 @@ struct UserSelectionCard: View {
     }
 
     private var shadowColor: Color {
-        isSelected ? Color.coppelBlue.opacity(0.2) : Color.black.opacity(0.05)
+        isSelected ? Color.coppelBlue.opacity(0.2) : Color.coppelDarkBlue.opacity(0.05)
     }
 
     private var shadowRadius: CGFloat {
@@ -812,6 +776,34 @@ struct UserSelectionCard: View {
         RoundedRectangle(cornerRadius: CoppelTheme.CornerRadius.lg, style: .continuous)
             .strokeBorder(isSelected ? Color.coppelBlue : Color.clear, lineWidth: 2)
     }
+    private var sponsorLogosSection: some View {
+        HStack(spacing: 0) {
+            // Fundación Coppel (izquierda)
+            // [Asset: FundacionCoppelLogoWhite]
+            Image("Fundacion-Coppel-Logo")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 32)
+
+            Spacer()
+
+            // Divisor vertical fino en white
+            Rectangle()
+                .fill(Color.white.opacity(0.4))
+                .frame(width: 1, height: 32)
+
+            Spacer()
+
+            // Coppel Emprende (derecha)
+            // [Asset: CoppelEmprendeLogoWhite]
+            Image("Coppel-Emprende-Logo")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 48)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
 }
 
 // MARK: - Rainbow Border Component

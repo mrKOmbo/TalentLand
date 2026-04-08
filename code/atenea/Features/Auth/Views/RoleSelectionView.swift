@@ -47,21 +47,42 @@ struct RoleSelectionView: View {
         } message: {
             Text("Para acceder a todas las funciones de Atenea, te recomendamos verificar tu identidad. ¿Deseas hacerlo ahora?")
         }
+            .safeAreaInset(edge: .top, spacing: 0) {
+                sponsorLogosSection
+                    .frame(height: 55)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+            }
     }
 
     // MARK: - View Components
 
+    private var sponsorLogosSection: some View {
+        HStack(spacing: 0) {
+            Image("Fundacion-Coppel-Logo")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 32)
+
+            Spacer()
+
+            Rectangle()
+                .fill(Color.coppelDarkBlue.opacity(0.15))
+                .frame(width: 1, height: 32)
+
+            Spacer()
+
+            Image("Coppel-Emprende-Logo")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 32)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
     private var backgroundGradient: some View {
-        LinearGradient(
-            colors: [
-                Color.coppelBlue.opacity(0.05),
-                Color.white,
-                Color.coppelYellow.opacity(0.03)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-        .ignoresSafeArea()
+        Color.white
+            .ignoresSafeArea()
     }
 
     private var headerSection: some View {
@@ -73,7 +94,7 @@ struct RoleSelectionView: View {
 
             Text("Elige el perfil que mejor describa cómo planeas usar la aplicación. Podrás cambiar esto después en tu configuración.")
                 .font(.coppelBody)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.coppelDarkBlue.opacity(0.6))
                 .fixedSize(horizontal: false, vertical: true)
                 .lineSpacing(4)
         }
@@ -192,7 +213,7 @@ struct RoleCard: View {
 
                         Text(description)
                             .font(.coppelBodySmall)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.coppelDarkBlue.opacity(0.6))
                             .fixedSize(horizontal: false, vertical: true)
                             .lineSpacing(2)
                     }

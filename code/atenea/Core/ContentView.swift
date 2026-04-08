@@ -48,7 +48,7 @@ struct ContentView: View {
                         .environmentObject(languageManager)
                 } else if !isLoggedIn {
                     // Show welcome/login flow
-                    WelcomeView(isLoggedIn: $isLoggedIn)
+                    LoginView(isLoggedIn: $isLoggedIn)
                         .environmentObject(languageManager)
                         .transition(.move(edge: .bottom))
                         .onChange(of: isLoggedIn) { _, newValue in
