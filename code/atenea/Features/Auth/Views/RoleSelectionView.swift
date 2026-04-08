@@ -277,17 +277,6 @@ struct RoleCard: View {
     }
 }
 
-// MARK: - User Registration Info Model
-
-struct UserRegistrationInfo {
-    let fullName: String
-    let age: String
-    let country: String
-    let email: String
-    let phoneNumber: String
-    let accessibilityOption: AccessibilityOption
-}
-
 // MARK: - Preview
 
 #Preview {

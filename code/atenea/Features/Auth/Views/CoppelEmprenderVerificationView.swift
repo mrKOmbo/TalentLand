@@ -138,7 +138,7 @@ struct CoppelEmprenderVerificationView: View {
 
                 TextField("Tu correo registrado", text: $email)
                     .font(.system(size: 16, weight: .regular))
-                    .keyboardType(.emailAddress)
+                    .keyboardType(UIKeyboardType.emailAddress)
                     .textInputAutocapitalization(.never)
                     .padding(12)
                     .background(
