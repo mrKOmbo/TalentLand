@@ -160,8 +160,8 @@ struct RoleSelectionView: View {
         let currentLocation: UserLocation?
         if let location = locationManager.currentLocation {
             currentLocation = UserLocation(
-                latitude: location.coordinate.latitude,
-                longitude: location.coordinate.longitude,
+                latitude: location.latitude,
+                longitude: location.longitude,
                 timestamp: Date(),
                 address: nil
             )
