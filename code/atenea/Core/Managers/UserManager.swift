@@ -34,6 +34,16 @@ class UserManager: ObservableObject {
             country: "España",
             phoneNumber: "+34 91 234 5678",
             profileImage: nil
+        ),
+        User(
+            email: "don.taco@atenea.com",
+            name: "Don Taco",
+            role: .merchant,
+            accessibilityOption: .none,
+            age: "45",
+            country: "México",
+            phoneNumber: "+52 55 9876 5432",
+            profileImage: nil
         )
     ]
 
@@ -48,6 +58,10 @@ class UserManager: ObservableObject {
     func loginUser(withEmail email: String) -> Bool {
         if let user = predefinedUsers.first(where: { $0.email.lowercased() == email.lowercased() }) {
             currentUser = user
+            // Si es merchant, vincular perfil de negocio
+            if user.isMerchant {
+                MerchantManager.shared.currentMerchantProfile = MerchantManager.shared.merchantForUser(user.id)
+            }
             print("✅ Usuario logueado: \(user.name) (\(user.role.displayName))")
             return true
         }
@@ -57,6 +71,7 @@ class UserManager: ObservableObject {
 
     /// Cerrar sesión
     func logout() {
+        MerchantManager.shared.currentMerchantProfile = nil
         currentUser = nil
         print("👋 Usuario deslogueado")
     }

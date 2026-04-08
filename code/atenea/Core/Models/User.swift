@@ -10,11 +10,13 @@ import Foundation
 // MARK: - User Role
 enum UserRole: String, Codable {
     case admin = "admin"
+    case merchant = "merchant"
     case user = "user"
 
     var displayName: String {
         switch self {
         case .admin: return "Administrador"
+        case .merchant: return "Comerciante"
         case .user: return "Usuario"
         }
     }
@@ -49,6 +51,10 @@ struct User: Codable, Identifiable {
     // Verificar si el usuario es administrador
     var isAdmin: Bool {
         return role == .admin
+    }
+
+    var isMerchant: Bool {
+        return role == .merchant
     }
 
     // Verificar si el usuario tiene permisos de staff

@@ -12,12 +12,12 @@ internal import Combine
 class LanguageManager: ObservableObject {
     static let shared = LanguageManager()
 
-    @Published var currentLanguage: String = "en"
+    @Published var currentLanguage: String = "es"
 
     private init() {
-        // Detect device language automatically
-        currentLanguage = detectDeviceLanguage()
-        print("🌐 Language initialized to: \(currentLanguage)")
+        // currentLanguage ya es "es" por el valor default de la propiedad
+        UserDefaults.standard.set(["es"], forKey: "AppleLanguages")
+        UserDefaults.standard.synchronize()
     }
 
     // MARK: - Device Language Detection

@@ -7,12 +7,16 @@
 
 import Foundation
 internal import Combine
+import CoreLocation
 
 class NavigationStateManager: ObservableObject {
     static let shared = NavigationStateManager()
 
     @Published var isNavigationActive: Bool = false
     @Published var shouldOpenNavigation: Bool = false
+    @Published var showDirections: Bool = false // Controla visibilidad del Tab Bar
+    @Published var pendingDemandZoneCoord: CLLocationCoordinate2D? // Navegar a zona de demanda
+    @Published var merchantLocationEditMode: Bool = false // Modo edición de ubicación del merchant
 
     private init() {}
 

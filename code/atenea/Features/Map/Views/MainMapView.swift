@@ -19,6 +19,8 @@ struct MainMapView: View {
     @EnvironmentObject var languageManager: LanguageManager
     @ObservedObject private var emergencyManager = EmergencyModeManager.shared
     @ObservedObject private var menuState = MenuStateManager.shared
+    @ObservedObject private var demandManager = DemandZoneManager.shared
+    @ObservedObject private var userManager = UserManager.shared
     @Binding var selectedTab: Int
     @Binding var isLoggedIn: Bool
     @State private var selectedSearchPlace: SearchPlace? = nil
@@ -37,6 +39,7 @@ struct MainMapView: View {
     @State private var modalState: SheetState = .collapsed
     @State private var cameraCenter: CLLocationCoordinate2D? = CLLocationCoordinate2D(latitude: 20.0, longitude: -100.0) // Centro en América para ver el globo completo
     @State private var cameraZoom: Double = 1.0 // Zoom mínimo para ver el globo completo
+    @State private var cameraPitch: Double = 0 // Inclinación de la cámara (0 = 2D, 45-60 = 3D)
     @FocusState private var isSearchFocused: Bool
     @State private var selectedMarker: SearchPlace? = nil
     @State private var estimatedTravelTime: TimeInterval? = nil
@@ -83,6 +86,14 @@ struct MainMapView: View {
     // Navigation State Manager
     @StateObject private var navigationStateManager = NavigationStateManager.shared
 
+    // Location Banner
+    @State private var showLocationBanner = false
+    @State private var currentLocationText = "New York, États-Unis"
+
+    // Category Filter
+    @State private var selectedCategory: MapCategory? = nil
+    @State private var isCategoryFilterExpanded = false
+
     // MARK: - Body Components (dividido para ayudar al compilador)
 
     var body: some View {
@@ -101,6 +112,22 @@ struct MainMapView: View {
                         modalState = SheetState.collapsed
                     }
                 }
+
+                // Mostrar banner de ubicación al regresar al mapa desde otro tab
+                if newValue == 0 && oldValue != 0 {
+                    // Resetear estado del buscador para mostrar el filtro de categorías
+                    isSearchBarExpanded = false
+                    isSearchFocused = false
+
+                    if let userLocation = locationManager.currentLocation {
+                        // Delay breve para que la vista termine de cargar
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            currentLocationText = getLocationName(for: userLocation)
+                            showLocationBanner = true
+                            print("📍 Banner de ubicación mostrado al regresar al mapa: \(currentLocationText)")
+                        }
+                    }
+                }
             }
             .onChange(of: navigationStateManager.shouldOpenNavigation) { oldValue, newValue in
                 if newValue && preparedNavigation != nil {
@@ -109,6 +136,10 @@ struct MainMapView: View {
                     // Reset el flag
                     navigationStateManager.shouldOpenNavigation = false
                 }
+            }
+            .onChange(of: showDirections) { oldValue, newValue in
+                // Sincronizar el estado local con el manager global
+                navigationStateManager.showDirections = newValue
             }
             .sheet(isPresented: $showVenuesView) {
                 NavigationView {
@@ -130,13 +161,6 @@ struct MainMapView: View {
             .sheet(isPresented: $showHelpView) {
                 HelpView()
             }
-            .overlay(
-                Group {
-                    if menuState.showMenu && !emergencyManager.isEmergencyActive {
-                        sidebarMenuOverlay
-                    }
-                }
-            )
             .modifier(FullScreenCoversModifier(
                 preparedNavigation: $preparedNavigation,
                 showTangaraView: $showTangaraView,
@@ -219,8 +243,11 @@ struct MainMapView: View {
                 confettiCounter: $confettiCounter,
                 cameraCenter: $cameraCenter,
                 cameraZoom: $cameraZoom,
+                cameraPitch: $cameraPitch,
                 shouldFollowUser: $shouldFollowUser,
-                modalState: $modalState
+                modalState: $modalState,
+                showLocationBanner: $showLocationBanner,
+                currentLocationText: $currentLocationText
             ))
             .onShake {
                 // Abrir modal de emergencia cuando se agite el dispositivo
@@ -247,73 +274,6 @@ struct MainMapView: View {
                         radius: 400)
     }
 
-    private var sidebarMenuOverlay: some View {
-        SidebarMenuView(
-            languageManager: languageManager,
-            onHome: {
-                // Volver a la vista principal del mapa
-                selectedMarker = nil
-                showDirections = false
-                isSearchFocused = false
-            },
-            onSearch: {
-                // Activar búsqueda expandiendo el buscador
-                isSearchBarExpanded = true
-                isSearchFocused = true
-            },
-            onProfile: {
-                showProfileView = true
-            },
-            onFavorites: {
-                showFavoritesView = true
-            },
-            onHelp: {
-                showHelpView = true
-            },
-            onHistory: {
-                // Mostrar historial
-                // TODO: Implementar vista de historial
-            },
-            onNotifications: {
-                // Mostrar notificaciones
-                // TODO: Implementar vista de notificaciones
-            },
-            onSettings: {
-                showSettingsView = true
-            },
-            onAccessibility: {
-                showAccessibilityView = true
-            },
-            onLogout: {
-                isLoggedIn = false
-            },
-            onShowVenues: {
-                showVenuesView = true
-            },
-            onShowSchedule: {
-                showScheduleModal = true
-            },
-            onShowARScanner: {
-                showARPosterScanner = true
-            },
-            onShowStaff: {
-                showStaffView = true
-            },
-            onShowLine1: {
-                showLine1Simulation = true
-            },
-            onShowLine2: {
-                showLine2Simulation = true
-            },
-            onShowLine3: {
-                showLine3Simulation = true
-            },
-            onShowLine9: {
-                showLine9Simulation = true
-            },
-            selectedMapStyle: $selectedMapStyle
-        )
-    }
 
     private var mainContentWithOverlays: some View {
         ZStack {
@@ -412,8 +372,7 @@ struct MainMapView: View {
                 // Botones normales (ocultar en modo emergencia)
                 if !emergencyManager.isEmergencyActive {
                     HStack(spacing: 12) {
-                        // Botón de emergencia (solo visible cuando el sheet está colapsado o escondido)
-                        if modalState == SheetState.collapsed || modalState == SheetState.hidden {
+                        // Botón de emergencia
                         Button(action: {
                             showEmergencyModal = true
                         }) {
@@ -430,14 +389,32 @@ struct MainMapView: View {
                         }
                         .padding(.leading, 20)
                         .transition(.move(edge: .leading).combined(with: .opacity))
-                    }
+
+                        // Botón de heatmap
+                        Button(action: {
+                                let generator = UIImpactFeedbackGenerator(style: .medium)
+                                generator.impactOccurred()
+                                demandManager.showHeatMap.toggle()
+                            }) {
+                                ZStack {
+                                    Circle()
+                                        .fill(demandManager.showHeatMap ? Color.orange : Color.white)
+                                        .frame(width: 50, height: 50)
+                                        .shadow(color: (demandManager.showHeatMap ? Color.orange : Color.black).opacity(0.3), radius: 8, x: 0, y: 4)
+
+                                    Image(systemName: demandManager.showHeatMap ? "flame.fill" : "flame")
+                                        .font(.system(size: CGFloat(22)))
+                                        .foregroundColor(demandManager.showHeatMap ? .white : .orange)
+                                }
+                            }
+                        .transition(.scale.combined(with: .opacity))
 
                     Spacer()
 
                     // Botón de ubicación
                     Button(action: {
                         // Centrar el mapa en la ubicación actual y reactivar seguimiento
-                        if locationManager.currentLocation != nil {
+                        if let userLocation = locationManager.currentLocation {
                             // Desactivar modo de navegación AR
                             isARNavigationMode = false
                             shouldFollowUser = true
@@ -447,6 +424,11 @@ struct MainMapView: View {
                             centerOnLocation.toggle()
                             print("📍 Centrando mapa en ubicación actual y activando seguimiento")
                             print("🔓 Modo navegación AR desactivado")
+
+                            // Mostrar banner de ubicación
+                            currentLocationText = getLocationName(for: userLocation)
+                            showLocationBanner = true
+                            print("📍 Banner de ubicación mostrado: \(currentLocationText)")
                         }
                     }) {
                         ZStack {
@@ -463,25 +445,10 @@ struct MainMapView: View {
                     .padding(.trailing, 20)
                 }
                 .padding(.bottom, locationButtonOffset)
-                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: sheetHeight)
-                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: modalState)
                 .animation(.spring(response: 0.35, dampingFraction: 0.8), value: menuState.showMenu)
                 }
             }
 
-            // Bottom Sheet con reservaciones (ocultar si hay modales abiertos o en emergencia)
-            if !showVenueDetailModal && !showDirections && !emergencyManager.isEmergencyActive {
-                VenueBottomSheet(
-                    locationManager: locationManager,
-                    reservations: $reservations,
-                    sheetHeight: $sheetHeight,
-                    sheetState: $modalState,
-                    onCreateReservation: {
-                        openReservationModal()
-                    }
-                )
-                .animation(.spring(response: 0.35, dampingFraction: 0.8), value: menuState.showMenu)
-            }
 
             // Modal de reservaciones desde bottom sheet (ocultar en emergencia)
             if showScheduleModal && !emergencyManager.isEmergencyActive {
@@ -491,6 +458,15 @@ struct MainMapView: View {
                 .environmentObject(languageManager)
                 .zIndex(1000)
                 .transition(.opacity)
+            }
+
+            // Banner de ubicación superior (ocultar en emergencia)
+            if !emergencyManager.isEmergencyActive {
+                LocationBannerView(
+                    locationText: currentLocationText,
+                    isVisible: $showLocationBanner
+                )
+                .zIndex(200)
             }
         }
         // Vista principal estática - no se mueve cuando el menú está abierto
@@ -524,6 +500,47 @@ struct MainMapView: View {
             }
 
             print("📍 Volando a: \(place.name) (\(coordinate.latitude), \(coordinate.longitude))")
+        }
+    }
+
+    // MARK: - Category Filter Selection
+
+    private func handleCategorySelection(_ category: MapCategory?) {
+        guard let category = category else {
+            // Deseleccionar: limpiar marcadores y reactivar seguimiento
+            searchMarkers = []
+            if !isARNavigationMode {
+                shouldFollowUser = true
+            }
+            cameraCenter = nil
+            print("❌ Categoría deseleccionada")
+            return
+        }
+
+        print("✅ Categoría seleccionada: \(category.name)")
+
+        // Obtener lugares de la categoría
+        let categoryPlaces = searchViewModel.getPlacesByCategory(category.searchTerm)
+
+        if !categoryPlaces.isEmpty {
+            // Desactivar seguimiento del usuario para mantener el mapa en esta vista
+            shouldFollowUser = false
+
+            // Agregar todos los lugares encontrados como marcadores
+            searchMarkers = categoryPlaces
+
+            // Centrar el mapa en el primer lugar
+            if let firstPlace = categoryPlaces.first,
+               let coordinate = firstPlace.coordinate {
+                withAnimation(.easeInOut(duration: 1.0)) {
+                    cameraCenter = coordinate
+                    cameraZoom = 13  // Zoom más alejado para ver varios lugares
+                }
+            }
+
+            print("📍 Se agregaron \(categoryPlaces.count) lugares de tipo '\(category.searchTerm)' al mapa")
+        } else {
+            print("⚠️ No se encontraron lugares para la categoría '\(category.name)'")
         }
     }
 
@@ -781,8 +798,11 @@ struct MainMapView: View {
                 selectedTransportMode: selectedTransportMode,
                 cameraCenter: cameraCenter,
                 cameraZoom: cameraZoom,
+                cameraPitch: cameraPitch,
                 shouldFollowUser: shouldFollowUser,
                 isEmergencyActive: emergencyManager.isEmergencyActive,
+                demandZones: demandManager.demandZones,
+                showHeatMap: demandManager.showHeatMap,
                 onMarkerTapped: { marker in
                     handleMarkerTap(marker)
                 },
@@ -813,9 +833,21 @@ struct MainMapView: View {
                 isSearchFocused: $isSearchFocused,
                 isWorldCupToday: $isWorldCupToday,
                 onMenuTap: {
-                    menuState.showMenu = true
+                    menuState.toggleMenu()
                 }
             )
+
+            // Filtro de categorías desplegable (solo visible cuando el buscador NO está expandido)
+            if !isSearchBarExpanded && !isSearchFocused {
+                CategoryFilterScrollView(
+                    selectedCategory: $selectedCategory,
+                    isExpanded: $isCategoryFilterExpanded,
+                    onCategorySelected: { category in
+                        handleCategorySelection(category)
+                    }
+                )
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
 
             Spacer()
         }
@@ -881,7 +913,7 @@ struct MainMapView: View {
 
             // Botón de usuario más compacto
             Button(action: {
-                menuState.showMenu = true
+                menuState.toggleMenu()
                 isSearchFocused = false
                 let generator = UIImpactFeedbackGenerator(style: .medium)
                 generator.impactOccurred()
@@ -1514,13 +1546,8 @@ struct MainMapView: View {
 
     // Calcular el offset del botón de ubicación
     private var locationButtonOffset: CGFloat {
-        if sheetHeight <= 164 {
-            // Modal colapsado u oculto - seguir al modal
-            return max(sheetHeight, 90) + 20
-        } else {
-            // Modal expandido - quedarse en posición fija baja
-            return 110
-        }
+        // Posición fija desde el bottom (considerando el tab bar)
+        return 110
     }
 
     // Abrir el modal de reservaciones desde el bottom sheet
@@ -1753,8 +1780,11 @@ struct LocationObserverModifier: ViewModifier {
     @Binding var confettiCounter: Int
     @Binding var cameraCenter: CLLocationCoordinate2D?
     @Binding var cameraZoom: Double
+    @Binding var cameraPitch: Double
     @Binding var shouldFollowUser: Bool
     @Binding var modalState: SheetState
+    @Binding var showLocationBanner: Bool
+    @Binding var currentLocationText: String
 
     func body(content: Content) -> some View {
         content
@@ -1782,12 +1812,29 @@ struct LocationObserverModifier: ViewModifier {
                         cameraZoom = 16.0
                         print("🎬 Iniciando animación hacia ubicación del usuario")
 
+                        // Después de llegar a la ubicación (3.5s), hacer transición a vista 3D (3s adicionales)
                         DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
-                            shouldFollowUser = true
-                            print("📍 Seguimiento de usuario activado")
+                            withAnimation(.easeInOut(duration: 3.0)) {
+                                cameraPitch = 45
+                                print("🌐 Activando vista 3D (pitch: 45°)")
+                            }
+
+                            // Activar seguimiento del usuario después de la transición 3D
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                                shouldFollowUser = true
+                                print("📍 Seguimiento de usuario activado")
+                            }
                         }
 
                         isFirstLocationLoad = false
+                    }
+
+                    // Mostrar banner de ubicación al entrar al mapa
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                        // Obtener nombre de ubicación (puedes agregar reverse geocoding aquí)
+                        currentLocationText = getLocationName(for: userLocation)
+                        showLocationBanner = true
+                        print("📍 Banner de ubicación mostrado: \(currentLocationText)")
                     }
                 }
             }
@@ -1823,6 +1870,72 @@ struct LocationObserverModifier: ViewModifier {
     }
 }
 
+// MARK: - Helper Functions
+
+/// Obtiene el nombre de la ubicación basado en las coordenadas
+/// Puede ser mejorado con reverse geocoding real usando CLGeocoder o Amazon Location Service
+func getLocationName(for coordinate: CLLocationCoordinate2D) -> String {
+    // Por ahora, retornar ubicación genérica basada en coordenadas
+    // TODO: Implementar reverse geocoding real con Amazon Location Service o CLGeocoder
+
+    // Detectar si está en México (aproximado)
+    if coordinate.latitude >= 14.5 && coordinate.latitude <= 32.7 &&
+       coordinate.longitude >= -118.4 && coordinate.longitude <= -86.7 {
+
+        // Detección de ciudades principales en México
+        if coordinate.latitude >= 19.0 && coordinate.latitude <= 19.6 &&
+           coordinate.longitude >= -99.4 && coordinate.longitude <= -98.9 {
+            return "Ciudad de México, CDMX"
+        } else if coordinate.latitude >= 25.5 && coordinate.latitude <= 25.8 &&
+                  coordinate.longitude >= -100.5 && coordinate.longitude <= -100.1 {
+            return "Monterrey, Nuevo León"
+        } else if coordinate.latitude >= 20.5 && coordinate.latitude <= 20.8 &&
+                  coordinate.longitude >= -103.5 && coordinate.longitude <= -103.2 {
+            return "Guadalajara, Jalisco"
+        }
+
+        return "México"
+    }
+
+    // Detectar si está en Estados Unidos (aproximado)
+    if coordinate.latitude >= 25.0 && coordinate.latitude <= 49.0 &&
+       coordinate.longitude >= -125.0 && coordinate.longitude <= -66.0 {
+
+        // Detección de ciudades principales en USA
+        if coordinate.latitude >= 40.6 && coordinate.latitude <= 40.9 &&
+           coordinate.longitude >= -74.1 && coordinate.longitude <= -73.7 {
+            return "New York, NY"
+        } else if coordinate.latitude >= 34.0 && coordinate.latitude <= 34.4 &&
+                  coordinate.longitude >= -118.7 && coordinate.longitude <= -118.1 {
+            return "Los Angeles, CA"
+        } else if coordinate.latitude >= 29.6 && coordinate.latitude <= 30.0 &&
+                  coordinate.longitude >= -95.8 && coordinate.longitude <= -95.0 {
+            return "Houston, TX"
+        }
+
+        return "United States"
+    }
+
+    // Detectar si está en Canadá (aproximado)
+    if coordinate.latitude >= 41.0 && coordinate.latitude <= 83.0 &&
+       coordinate.longitude >= -141.0 && coordinate.longitude <= -52.0 {
+
+        // Detección de ciudades principales en Canadá
+        if coordinate.latitude >= 43.5 && coordinate.latitude <= 43.9 &&
+           coordinate.longitude >= -79.6 && coordinate.longitude <= -79.1 {
+            return "Toronto, ON"
+        } else if coordinate.latitude >= 45.4 && coordinate.latitude <= 45.6 &&
+                  coordinate.longitude >= -73.8 && coordinate.longitude <= -73.4 {
+            return "Montreal, QC"
+        }
+
+        return "Canada"
+    }
+
+    // Por defecto
+    return String(format: "%.4f°, %.4f°", coordinate.latitude, coordinate.longitude)
+}
+
 // MARK: - Vista del mapa base de Mapbox
 
 struct MapboxMainMapView: UIViewRepresentable {
@@ -1836,8 +1949,11 @@ struct MapboxMainMapView: UIViewRepresentable {
     var selectedTransportMode: TransportMode
     var cameraCenter: CLLocationCoordinate2D?
     var cameraZoom: CGFloat
+    var cameraPitch: Double
     var shouldFollowUser: Bool
     var isEmergencyActive: Bool
+    var demandZones: [DemandZone]
+    var showHeatMap: Bool
     var onMarkerTapped: ((SearchPlace) -> Void)?
     var onVenueTapped: ((WorldCupVenue) -> Void)?
     var onMapTapped: ((CLLocationCoordinate2D) -> Void)?
@@ -1868,9 +1984,22 @@ struct MapboxMainMapView: UIViewRepresentable {
                 print("❌ Error cargando estilo: \(error)")
             } else {
                 print("✅ Estilo \(mapStyle.displayName) cargado")
+                context.coordinator.styleLoaded = true
                 // Agregar marcadores de sedes FIFA después de cargar el estilo
                 if !self.venueMarkers.isEmpty {
                     context.coordinator.updateVenueMarkers(self.venueMarkers, on: mapView)
+                }
+                // Agregar heatmap pendiente o activo
+                print("🔥 [styleLoaded] showHeatMap=\(self.showHeatMap), zones=\(self.demandZones.count), pending=\(context.coordinator.pendingHeatmapZones?.count ?? -1)")
+                if let pendingZones = context.coordinator.pendingHeatmapZones {
+                    print("🔥 [styleLoaded] Agregando heatmap pendiente con \(pendingZones.count) zonas")
+                    context.coordinator.addDemandHeatmap(zones: pendingZones, on: mapView)
+                    context.coordinator.pendingHeatmapZones = nil
+                } else if self.showHeatMap && !self.demandZones.isEmpty {
+                    print("🔥 [styleLoaded] Agregando heatmap directo con \(self.demandZones.count) zonas")
+                    context.coordinator.addDemandHeatmap(zones: self.demandZones, on: mapView)
+                } else {
+                    print("🔥 [styleLoaded] No se agrega heatmap — showHeatMap=\(self.showHeatMap), zones=\(self.demandZones.count)")
                 }
             }
         }
@@ -1955,6 +2084,8 @@ struct MapboxMainMapView: UIViewRepresentable {
         // Verificar si cambió el estilo del mapa
         if context.coordinator.currentStyle != mapStyle {
             context.coordinator.currentStyle = mapStyle
+            context.coordinator.styleLoaded = false
+            context.coordinator.heatmapAdded = false
 
             // Cambiar el estilo del mapa
             mapView.mapboxMap.loadStyleURI(mapStyle.styleURI) { error in
@@ -1962,12 +2093,17 @@ struct MapboxMainMapView: UIViewRepresentable {
                     print("❌ Error cambiando estilo: \(error)")
                 } else {
                     print("✅ Estilo cambiado a \(mapStyle.displayName)")
+                    context.coordinator.styleLoaded = true
                     // Re-agregar marcadores de búsqueda
                     context.coordinator.updateSearchMarkers(searchMarkers, on: mapView)
                     // Re-agregar marcadores de sedes
                     context.coordinator.updateVenueMarkers(venueMarkers, on: mapView)
                     // Re-agregar rutas
                     context.coordinator.updateRoutePolylines(routePolylines, selectedIndex: selectedRouteIndex, transportMode: selectedTransportMode, on: mapView)
+                    // Re-agregar heatmap si estaba activo
+                    if self.showHeatMap && !self.demandZones.isEmpty {
+                        context.coordinator.addDemandHeatmap(zones: self.demandZones, on: mapView)
+                    }
                 }
             }
         }
@@ -2003,15 +2139,17 @@ struct MapboxMainMapView: UIViewRepresentable {
                                       abs(context.coordinator.currentCameraCenter!.latitude - center.latitude) > 0.0001 ||
                                       abs(context.coordinator.currentCameraCenter!.longitude - center.longitude) > 0.0001
             let cameraZoomChanged = abs(context.coordinator.currentCameraZoom - cameraZoom) > 0.1
+            let cameraPitchChanged = abs(context.coordinator.currentCameraPitch - cameraPitch) > 1.0
 
-            if cameraCenterChanged || cameraZoomChanged {
+            if cameraCenterChanged || cameraZoomChanged || cameraPitchChanged {
                 mapView.camera.fly(
-                    to: CameraOptions(center: center, zoom: cameraZoom, pitch: 0),
+                    to: CameraOptions(center: center, zoom: cameraZoom, pitch: cameraPitch),
                     duration: 3.0  // Duración más larga para animación suave
                 )
                 context.coordinator.currentCameraCenter = center
                 context.coordinator.currentCameraZoom = cameraZoom
-                print("🎬 Animando cámara hacia: \(center.latitude), \(center.longitude) con zoom: \(cameraZoom)")
+                context.coordinator.currentCameraPitch = cameraPitch
+                print("🎬 Animando cámara hacia: \(center.latitude), \(center.longitude) con zoom: \(cameraZoom), pitch: \(cameraPitch)")
             }
         }
 
@@ -2028,6 +2166,42 @@ struct MapboxMainMapView: UIViewRepresentable {
         if context.coordinator.currentIsEmergencyActive != isEmergencyActive {
             context.coordinator.currentIsEmergencyActive = isEmergencyActive
             context.coordinator.updateEmergencyPuck(isActive: isEmergencyActive, on: mapView)
+        }
+
+        // Actualizar heatmap de demanda
+        let heatmapToggled = context.coordinator.currentShowHeatMap != showHeatMap
+        let zonesChanged = context.coordinator.currentDemandZoneCount != demandZones.count
+
+        print("🔥 [updateUIView] showHeatMap=\(showHeatMap), zones=\(demandZones.count), toggled=\(heatmapToggled), zonesChanged=\(zonesChanged), styleLoaded=\(context.coordinator.styleLoaded), heatmapAdded=\(context.coordinator.heatmapAdded)")
+
+        if heatmapToggled {
+            context.coordinator.currentShowHeatMap = showHeatMap
+            if showHeatMap && !demandZones.isEmpty {
+                if !context.coordinator.styleLoaded {
+                    print("🔥 [updateUIView] Estilo no cargado, guardando \(demandZones.count) zonas como pendientes")
+                    context.coordinator.pendingHeatmapZones = demandZones
+                } else if !context.coordinator.heatmapAdded {
+                    print("🔥 [updateUIView] Agregando heatmap ahora")
+                    context.coordinator.addDemandHeatmap(zones: demandZones, on: mapView)
+                } else {
+                    print("🔥 [updateUIView] Toggling visibility ON")
+                    context.coordinator.toggleDemandHeatmapVisibility(show: true, on: mapView)
+                }
+            } else {
+                if context.coordinator.heatmapAdded {
+                    print("🔥 [updateUIView] Toggling visibility OFF")
+                    context.coordinator.toggleDemandHeatmapVisibility(show: false, on: mapView)
+                }
+            }
+        } else if zonesChanged && showHeatMap && context.coordinator.styleLoaded {
+            context.coordinator.currentDemandZoneCount = demandZones.count
+            if context.coordinator.heatmapAdded {
+                print("🔥 [updateUIView] Actualizando datos del heatmap")
+                context.coordinator.updateDemandHeatmapData(zones: demandZones, on: mapView)
+            } else {
+                print("🔥 [updateUIView] Agregando heatmap (zones changed)")
+                context.coordinator.addDemandHeatmap(zones: demandZones, on: mapView)
+            }
         }
     }
 
@@ -2047,6 +2221,7 @@ struct MapboxMainMapView: UIViewRepresentable {
         var currentIsEmergencyActive: Bool = false
         var currentCameraCenter: CLLocationCoordinate2D? = CLLocationCoordinate2D(latitude: 10, longitude: -85)
         var currentCameraZoom: CGFloat = 2.5
+        var currentCameraPitch: Double = 0
         var emergencyPulseView: UIView?
         var emergencyPulseTimer: Timer?
         var searchAnnotationManager: PointAnnotationManager?
@@ -2054,6 +2229,11 @@ struct MapboxMainMapView: UIViewRepresentable {
         var onMarkerTapped: ((SearchPlace) -> Void)?
         var onVenueTapped: ((WorldCupVenue) -> Void)?
         var onMapTapped: ((CLLocationCoordinate2D) -> Void)?
+        var currentShowHeatMap: Bool = false
+        var currentDemandZoneCount: Int = 0
+        var heatmapAdded: Bool = false
+        var styleLoaded: Bool = false
+        var pendingHeatmapZones: [DemandZone]?
 
         init(initialStyle: MapStyle, onMarkerTapped: ((SearchPlace) -> Void)?, onVenueTapped: ((WorldCupVenue) -> Void)?, onMapTapped: ((CLLocationCoordinate2D) -> Void)?) {
             self.currentStyle = initialStyle
@@ -2906,6 +3086,72 @@ struct MapboxMainMapView: UIViewRepresentable {
                     arrowPath.lineWidth = 2
                     arrowPath.stroke()
                 }
+            }
+        }
+
+        // MARK: - Demand Heatmap
+
+        func addDemandHeatmap(zones: [DemandZone], on mapView: MapView) {
+            removeDemandHeatmap(from: mapView)
+
+            // Generar cientos de puntos individuales alrededor de Expo Santa Fe
+            let expoCenter = CLLocationCoordinate2D(latitude: 19.3585, longitude: -99.2740)
+            let featureCollection = DemandHeatmapBuilder.generateCrowdFeatures(around: expoCenter)
+            let source = DemandHeatmapBuilder.makeSource(with: featureCollection)
+
+            do {
+                try mapView.mapboxMap.addSource(source)
+            } catch {
+                print("🔥 [HEATMAP] ERROR source: \(error)")
+                return
+            }
+
+            // Agregar capas — mismo patrón que addMetroLine (sin layerPosition)
+            do {
+                try mapView.mapboxMap.addLayer(DemandHeatmapBuilder.makeGlowLayer())
+                try mapView.mapboxMap.addLayer(DemandHeatmapBuilder.makeCircleLayer())
+                try mapView.mapboxMap.addLayer(DemandHeatmapBuilder.makeSymbolLayer())
+                heatmapAdded = true
+                print("🔥 [HEATMAP] OK — \(featureCollection.features.count) puntos, glow+circle+symbol")
+            } catch {
+                print("🔥 [HEATMAP] ERROR layers: \(error)")
+            }
+        }
+
+        func removeDemandHeatmap(from mapView: MapView) {
+            try? mapView.mapboxMap.removeLayer(withId: DemandHeatmapBuilder.symbolLayerId)
+            try? mapView.mapboxMap.removeLayer(withId: DemandHeatmapBuilder.circleLayerId)
+            try? mapView.mapboxMap.removeLayer(withId: DemandHeatmapBuilder.glowLayerId)
+            try? mapView.mapboxMap.removeSource(withId: DemandHeatmapBuilder.sourceId)
+            heatmapAdded = false
+        }
+
+        func updateDemandHeatmapData(zones: [DemandZone], on mapView: MapView) {
+            // Regenerar todos los puntos
+            guard heatmapAdded else { return }
+            let expoCenter = CLLocationCoordinate2D(latitude: 19.3585, longitude: -99.2740)
+            let featureCollection = DemandHeatmapBuilder.generateCrowdFeatures(around: expoCenter)
+            mapView.mapboxMap.updateGeoJSONSource(
+                withId: DemandHeatmapBuilder.sourceId,
+                geoJSON: .featureCollection(featureCollection)
+            )
+        }
+
+        func toggleDemandHeatmapVisibility(show: Bool, on mapView: MapView) {
+            guard heatmapAdded else { return }
+            let visibility: MapboxMaps.Visibility = show ? .visible : .none
+            do {
+                try mapView.mapboxMap.updateLayer(withId: DemandHeatmapBuilder.glowLayerId, type: CircleLayer.self) { layer in
+                    layer.visibility = .constant(visibility)
+                }
+                try mapView.mapboxMap.updateLayer(withId: DemandHeatmapBuilder.circleLayerId, type: CircleLayer.self) { layer in
+                    layer.visibility = .constant(visibility)
+                }
+                try mapView.mapboxMap.updateLayer(withId: DemandHeatmapBuilder.symbolLayerId, type: SymbolLayer.self) { layer in
+                    layer.visibility = .constant(visibility)
+                }
+            } catch {
+                print("❌ Error toggling heatmap: \(error)")
             }
         }
 

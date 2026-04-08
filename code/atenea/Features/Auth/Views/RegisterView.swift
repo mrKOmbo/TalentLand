@@ -22,6 +22,7 @@ struct RegisterView: View {
     @State private var showingCountryPicker: Bool = false
     @State private var showingAgePicker: Bool = false
     @State private var showingAccessibilityPicker: Bool = false
+    @State private var navigateToRoleSelection = false
 
     // List of World Cup 2026 host countries and other popular countries
     let countries = [
@@ -118,6 +119,20 @@ struct RegisterView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
+            .navigationDestination(isPresented: $navigateToRoleSelection) {
+                RoleSelectionView(
+                    isLoggedIn: $isLoggedIn,
+                    userInfo: UserRegistrationInfo(
+                        fullName: fullName,
+                        age: age,
+                        country: selectedCountry,
+                        email: email,
+                        phoneNumber: phoneNumber,
+                        accessibilityOption: selectedAccessibility
+                    )
+                )
+                .environmentObject(languageManager)
+            }
             .id(languageManager.currentLanguage) // Force re-render when language changes
         }
 
@@ -126,8 +141,9 @@ struct RegisterView: View {
     private var backgroundGradient: some View {
         LinearGradient(
             colors: [
-                Color(red: 0.95, green: 0.97, blue: 1.0),
-                Color.white
+                Color.coppelBlue.opacity(0.05),
+                Color.white,
+                Color.coppelYellow.opacity(0.03)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -138,14 +154,14 @@ struct RegisterView: View {
     private var titleSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(LocalizedString("register.subtitle"))
-                .font(.system(size: 17, weight: .regular))
+                .font(.coppelBody)
                 .foregroundStyle(.secondary)
 
             Text(LocalizedString("register.title"))
-                .font(.system(size: 40, weight: .bold))
+                .font(.coppelHeadline)
                 .foregroundStyle(
                     LinearGradient(
-                        colors: [.blue, .cyan],
+                        colors: [.coppelBlue, .coppelLightBlue],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
@@ -162,22 +178,22 @@ struct RegisterView: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label)
-                .font(.system(size: 14, weight: .medium))
+                .font(.coppelCaption)
                 .foregroundStyle(.secondary)
 
             TextField(placeholder, text: text)
                 .textFieldStyle(PlainTextFieldStyle())
-                .font(.system(size: 16))
-                .foregroundStyle(.primary)
+                .font(.coppelBody)
+                .foregroundStyle(Color.primaryText)
                 .padding()
                 .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    RoundedRectangle(cornerRadius: CoppelTheme.CornerRadius.lg, style: .continuous)
                         .fill(Color(.systemBackground))
                         .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(Color.gray.opacity(0.1), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: CoppelTheme.CornerRadius.lg, style: .continuous)
+                        .stroke(Color.coppelGrey.opacity(0.1), lineWidth: 1)
                 )
                 .textInputAutocapitalization(autocapitalization)
                 .keyboardType(keyboardType)
@@ -332,7 +348,7 @@ struct RegisterView: View {
                         .font(.system(size: 18))
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [.blue, .cyan],
+                                colors: [.coppelBlue, .coppelLightBlue],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
@@ -393,25 +409,25 @@ struct RegisterView: View {
         }) {
             HStack(spacing: 8) {
                 Text(LocalizedString("register.createAccount"))
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.coppelCTA)
 
                 Image(systemName: "arrow.right")
                     .font(.system(size: 16, weight: .semibold))
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(Color.primaryTextInverted)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
             .background(
                 Group {
                     if canCreateAccount {
                         LinearGradient(
-                            gradient: Gradient(colors: [.blue, .cyan]),
+                            gradient: Gradient(colors: [.coppelBlue, .coppelLightBlue]),
                             startPoint: .leading,
                             endPoint: .trailing
                         )
                     } else {
                         LinearGradient(
-                            gradient: Gradient(colors: [.gray, .gray]),
+                            gradient: Gradient(colors: [.coppelGrey, .coppelGrey]),
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -419,9 +435,9 @@ struct RegisterView: View {
                     }
                 }
             )
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: CoppelTheme.CornerRadius.lg, style: .continuous))
             .shadow(
-                color: canCreateAccount ? Color.blue.opacity(0.4) : Color.clear,
+                color: canCreateAccount ? Color.coppelBlue.opacity(0.4) : Color.clear,
                 radius: 12,
                 x: 0,
                 y: 6
@@ -442,10 +458,10 @@ struct RegisterView: View {
                 dismiss()
             }) {
                 Text(LocalizedString("register.signIn"))
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.coppelCTA)
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [.blue, .cyan],
+                            colors: [.coppelBlue, .coppelLightBlue],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -477,31 +493,8 @@ struct RegisterView: View {
         print("   Phone: \(phoneNumber)")
         print("   Accessibility: \(selectedAccessibility.displayName)")
 
-        // Crear nuevo usuario con toda la información
-        let newUser = User(
-            email: email,
-            name: fullName,
-            role: .user,
-            accessibilityOption: selectedAccessibility,
-            age: age,
-            country: selectedCountry,
-            phoneNumber: phoneNumber
-        )
-
-        // Guardar usuario en UserManager
-        userManager.currentUser = newUser
-
-        // Si el usuario tiene discapacidad visual, anunciar bienvenida
-        if newUser.hasVisualDisability {
-            let accessibilityManager = AccessibilitySettingsManager.shared
-            accessibilityManager.announce("Bienvenido a Atenea, \(fullName). Tu perfil de accesibilidad ha sido configurado.")
-            accessibilityManager.provideHapticFeedback(.success)
-        }
-
-        // Log in
-        withAnimation {
-            isLoggedIn = true
-        }
+        // Navigate to role selection instead of logging in directly
+        navigateToRoleSelection = true
     }
 }
 
