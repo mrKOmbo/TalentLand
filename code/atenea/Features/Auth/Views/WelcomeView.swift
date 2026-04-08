@@ -1,7 +1,8 @@
 //  WelcomeView.swift
 //  atenea
 //
-//  Vista de bienvenida optimizada con Coppel Brand Toolkit 2024
+//  Vista de bienvenida nativa iOS — Coppel Brand Toolkit 2024
+//  Cumplimiento estricto: gradiente lineal, logos sin barra opaca, búho limpio, contraste AAA
 
 import SwiftUI
 
@@ -12,156 +13,135 @@ struct WelcomeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Fondo con Gradiente Radial
-                backgroundView
+                // MARK: - Fondo: Gradiente Lineal Vertical (coppelBlue → darkBlue)
+                LinearGradient(
+                    gradient: Gradient(stops: [
+                        .init(color: Color.coppelBlue, location: 0.0),
+                        .init(color: Color.coppelDarkBlue, location: 1.0)
+                    ]),
+                    startPoint: .topCenter,
+                    endPoint: .bottomCenter
+                )
+                .ignoresSafeArea()
 
-                // Contenido Principal
+                // MARK: - Contenido Principal (VStack vertical)
                 VStack(spacing: 0) {
+                    // 1. Logos de Patrocinadores (Fundación Coppel + Divisor + Coppel Emprende)
+                    // Posicionados directamente sobre el gradiente, sin barra opaca
+                    sponsorLogosSection
+                        .frame(height: 55)
+                        .padding(.horizontal, 24)
+                        .padding(.top, 16)
+                        .padding(.bottom, 32)
+
                     Spacer()
 
-                    // Logo ATR y Títulos (centrado)
-                    VStack(spacing: 28) {
-                        brandIcon
+                    // 2. Logo del Búho de Atenea (limpio, sin recuadro)
+                    // [Asset: AteneaOwlIconCleanVector]
+                    Image("Atenea-Logo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 100, height: 100)
+                        .shadow(color: Color.black.opacity(0.25), radius: 16, x: 0, y: 8)
 
-                        VStack(spacing: 12) {
-                            Text("Bienvenido a Atenea")
-                                .font(.system(size: 36, weight: .bold, design: .rounded))
-                                .foregroundColor(.white)
-                                .multilineTextAlignment(.center)
+                    // 3. Textos de Bienvenida (Jerarquía visual)
+                    VStack(spacing: 16) {
+                        // Headline: "Bienvenido a Atenea" en coppelYellow
+                        Text("Bienvenido a Atenea")
+                            .font(.system(size: 36, weight: .semibold, design: .default))
+                            .foregroundColor(.coppelYellow)
+                            .multilineTextAlignment(.center)
 
-                            Text("Descubre negocios locales o impulsa tu emprendimiento en la red más grande de la Copa del Mundo.")
-                                .font(.system(size: 17, weight: .medium))
-                                .foregroundColor(.white.opacity(0.85))
-                                .multilineTextAlignment(.center)
-                                .lineSpacing(4)
-                                .padding(.horizontal, 20)
-                        }
+                        // Body: Descripción en white con 120% leading
+                        Text("Descubre negocios locales o impulsa tu emprendimiento en la red más grande de la Copa del Mundo.")
+                            .font(.system(size: 17, weight: .regular, design: .rounded))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(2)
+                            .padding(.horizontal, 24)
                     }
+                    .padding(.top, 32)
 
                     Spacer()
 
-                    // Botones de Acción
+                    // 4. Acciones (Botones con AAA contrast)
                     actionSection
-                        .padding(.bottom, 50)
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 60)
                 }
-                .padding(.horizontal, 30)
-            }
-            .ignoresSafeArea()
-            // Sponsor Logos debajo de la Dynamic Island
-            .safeAreaInset(edge: .top, spacing: 0) {
-                sponsorLogosSection
-                    .frame(height: 55)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 12)
             }
         }
     }
 
-    // MARK: - Componentes de UI
-
-    private var backgroundView: some View {
-        ZStack {
-            // Fondo gradiente radial (coppelBlue al centro, darkBlue en bordes)
-            RadialGradient(
-                gradient: Gradient(colors: [
-                    Color.coppelBlue.opacity(0.8),
-                    Color.coppelBlue.opacity(0.4),
-                    Color.coppelDarkBlue
-                ]),
-                center: .center,
-                startRadius: 0,
-                endRadius: 500
-            )
-
-            // Círculos decorativos sutiles
-            Circle()
-                .fill(Color.coppelYellow.opacity(0.12))
-                .frame(width: 300)
-                .blur(radius: 70)
-                .offset(x: 150, y: -250)
-
-            Circle()
-                .fill(Color.white.opacity(0.05))
-                .frame(width: 400)
-                .blur(radius: 90)
-                .offset(x: -150, y: 300)
-        }
-    }
-
+    // MARK: - Sponsor Logos Section
     private var sponsorLogosSection: some View {
         HStack(spacing: 0) {
             // Fundación Coppel (izquierda)
+            // [Asset: FundaciónCoppelLogoWhite]
             Image("Fundacion-Coppel-Logo")
                 .resizable()
                 .scaledToFit()
-                .frame(height: 35)
-                .padding(.leading, 8)
+                .frame(height: 32)
 
             Spacer()
 
-            // Divisor vertical
-            VStack {
-                Rectangle()
-                    .fill(Color.white.opacity(0.6))
-                    .frame(width: 1, height: 35)
-            }
+            // Divisor vertical fino en white
+            Rectangle()
+                .fill(Color.white.opacity(0.4))
+                .frame(width: 1, height: 32)
 
             Spacer()
 
             // Coppel Emprende (derecha)
+            // [Asset: CoppelEmprendeLogoWhite]
             Image("Coppel-Emprende-Logo")
                 .resizable()
                 .scaledToFit()
-                .frame(height: 35)
-                .padding(.trailing, 8)
+                .frame(height: 32)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 55)
-        .background(Color.coppelDarkBlue.opacity(0.3))
     }
 
-    private var brandIcon: some View {
-        Image("Atenea-Logo")
-            .resizable()
-            .scaledToFit()
-            .frame(width: 100, height: 100)
-            .shadow(color: Color.black.opacity(0.3), radius: 20, x: 0, y: 10)
-    }
-
+    // MARK: - Action Section (Botones)
     private var actionSection: some View {
         VStack(spacing: 16) {
-            // Botón Principal - Iniciar Sesión
+            // Botón Primario: "Iniciar sesión →" (coppelYellow fill, darkBlue text)
             NavigationLink(destination: LoginView(isLoggedIn: $isLoggedIn)
                 .environmentObject(languageManager)
             ) {
                 HStack(spacing: 8) {
                     Text("Iniciar sesión")
+                        .font(.system(size: 18, weight: .semibold, design: .rounded))
+
                     Image(systemName: "arrow.right")
+                        .font(.system(size: 16, weight: .semibold))
                 }
-                .font(.system(size: 18, weight: .bold))
-                .foregroundColor(.black)
+                .foregroundColor(.coppelDarkBlue)
                 .frame(maxWidth: .infinity)
-                .frame(height: 58)
+                .frame(height: 56)
                 .background(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .fill(Color.coppelYellow)
                 )
             }
             .buttonStyle(PlainButtonStyle())
 
-            // Botón Secundario - Registrarse
+            // Botón Secundario: "Registrarse" (white outline, white text)
             NavigationLink(destination: RegisterView(isLoggedIn: $isLoggedIn)
                 .environmentObject(languageManager)
             ) {
                 Text("Registrarse")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 58)
+                    .frame(height: 56)
                     .background(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .stroke(Color.white.opacity(0.6), lineWidth: 2)
-                            .background(Color.white.opacity(0.1))
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(Color.white.opacity(0.7), lineWidth: 2)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(Color.white.opacity(0.08))
+                            )
                     )
             }
             .buttonStyle(PlainButtonStyle())
