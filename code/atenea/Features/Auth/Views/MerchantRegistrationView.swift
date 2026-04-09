@@ -29,6 +29,8 @@ struct MerchantRegistrationView: View {
     @State private var showLocationMap = false
     @State private var isCalculatingRoute = false
     @State private var showCoppelModal = false
+    @State private var showAddProducts = false
+    @State private var pendingMerchant: Merchant?
     @State private var coppelEmail = ""
     @State private var coppelName = ""
 
@@ -76,6 +78,40 @@ struct MerchantRegistrationView: View {
         }
         .sheet(isPresented: $showCoppelModal) {
             coppelModal
+        }
+        .fullScreenCover(isPresented: $showAddProducts) {
+            if let merchant = pendingMerchant {
+                AddProductsView(
+                    onSave: { products in
+                        // Update merchant with products
+                        if let index = MerchantManager.shared.merchants.firstIndex(where: { $0.id == merchant.id }) {
+                            let updated = Merchant(
+                                id: merchant.id,
+                                userId: merchant.userId,
+                                businessName: merchant.businessName,
+                                category: merchant.category,
+                                emoji: merchant.emoji,
+                                description: merchant.description,
+                                products: products,
+                                schedule: merchant.schedule,
+                                isActive: merchant.isActive,
+                                isStatic: merchant.isStatic,
+                                currentLocation: merchant.currentLocation,
+                                route: merchant.route
+                            )
+                            MerchantManager.shared.merchants[index] = updated
+                            MerchantManager.shared.currentMerchantProfile = updated
+
+                            // Sync to Supabase with products
+                            Task {
+                                _ = try? await SupabaseService.shared.saveMerchant(updated)
+                            }
+                        }
+                        finishRegistration()
+                    },
+                    merchantId: merchant.id.uuidString
+                )
+            }
         }
         .sheet(isPresented: $showLocationMap) {
             NavigationStack {
@@ -763,6 +799,11 @@ struct MerchantRegistrationView: View {
         // Save user
         userManager.currentUser = user
 
+        // Sync user to Supabase
+        Task {
+            try? await SupabaseService.shared.saveUser(user)
+        }
+
         // Register merchant in MerchantManager so it appears on the main map
         MerchantManager.shared.registerMerchant(
             userId: user.id,
@@ -783,7 +824,12 @@ struct MerchantRegistrationView: View {
             accessibilityManager.provideHapticFeedback(.success)
         }
 
-        // Log in
+        // Show add products screen
+        pendingMerchant = MerchantManager.shared.currentMerchantProfile
+        showAddProducts = true
+    }
+
+    private func finishRegistration() {
         withAnimation {
             isLoggedIn = true
         }

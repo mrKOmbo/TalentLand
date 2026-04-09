@@ -130,6 +130,12 @@ class UserManager: ObservableObject {
             // Vincular perfil de negocio
             MerchantManager.shared.linkCurrentUserProfile()
             print("✅ Usuario logueado: \(user.name) (\(user.role.displayName))")
+
+            // Sync user to Supabase
+            Task {
+                try? await SupabaseService.shared.saveUser(user)
+            }
+
             return true
         }
         print("❌ Usuario no encontrado: \(email)")

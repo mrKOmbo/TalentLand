@@ -3,6 +3,7 @@
 //  atenea
 //
 //  Genera URLs y QR codes para páginas web de negocios en komiia.com
+//  Los datos se cargan desde Supabase por ID
 //
 
 import UIKit
@@ -14,15 +15,18 @@ enum BusinessQRService {
 
     // MARK: - URL Generation
 
-    /// Genera la URL web del negocio con datos codificados en base64
+    /// URL con ID de Supabase — la web consulta los datos desde la DB
     static func businessURL(for merchant: Merchant) -> String {
-        let data = businessPayload(for: merchant)
+        return "\(baseURL)?id=\(merchant.id.uuidString)"
+    }
 
+    /// Fallback: URL con datos embebidos en base64 (funciona sin internet para la web)
+    static func businessURLWithData(for merchant: Merchant) -> String {
+        let data = businessPayload(for: merchant)
         guard let jsonData = try? JSONSerialization.data(withJSONObject: data),
               let jsonString = String(data: jsonData, encoding: .utf8) else {
             return baseURL
         }
-
         let base64 = Data(jsonString.utf8).base64EncodedString()
         return "\(baseURL)?d=\(base64)"
     }
@@ -33,7 +37,7 @@ enum BusinessQRService {
         return QRGeneratorService.generateQRCode(from: url, size: size)
     }
 
-    // MARK: - Payload
+    // MARK: - Payload (for base64 fallback)
 
     private static func businessPayload(for merchant: Merchant) -> [String: Any] {
         var data: [String: Any] = [
@@ -58,7 +62,6 @@ enum BusinessQRService {
             data["lng"] = location.longitude
         }
 
-        // Products (solo disponibles, max 8 para no inflar el QR)
         let availableProducts = merchant.products.filter { $0.isAvailable }.prefix(8)
         if !availableProducts.isEmpty {
             data["products"] = availableProducts.map { product -> [String: Any] in

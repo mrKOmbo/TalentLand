@@ -17,6 +17,18 @@ class MerchantManager: ObservableObject {
 
     private init() {
         loadMockMerchants()
+        syncMocksToSupabaseIfNeeded()
+    }
+
+    /// Sync mock merchants to Supabase once on first launch
+    private func syncMocksToSupabaseIfNeeded() {
+        let key = "hasSyncedMocksToSupabase"
+        guard !UserDefaults.standard.bool(forKey: key) else { return }
+
+        Task {
+            await SupabaseService.shared.syncAllMerchants(merchants)
+            UserDefaults.standard.set(true, forKey: key)
+        }
     }
 
     /// Vincular perfil de merchant para el usuario actual (llamar después de login/restore)
@@ -75,6 +87,11 @@ class MerchantManager: ObservableObject {
         } else {
             print("🏪 [toggleActive] No coincide con currentMerchantProfile")
         }
+
+        // Sync status to Supabase
+        Task {
+            try? await SupabaseService.shared.updateMerchantStatus(merchantId: merchantId, isActive: despues)
+        }
     }
 
     func updateLocation(merchantId: UUID, latitude: Double, longitude: Double) {
@@ -82,6 +99,11 @@ class MerchantManager: ObservableObject {
         merchants[index].currentLocation = MerchantLocation(latitude: latitude, longitude: longitude)
         if merchants[index].id == currentMerchantProfile?.id {
             currentMerchantProfile = merchants[index]
+        }
+
+        // Sync location to Supabase
+        Task {
+            try? await SupabaseService.shared.updateMerchantLocation(merchantId: merchantId, latitude: latitude, longitude: longitude)
         }
     }
 
@@ -175,6 +197,16 @@ class MerchantManager: ObservableObject {
         merchants.append(merchant)
         currentMerchantProfile = merchant
         print("✅ Merchant registrado en MerchantManager: \(businessName)")
+
+        // Subir a Supabase automáticamente
+        Task {
+            do {
+                let supabaseId = try await SupabaseService.shared.saveMerchant(merchant)
+                print("☁️ Merchant sincronizado con Supabase: \(supabaseId)")
+            } catch {
+                print("⚠️ Error subiendo merchant a Supabase: \(error.localizedDescription)")
+            }
+        }
     }
 
     private static func merchantCategory(from businessType: BusinessType) -> MerchantCategory {
