@@ -29,6 +29,7 @@ struct ContentView: View {
     @State private var showHelpView = false
     @State private var showVenuesView = false
     @State private var showAccessibilityView = false
+    @State private var showReputationView = false
     @State private var showSaleSheet = false
 
     @Environment(\.scenePhase) private var scenePhase
@@ -153,6 +154,9 @@ struct ContentView: View {
                     .onAccessibility {
                         showAccessibilityView = true
                     }
+                    .onReputation {
+                        showReputationView = true
+                    }
                     .onLogout {
                         handleLogout()
                     }
@@ -170,6 +174,9 @@ struct ContentView: View {
                     }
                     .sheet(isPresented: $showAccessibilityView) {
                         VisualAccessibilitySettingsView()
+                    }
+                    .sheet(isPresented: $showReputationView) {
+                        ReputationView()
                     }
                     .sheet(isPresented: $showVenuesView) {
                         NavigationView {

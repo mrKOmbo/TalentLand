@@ -1354,3 +1354,11 @@
 "products.skip" = "Skip";
 "products.namePlaceholder" = "Product name";
 "products.addPhoto" = "Add photo";
+
+// MARK: - Route Tracking
+"route.nearRoute" = "You're near your route";
+"route.startPrompt" = "Your route has %d stops. Start your route?";
+"route.notNow" = "Not now";
+"route.startRoute" = "Start route";
+"route.onRoute" = "On route";
+"route.endRoute" = "End route";

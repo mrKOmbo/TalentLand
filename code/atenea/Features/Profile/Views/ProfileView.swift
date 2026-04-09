@@ -47,29 +47,78 @@ struct UserProfileView: View {
 
                     // Avatar
                     VStack(spacing: 16) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.coppelBlue)
-                                .frame(width: 100, height: 100)
+                        ZStack(alignment: .bottomTrailing) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.coppelBlue)
+                                    .frame(width: 100, height: 100)
 
-                            Image(systemName: "person.fill")
-                                .font(.system(size: 48, weight: .semibold))
-                                .foregroundColor(.white)
+                                Image(systemName: "person.fill")
+                                    .font(.system(size: 48, weight: .semibold))
+                                    .foregroundColor(.white)
+                            }
+                            .overlay(
+                                Circle()
+                                    .stroke(
+                                        userManager.currentUser?.trustLevel.isGreen == true
+                                            ? Color.green
+                                            : Color(red: 0.11, green: 0.26, blue: 0.91).opacity(0.2),
+                                        lineWidth: userManager.currentUser?.trustLevel.isGreen == true ? 3.5 : 3
+                                    )
+                            )
+
+                            // Badge de verificación verde
+                            if let user = userManager.currentUser, user.trustLevel.isGreen {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.white)
+                                        .frame(width: 30, height: 30)
+                                    Circle()
+                                        .fill(Color.green)
+                                        .frame(width: 26, height: 26)
+                                    Image(systemName: user.trustLevel.icon)
+                                        .font(.system(size: 13, weight: .bold))
+                                        .foregroundColor(.white)
+                                }
+                                .offset(x: 2, y: 2)
+                            }
                         }
-                        .overlay(
-                            Circle()
-                                .stroke(Color(red: 0.11, green: 0.26, blue: 0.91).opacity(0.2), lineWidth: 3)
-                        )
 
                         if !isEditMode {
                             VStack(spacing: 4) {
-                                Text(userManager.currentUser?.name ?? LocalizedString("profile.defaultUser"))
-                                    .font(.system(size: 22, weight: .bold, design: .rounded))
-                                    .foregroundColor(Color.coppelDarkBlue)
+                                HStack(spacing: 6) {
+                                    Text(userManager.currentUser?.name ?? LocalizedString("profile.defaultUser"))
+                                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                                        .foregroundColor(Color.coppelDarkBlue)
+
+                                    if userManager.currentUser?.trustLevel.isGreen == true {
+                                        Image(systemName: userManager.currentUser?.trustLevel.icon ?? "checkmark.seal.fill")
+                                            .font(.system(size: 16))
+                                            .foregroundColor(.green)
+                                    }
+                                }
 
                                 Text(userManager.currentUser?.email ?? "user@atenea.com")
                                     .font(.system(size: 14, weight: .medium))
                                     .foregroundColor(.gray)
+
+                                // Trust level label
+                                if let user = userManager.currentUser, user.trustLevel != .unverified {
+                                    HStack(spacing: 4) {
+                                        Circle()
+                                            .fill(user.trustLevel.color)
+                                            .frame(width: 6, height: 6)
+                                        Text(user.trustLevel.displayName)
+                                            .font(.system(size: 12, weight: .semibold))
+                                            .foregroundColor(user.trustLevel.color)
+                                    }
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 4)
+                                    .background(
+                                        Capsule().fill(user.trustLevel.color.opacity(0.1))
+                                    )
+                                    .padding(.top, 2)
+                                }
                             }
                         }
                     }

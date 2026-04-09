@@ -23,7 +23,9 @@ class UserManager: ObservableObject {
             age: "25",
             country: "México",
             phoneNumber: "+52 55 1234 5678",
-            profileImage: "MILO"
+            profileImage: "MILO",
+            isVerified: true,
+            trustLevel: .trusted
         ),
         User(
             email: "sebas@atenea.com",
@@ -43,7 +45,9 @@ class UserManager: ObservableObject {
             age: "45",
             country: "México",
             phoneNumber: "+52 55 9876 5432",
-            profileImage: nil
+            profileImage: nil,
+            isVerified: true,
+            trustLevel: .trusted
         ),
         // Clientes nuevos
         User(
@@ -85,7 +89,9 @@ class UserManager: ObservableObject {
             age: "38",
             country: "México",
             phoneNumber: "+52 55 6677 8899",
-            profileImage: nil
+            profileImage: nil,
+            isVerified: true,
+            trustLevel: .verified
         ),
         User(
             email: "pepe.carnitas@atenea.com",

@@ -27,6 +27,7 @@ struct SidebarPushMenuContainer<Content: View>: View {
     var onHelp: (() -> Void)?
     var onShowVenues: (() -> Void)?
     var onAccessibility: (() -> Void)?
+    var onReputation: (() -> Void)?
     var onLogout: (() -> Void)?
 
     var selectedTab: Int
@@ -166,6 +167,11 @@ struct SidebarPushMenuContainer<Content: View>: View {
 
                         menuItem(icon: "questionmark.circle.fill", title: "Help") {
                             onHelp?()
+                            closeMenu()
+                        }
+
+                        menuItem(icon: "star.circle.fill", title: "Reconocimientos") {
+                            onReputation?()
                             closeMenu()
                         }
 
@@ -355,6 +361,12 @@ extension SidebarPushMenuContainer {
     func onAccessibility(_ action: @escaping () -> Void) -> Self {
         var view = self
         view.onAccessibility = action
+        return view
+    }
+
+    func onReputation(_ action: @escaping () -> Void) -> Self {
+        var view = self
+        view.onReputation = action
         return view
     }
 

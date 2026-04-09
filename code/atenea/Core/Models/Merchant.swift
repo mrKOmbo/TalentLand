@@ -109,6 +109,8 @@ struct Merchant: Identifiable, Codable, Equatable {
     var currentLocation: MerchantLocation?
     let route: MerchantRoute? // Route for mobile merchants
     let createdAt: Date
+    let isVerified: Bool
+    let trustLevel: TrustLevel
 
     init(
         id: UUID = UUID(),
@@ -123,7 +125,9 @@ struct Merchant: Identifiable, Codable, Equatable {
         isStatic: Bool = true,
         currentLocation: MerchantLocation? = nil,
         route: MerchantRoute? = nil,
-        createdAt: Date = Date()
+        createdAt: Date = Date(),
+        isVerified: Bool = false,
+        trustLevel: TrustLevel = .unverified
     ) {
         self.id = id
         self.userId = userId
@@ -138,6 +142,8 @@ struct Merchant: Identifiable, Codable, Equatable {
         self.currentLocation = currentLocation
         self.route = route
         self.createdAt = createdAt
+        self.isVerified = isVerified
+        self.trustLevel = trustLevel
     }
 
     var isCurrentlyOpen: Bool {

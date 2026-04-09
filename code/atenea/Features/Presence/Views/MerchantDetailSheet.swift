@@ -50,13 +50,48 @@ struct MerchantDetailSheet: View {
 
     private var headerSection: some View {
         VStack(spacing: 8) {
-            Text(merchant.emoji)
-                .font(.system(size: 56))
+            ZStack(alignment: .bottomTrailing) {
+                Text(merchant.emoji)
+                    .font(.system(size: 56))
 
-            Text(merchant.businessName)
-                .font(.system(size: 22, weight: .bold))
+                if merchant.trustLevel.isGreen {
+                    ZStack {
+                        Circle().fill(Color.white).frame(width: 22, height: 22)
+                        Circle().fill(Color.green).frame(width: 18, height: 18)
+                        Image(systemName: merchant.trustLevel.icon)
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    .offset(x: 4, y: 4)
+                }
+            }
+
+            HStack(spacing: 6) {
+                Text(merchant.businessName)
+                    .font(.system(size: 22, weight: .bold))
+
+                if merchant.trustLevel.isGreen {
+                    Image(systemName: merchant.trustLevel.icon)
+                        .font(.system(size: 16))
+                        .foregroundColor(.green)
+                }
+            }
 
             HStack(spacing: 8) {
+                if merchant.trustLevel.isGreen {
+                    HStack(spacing: 3) {
+                        Circle().fill(Color.green).frame(width: 5, height: 5)
+                        Text(merchant.trustLevel.displayName)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.green)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Capsule().fill(Color.green.opacity(0.1)))
+
+                    Text("·").foregroundColor(.secondary)
+                }
+
                 Text(merchant.category.displayName)
                     .font(.system(size: 14))
                     .foregroundColor(.secondary)

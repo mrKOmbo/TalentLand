@@ -11,6 +11,7 @@ import MapboxNavigationCore
 internal import MapboxDirections
 import CoreLocation
 import MapKit
+internal import Combine
 import ConfettiSwiftUI
 
 struct MainMapView: View {
@@ -22,6 +23,7 @@ struct MainMapView: View {
     // @ObservedObject private var demandManager = DemandZoneManager.shared
     @ObservedObject private var userManager = UserManager.shared
     @ObservedObject private var merchantManager = MerchantManager.shared
+    @ObservedObject private var routeTracker = RouteTrackingManager.shared
     @Binding var selectedTab: Int
     @Binding var isLoggedIn: Bool
     @State private var selectedSearchPlace: SearchPlace? = nil
@@ -58,6 +60,8 @@ struct MainMapView: View {
     @State private var selectedChipId: String? = nil // ID del chip seleccionado
     @State private var showScheduleModal = false // Modal de reservaciones
     @State private var showEmergencyModal = false // Modal de emergencia
+    @State private var selectedMerchant: Merchant? = nil // Comerciante seleccionado para detalle
+    @State private var showNearbyPanel = true // Panel de comerciantes cercanos
 
     // Chat con Claude states
     @State private var showChatSearch = false
@@ -107,6 +111,7 @@ struct MainMapView: View {
                 loadReservations()
                 handleAppIntentRequests()
                 loadUserRouteOnMap()
+                startMerchantRouteMonitoring()
             }
             .onChange(of: selectedTab) { oldValue, newValue in
                 if newValue == 0 && modalState == SheetState.hidden {
@@ -143,6 +148,33 @@ struct MainMapView: View {
                 // Sincronizar el estado local con el manager global
                 navigationStateManager.showDirections = newValue
             }
+            .onChange(of: routeTracker.isOnRoute) { _, isOnRoute in
+                if isOnRoute {
+                    // Dibujar la ruta del comerciante en el mapa
+                    let coords = routeTracker.routeCoordinates
+                    guard coords.count >= 2 else { return }
+                    let polyline = MKPolyline(coordinates: coords, count: coords.count)
+                    routePolylines.append(polyline)
+
+                    // Centrar cámara en la ruta
+                    if let first = coords.first {
+                        withAnimation(.easeInOut(duration: 1.0)) {
+                            cameraCenter = first
+                            cameraZoom = 15.0
+                        }
+                    }
+                    print("🗺️ Ruta del comerciante dibujada con \(coords.count) puntos")
+                } else {
+                    // Quitar la polyline de la ruta del comerciante
+                    let merchantCoords = routeTracker.routeCoordinates
+                    if !merchantCoords.isEmpty {
+                        routePolylines.removeAll { polyline in
+                            polyline.pointCount == merchantCoords.count
+                        }
+                    }
+                    print("🗺️ Ruta del comerciante removida del mapa")
+                }
+            }
             .sheet(isPresented: $showVenuesView) {
                 NavigationView {
                     VenuesListView()
@@ -162,6 +194,22 @@ struct MainMapView: View {
             }
             .sheet(isPresented: $showHelpView) {
                 HelpView()
+            }
+            .sheet(item: $selectedMerchant) { merchant in
+                MerchantDetailSheet(
+                    merchant: merchant,
+                    presence: nil,
+                    onViewOnMap: {
+                        selectedMerchant = nil
+                        // Centrar cámara en el comerciante
+                        if let loc = merchant.currentLocation {
+                            withAnimation(.easeInOut(duration: 1.0)) {
+                                cameraCenter = loc.coordinate
+                                cameraZoom = 16.0
+                            }
+                        }
+                    }
+                )
             }
             .modifier(FullScreenCoversModifier(
                 preparedNavigation: $preparedNavigation,
@@ -335,6 +383,75 @@ struct MainMapView: View {
                 .zIndex(101)
             }
 
+            // Panel de comerciantes cercanos (ocultar en emergencia y cuando hay direcciones activas)
+            if !emergencyManager.isEmergencyActive && !showDirections && !showVenueDetailModal {
+                VStack(spacing: 0) {
+                    Spacer()
+
+                    // Handle para abrir/cerrar el panel
+                    Button {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                            showNearbyPanel.toggle()
+                        }
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: showNearbyPanel ? "chevron.down" : "storefront.fill")
+                                .font(.system(size: showNearbyPanel ? 12 : 13, weight: .semibold))
+                                .foregroundColor(showNearbyPanel ? .secondary : .blue)
+
+                            if !showNearbyPanel {
+                                Text("\(merchantManager.merchants.filter { $0.isActive }.count) cerca")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(.ultraThickMaterial)
+                                .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
+                        )
+                        .overlay(
+                            Capsule()
+                                .strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5)
+                        )
+                    }
+                    .padding(.bottom, 8)
+
+                    if showNearbyPanel {
+                        NearbyMerchantsPanel(
+                            merchants: merchantManager.merchants,
+                            userLocation: locationManager.currentLocation,
+                            onMerchantTap: { merchant in
+                                guard let loc = merchant.currentLocation else { return }
+                                let marker = SearchPlace(
+                                    id: merchant.id.uuidString,
+                                    name: merchant.businessName,
+                                    subtitle: merchant.category.displayName,
+                                    fullAddress: merchant.description,
+                                    category: merchant.category.displayName,
+                                    icon: "storefront.fill",
+                                    coordinate: loc.coordinate,
+                                    isRecommended: false
+                                )
+                                handleMarkerTap(marker)
+                                withAnimation(.easeInOut(duration: 1.0)) {
+                                    cameraCenter = loc.coordinate
+                                    cameraZoom = 16.0
+                                }
+                            }
+                        )
+                        .padding(.horizontal, 12)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+                }
+                .padding(.bottom, 160)
+                .animation(.spring(response: 0.35, dampingFraction: 0.8), value: showNearbyPanel)
+                .zIndex(50)
+            }
+
             // Botones flotantes (ubicación y emergencia)
             VStack {
                 Spacer()
@@ -470,6 +587,20 @@ struct MainMapView: View {
                     isVisible: $showLocationBanner
                 )
                 .zIndex(200)
+            }
+
+            // Banner de ruta para comerciantes (solo si está cerca de su ruta y no en emergencia)
+            if !emergencyManager.isEmergencyActive && routeTracker.isNearRoute && !routeTracker.isOnRoute {
+                RoutePromptBanner()
+                    .zIndex(250)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+
+            // Indicador de ruta activa (cuando el comerciante está en ruta)
+            if !emergencyManager.isEmergencyActive && routeTracker.isOnRoute {
+                RouteActiveIndicator()
+                    .zIndex(250)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
         // Vista principal estática - no se mueve cuando el menú está abierto
@@ -815,9 +946,17 @@ struct MainMapView: View {
                 },
                 onMerchantTapped: { merchant in
                     print("🏪 Merchant tocado: \(merchant.businessName)")
+                    selectedMerchant = merchant
                 },
                 onMapTapped: { coordinate in
                     handleMapTap(at: coordinate)
+                },
+                onUserPanned: {
+                    // El usuario movió el mapa manualmente — liberar seguimiento
+                    if shouldFollowUser {
+                        shouldFollowUser = false
+                        print("🗺️ Seguimiento desactivado por interacción del usuario")
+                    }
                 }
             )
             .ignoresSafeArea()
@@ -1427,6 +1566,16 @@ struct MainMapView: View {
         print("📍 Ruta del usuario cargada con \(coordinates.count) puntos")
     }
 
+    // MARK: - Merchant Route Monitoring
+
+    private func startMerchantRouteMonitoring() {
+        guard let user = userManager.currentUser, user.isMerchant else { return }
+
+        // Crear publisher de ubicación desde el locationManager
+        let locationPublisher = locationManager.$currentLocation.eraseToAnyPublisher()
+        routeTracker.startMonitoring(location: locationPublisher)
+    }
+
     // MARK: - App Intent Request Handler
 
     /// Maneja las solicitudes provenientes de App Intents
@@ -1793,53 +1942,66 @@ struct LocationObserverModifier: ViewModifier {
             .onAppear {
                 isWorldCupToday = checkIfWorldCupToday()
                 searchViewModel.updateUserLocation(locationManager.currentLocation)
+
+                // Si ya hay ubicación al aparecer (ej. simulador), iniciar animación con delay para que el mapa cargue
+                if isFirstLocationLoad, let userLocation = locationManager.currentLocation {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        if isFirstLocationLoad {
+                            animateToUserLocation(userLocation)
+                        }
+                    }
+                }
             }
             .onChange(of: locationManager.currentLocation) { oldValue, newValue in
                 searchViewModel.updateUserLocation(newValue)
 
                 if isFirstLocationLoad, let userLocation = newValue {
-                    print("🌍 Primera ubicación detectada: \(userLocation.latitude), \(userLocation.longitude)")
-
-                    if isWorldCupToday {
-                        // Delay de 3 segundos para que la vista del mapa cargue completamente
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                            confettiCounter += 1
-                            print("🎉 ¡Lanzando confeti por el día del Mundial!")
-                        }
-                    }
-
-                    // Esperar 2 segundos para que el usuario vea el globo completo
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                        cameraCenter = userLocation
-                        cameraZoom = 16.0
-                        print("🎬 Iniciando animación hacia ubicación del usuario")
-
-                        // Después de llegar a la ubicación (3.5s), hacer transición a vista 3D (3s adicionales)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
-                            withAnimation(.easeInOut(duration: 3.0)) {
-                                cameraPitch = 45
-                                print("🌐 Activando vista 3D (pitch: 45°)")
-                            }
-
-                            // Activar seguimiento del usuario después de la transición 3D
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                                shouldFollowUser = true
-                                print("📍 Seguimiento de usuario activado")
-                            }
-                        }
-
-                        isFirstLocationLoad = false
-                    }
-
-                    // Mostrar banner de ubicación al entrar al mapa
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                        // Obtener nombre de ubicación (puedes agregar reverse geocoding aquí)
-                        currentLocationText = getLocationName(for: userLocation)
-                        showLocationBanner = true
-                        print("📍 Banner de ubicación mostrado: \(currentLocationText)")
-                    }
+                    animateToUserLocation(userLocation)
                 }
             }
+    }
+
+    private func animateToUserLocation(_ userLocation: CLLocationCoordinate2D) {
+        print("🌍 Primera ubicación detectada: \(userLocation.latitude), \(userLocation.longitude)")
+
+        if isWorldCupToday {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                confettiCounter += 1
+                print("🎉 ¡Lanzando confeti por el día del Mundial!")
+            }
+        }
+
+        // Esperar 2 segundos para que el usuario vea el globo completo
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            // Usar la ubicación más reciente disponible (puede haber cambiado durante los 2s de espera)
+            let targetLocation = locationManager.currentLocation ?? userLocation
+            cameraCenter = targetLocation
+            cameraZoom = 16.0
+            print("🎬 Iniciando animación hacia ubicación del usuario: \(targetLocation.latitude), \(targetLocation.longitude)")
+
+            // Después de llegar a la ubicación (3.5s), hacer transición a vista 3D
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+                withAnimation(.easeInOut(duration: 3.0)) {
+                    cameraPitch = 45
+                    print("🌐 Activando vista 3D (pitch: 45°)")
+                }
+
+                // Activar seguimiento del usuario después de la transición 3D
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                    shouldFollowUser = true
+                    print("📍 Seguimiento de usuario activado")
+                }
+            }
+
+            isFirstLocationLoad = false
+        }
+
+        // Mostrar banner de ubicación
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            currentLocationText = getLocationName(for: userLocation)
+            showLocationBanner = true
+            print("📍 Banner de ubicación mostrado: \(currentLocationText)")
+        }
     }
 
     /// Verifica si hoy es el día del Mundial (11 de junio de 2026)
@@ -1961,6 +2123,7 @@ struct MapboxMainMapView: UIViewRepresentable {
     var onVenueTapped: ((WorldCupVenue) -> Void)?
     var onMerchantTapped: ((Merchant) -> Void)?
     var onMapTapped: ((CLLocationCoordinate2D) -> Void)?
+    var onUserPanned: (() -> Void)?
 
     func makeUIView(context: Context) -> MapView {
         let mapView = MapView(frame: .zero)
@@ -2062,6 +2225,11 @@ struct MapboxMainMapView: UIViewRepresentable {
         // Agregar tap gesture recognizer para detectar taps en el mapa
         let tapGesture = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleMapTap(_:)))
         mapView.addGestureRecognizer(tapGesture)
+
+        // Agregar pan gesture recognizer para detectar cuando el usuario mueve el mapa manualmente
+        let panGesture = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleMapPan(_:)))
+        panGesture.delegate = context.coordinator
+        mapView.addGestureRecognizer(panGesture)
 
         print("✅ Mapa configurado con ubicación del usuario y orientación por giroscopio")
 
@@ -2226,10 +2394,10 @@ struct MapboxMainMapView: UIViewRepresentable {
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(initialStyle: mapStyle, onMarkerTapped: onMarkerTapped, onVenueTapped: onVenueTapped, onMerchantTapped: onMerchantTapped, onMapTapped: onMapTapped)
+        Coordinator(initialStyle: mapStyle, onMarkerTapped: onMarkerTapped, onVenueTapped: onVenueTapped, onMerchantTapped: onMerchantTapped, onMapTapped: onMapTapped, onUserPanned: onUserPanned)
     }
 
-    class Coordinator {
+    class Coordinator: NSObject, UIGestureRecognizerDelegate {
         var mapView: MapView?
         var currentStyle: MapStyle
         var currentSearchMarkers: [SearchPlace] = []
@@ -2252,18 +2420,21 @@ struct MapboxMainMapView: UIViewRepresentable {
         var onVenueTapped: ((WorldCupVenue) -> Void)?
         var onMerchantTapped: ((Merchant) -> Void)?
         var onMapTapped: ((CLLocationCoordinate2D) -> Void)?
+        var onUserPanned: (() -> Void)?
         // var currentShowHeatMap: Bool = false
         // var currentDemandZoneCount: Int = 0
-        // var heatmapAdded: Bool = false
+        var heatmapAdded: Bool = false
         var styleLoaded: Bool = false
         // var pendingHeatmapZones: [DemandZone]?
 
-        init(initialStyle: MapStyle, onMarkerTapped: ((SearchPlace) -> Void)?, onVenueTapped: ((WorldCupVenue) -> Void)?, onMerchantTapped: ((Merchant) -> Void)?, onMapTapped: ((CLLocationCoordinate2D) -> Void)?) {
+        init(initialStyle: MapStyle, onMarkerTapped: ((SearchPlace) -> Void)?, onVenueTapped: ((WorldCupVenue) -> Void)?, onMerchantTapped: ((Merchant) -> Void)?, onMapTapped: ((CLLocationCoordinate2D) -> Void)?, onUserPanned: (() -> Void)?) {
             self.currentStyle = initialStyle
             self.onMarkerTapped = onMarkerTapped
             self.onVenueTapped = onVenueTapped
             self.onMerchantTapped = onMerchantTapped
             self.onMapTapped = onMapTapped
+            self.onUserPanned = onUserPanned
+            super.init()
         }
 
         @objc func handleMapTap(_ gesture: UITapGestureRecognizer) {
@@ -2274,6 +2445,18 @@ struct MapboxMainMapView: UIViewRepresentable {
 
             // Llamar al callback con las coordenadas del tap
             onMapTapped?(coordinate)
+        }
+
+        @objc func handleMapPan(_ gesture: UIPanGestureRecognizer) {
+            if gesture.state == .began {
+                // El usuario está moviendo el mapa manualmente — desactivar seguimiento
+                onUserPanned?()
+            }
+        }
+
+        // Permitir que el pan gesture funcione simultáneamente con los gestos nativos de Mapbox
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+            return true
         }
 
         // MARK: - Search Markers
@@ -2404,8 +2587,8 @@ struct MapboxMainMapView: UIViewRepresentable {
                 )
 
                 let color: UIColor = merchant.isStatic ? .systemPurple : .systemOrange
-                let markerImage = createMerchantMarkerImage(emoji: merchant.emoji, color: color)
-                annotation.image = .init(image: markerImage, name: "merchant-\(merchant.id.uuidString)")
+                let markerImage = createMerchantMarkerImage(emoji: merchant.emoji, color: color, isVerified: merchant.trustLevel.isGreen)
+                annotation.image = .init(image: markerImage, name: "merchant-\(merchant.id.uuidString)-\(merchant.trustLevel.rawValue)")
                 annotation.iconAnchor = .bottom
 
                 annotation.textField = merchant.businessName
@@ -2423,21 +2606,34 @@ struct MapboxMainMapView: UIViewRepresentable {
             print("🏪 \(annotations.count) marcadores de comerciantes agregados al mapa")
         }
 
-        private func createMerchantMarkerImage(emoji: String, color: UIColor) -> UIImage {
-            let size = CGSize(width: 50, height: 60)
+        private func createMerchantMarkerImage(emoji: String, color: UIColor, isVerified: Bool = false) -> UIImage {
+            let size = CGSize(width: 56, height: 66)
             let renderer = UIGraphicsImageRenderer(size: size)
 
             return renderer.image { context in
                 let ctx = context.cgContext
                 let centerX: CGFloat = size.width / 2
-                let topY: CGFloat = 5
+                let topY: CGFloat = 8
                 let radius: CGFloat = 18
 
                 // Sombra
                 ctx.saveGState()
                 ctx.setShadow(offset: CGSize(width: 0, height: 2), blur: 4, color: UIColor.black.withAlphaComponent(0.3).cgColor)
 
-                // Círculo de fondo
+                // Borde verde brillante si esta verificado
+                if isVerified {
+                    let glowPath = UIBezierPath(
+                        arcCenter: CGPoint(x: centerX, y: topY + radius),
+                        radius: radius + 3,
+                        startAngle: 0,
+                        endAngle: .pi * 2,
+                        clockwise: true
+                    )
+                    UIColor.systemGreen.withAlphaComponent(0.6).setFill()
+                    glowPath.fill()
+                }
+
+                // Circulo de fondo
                 let circlePath = UIBezierPath(
                     arcCenter: CGPoint(x: centerX, y: topY + radius),
                     radius: radius,
@@ -2449,7 +2645,7 @@ struct MapboxMainMapView: UIViewRepresentable {
                 // Punta inferior
                 let pinPath = UIBezierPath()
                 pinPath.move(to: CGPoint(x: centerX - 8, y: topY + radius + 12))
-                pinPath.addLine(to: CGPoint(x: centerX, y: size.height - 3))
+                pinPath.addLine(to: CGPoint(x: centerX, y: size.height - 6))
                 pinPath.addLine(to: CGPoint(x: centerX + 8, y: topY + radius + 12))
 
                 color.setFill()
@@ -2457,9 +2653,10 @@ struct MapboxMainMapView: UIViewRepresentable {
                 pinPath.fill()
                 ctx.restoreGState()
 
-                // Borde blanco
-                UIColor.white.setStroke()
-                circlePath.lineWidth = 2
+                // Borde
+                let borderColor: UIColor = isVerified ? .systemGreen : .white
+                borderColor.setStroke()
+                circlePath.lineWidth = isVerified ? 2.5 : 2
                 circlePath.stroke()
 
                 // Emoji en el centro
@@ -2473,6 +2670,39 @@ struct MapboxMainMapView: UIViewRepresentable {
                     height: emojiSize.height
                 )
                 emojiStr.draw(in: emojiRect, withAttributes: [.font: emojiFont])
+
+                // Badge de verificacion (checkmark verde arriba a la derecha)
+                if isVerified {
+                    let badgeCenter = CGPoint(x: centerX + radius - 2, y: topY + 2)
+                    let badgeRadius: CGFloat = 7
+
+                    // Circulo blanco de fondo
+                    let badgeBg = UIBezierPath(
+                        arcCenter: badgeCenter, radius: badgeRadius + 1,
+                        startAngle: 0, endAngle: .pi * 2, clockwise: true
+                    )
+                    UIColor.white.setFill()
+                    badgeBg.fill()
+
+                    // Circulo verde
+                    let badgePath = UIBezierPath(
+                        arcCenter: badgeCenter, radius: badgeRadius,
+                        startAngle: 0, endAngle: .pi * 2, clockwise: true
+                    )
+                    UIColor.systemGreen.setFill()
+                    badgePath.fill()
+
+                    // Checkmark blanco
+                    let check = UIBezierPath()
+                    check.move(to: CGPoint(x: badgeCenter.x - 3.5, y: badgeCenter.y))
+                    check.addLine(to: CGPoint(x: badgeCenter.x - 1, y: badgeCenter.y + 2.5))
+                    check.addLine(to: CGPoint(x: badgeCenter.x + 3.5, y: badgeCenter.y - 2.5))
+                    UIColor.white.setStroke()
+                    check.lineWidth = 1.5
+                    check.lineCapStyle = .round
+                    check.lineJoinStyle = .round
+                    check.stroke()
+                }
             }
         }
 
