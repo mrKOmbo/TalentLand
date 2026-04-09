@@ -490,6 +490,7 @@ class MerchantManager: ObservableObject {
         merchants = [
             // COMERCIANTES CERCA DE EXPO SANTA FE (con rutas)
             Merchant(
+                id: UUID(uuidString: "7b057c59-3a6d-4a75-8d8d-4dc04b8e1e75")!,
                 userId: UUID(),
                 businessName: "Tacos El Güero - Ruta Santa Fe",
                 category: .tacos,
@@ -519,6 +520,7 @@ class MerchantManager: ObservableObject {
                 trustLevel: .verified
             ),
             Merchant(
+                id: UUID(uuidString: "7363ce16-b2ed-493e-85ca-0e72c5a964ff")!,
                 userId: UUID(),
                 businessName: "Café Móvil Andrea",
                 category: .bebidas,
@@ -549,6 +551,7 @@ class MerchantManager: ObservableObject {
                 trustLevel: .trusted
             ),
             Merchant(
+                id: UUID(uuidString: "fba76304-8146-46a5-96ba-18520f6f2a6b")!,
                 userId: UUID(),
                 businessName: "Frutas y Verduras Doña Lucha",
                 category: .frutas,
@@ -578,6 +581,7 @@ class MerchantManager: ObservableObject {
                 )
             ),
             Merchant(
+                id: UUID(uuidString: "b3e09cf3-63a9-449b-a546-044c44806d7d")!,
                 userId: UUID(),
                 businessName: "Gorditas Doña Meche",
                 category: .antojitos,
@@ -607,6 +611,7 @@ class MerchantManager: ObservableObject {
 
             // COMERCIANTES ORIGINALES
             Merchant(
+                id: UUID(uuidString: "f80d449b-90a2-47b2-a582-9fc014f1792c")!,
                 userId: donTacoUserId,
                 businessName: "Don Taco",
                 category: .tacos,
@@ -636,6 +641,7 @@ class MerchantManager: ObservableObject {
                 trustLevel: .trusted
             ),
             Merchant(
+                id: UUID(uuidString: "49207e8f-46cc-4d70-b030-94621f5be04b")!,
                 userId: UUID(),
                 businessName: "Paletas Doña Mary",
                 category: .helados,
@@ -652,6 +658,7 @@ class MerchantManager: ObservableObject {
                 currentLocation: MerchantLocation(latitude: 19.3492, longitude: -99.1617)
             ),
             Merchant(
+                id: UUID(uuidString: "8855bbce-b00e-472c-afa1-494653fadea0")!,
                 userId: UUID(),
                 businessName: "Jugos Mary",
                 category: .jugos,
@@ -667,6 +674,7 @@ class MerchantManager: ObservableObject {
                 currentLocation: MerchantLocation(latitude: 19.4185, longitude: -99.1654)
             ),
             Merchant(
+                id: UUID(uuidString: "1746f608-41ca-4c4e-affc-af86be4946ba")!,
                 userId: UUID(),
                 businessName: "Tamales Oaxaqueños",
                 category: .tamales,
@@ -683,6 +691,7 @@ class MerchantManager: ObservableObject {
                 currentLocation: MerchantLocation(latitude: 19.4326, longitude: -99.1332)
             ),
             Merchant(
+                id: UUID(uuidString: "45cb7a48-e592-4957-9824-696fea3f564c")!,
                 userId: UUID(),
                 businessName: "Elotes Don Chuy",
                 category: .elotes,
@@ -699,6 +708,7 @@ class MerchantManager: ObservableObject {
             ),
             // Comerciantes vinculados a nuevos usuarios
             Merchant(
+                id: UUID(uuidString: "317af792-cf5b-428f-be3e-7c84cf6602ca")!,
                 userId: mariaUserId,
                 businessName: "Elotes de María",
                 category: .elotes,
@@ -728,6 +738,7 @@ class MerchantManager: ObservableObject {
                 trustLevel: .verified
             ),
             Merchant(
+                id: UUID(uuidString: "9211515d-2061-4f27-b63a-eeb1b9019b27")!,
                 userId: pepeUserId,
                 businessName: "Carnitas Pepe",
                 category: .antojitos,
