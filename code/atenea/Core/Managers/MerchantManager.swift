@@ -175,6 +175,16 @@ class MerchantManager: ObservableObject {
         merchants.append(merchant)
         currentMerchantProfile = merchant
         print("✅ Merchant registrado en MerchantManager: \(businessName)")
+
+        // Subir a Supabase automáticamente
+        Task {
+            do {
+                let supabaseId = try await SupabaseService.shared.saveMerchant(merchant)
+                print("☁️ Merchant sincronizado con Supabase: \(supabaseId)")
+            } catch {
+                print("⚠️ Error subiendo merchant a Supabase: \(error.localizedDescription)")
+            }
+        }
     }
 
     private static func merchantCategory(from businessType: BusinessType) -> MerchantCategory {
