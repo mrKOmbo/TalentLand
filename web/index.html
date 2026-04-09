@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Atenea — Negocio</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏪</text></svg>">
+    <style>
+        /* Coppel Brand Toolkit 2024 */
+        :root {
+            --blue: #1C42E8;
+            --yellow: #F0D224;
+            --dark-blue: #081754;
+            --white: #FFFFFF;
+            --light-blue: #1CA8F7;
+            --green: #0ABF4F;
+            --orange: #FFAE43;
+            --red: #FF594D;
+            --beige: #EEE8E3;
+            --dark-grey: #4A4A4A;
+            --radius: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Rounded', 'Helvetica Neue', sans-serif;
+            background: var(--beige);
+            color: var(--dark-blue);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Header */
+        .header {
+            background: var(--blue);
+            padding: 24px 20px 32px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--white);
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+
+        .biz-emoji {
+            font-size: 56px;
+            line-height: 1;
+            margin-bottom: 12px;
+        }
+
+        .biz-name {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--white);
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+
+        .biz-category {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--yellow);
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        .status-open {
+            background: rgba(10, 191, 79, 0.15);
+            color: var(--green);
+            border: 1px solid rgba(10, 191, 79, 0.3);
+        }
+
+        .status-closed {
+            background: rgba(255, 89, 77, 0.15);
+            color: var(--red);
+            border: 1px solid rgba(255, 89, 77, 0.3);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-open .status-dot { background: var(--green); }
+        .status-closed .status-dot { background: var(--red); }
+
+        /* Content */
+        .content {
+            padding: 20px;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 12px rgba(8, 23, 84, 0.06);
+        }
+
+        .card-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--dark-grey);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        /* Products */
+        .product-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(8, 23, 84, 0.06);
+        }
+
+        .product-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .product-item:first-child {
+            padding-top: 0;
+        }
+
+        .product-emoji {
+            font-size: 28px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--beige);
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+
+        .product-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .product-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--dark-blue);
+        }
+
+        .product-desc {
+            font-size: 12px;
+            color: var(--dark-grey);
+            margin-top: 2px;
+        }
+
+        .product-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--blue);
+            white-space: nowrap;
+        }
+
+        .product-unavailable {
+            opacity: 0.4;
+        }
+
+        .product-unavailable .product-price {
+            text-decoration: line-through;
+            color: var(--dark-grey);
+        }
+
+        /* Info rows */
+        .info-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+        }
+
+        .info-row:not(:last-child) {
+            border-bottom: 1px solid rgba(8, 23, 84, 0.06);
+        }
+
+        .info-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .info-icon-location { background: rgba(28, 168, 247, 0.1); }
+        .info-icon-schedule { background: rgba(255, 174, 67, 0.1); }
+        .info-icon-type { background: rgba(125, 66, 255, 0.1); }
+
+        .info-label {
+            font-size: 12px;
+            color: var(--dark-grey);
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--dark-blue);
+            margin-top: 2px;
+        }
+
+        /* Action buttons */
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px;
+            border-radius: var(--radius);
+            font-size: 16px;
+            font-weight: 700;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: var(--blue);
+            color: var(--white);
+            box-shadow: 0 4px 16px rgba(28, 66, 232, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--blue);
+            border: 1.5px solid rgba(28, 66, 232, 0.2);
+            box-shadow: 0 2px 8px rgba(8, 23, 84, 0.06);
+        }
+
+        .btn-icon {
+            font-size: 18px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px 20px 48px;
+        }
+
+        .footer-logo {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--dark-grey);
+            opacity: 0.5;
+        }
+
+        .footer-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--blue);
+            text-decoration: none;
+        }
+
+        /* Loading & Error */
+        .loading, .error-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .loading-emoji, .error-emoji {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .error-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--dark-blue);
+            margin-bottom: 8px;
+        }
+
+        .error-desc {
+            font-size: 15px;
+            color: var(--dark-grey);
+            line-height: 1.5;
+        }
+
+        /* Animations */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-in {
+            animation: fadeUp 0.4s ease forwards;
+        }
+
+        .delay-1 { animation-delay: 0.1s; opacity: 0; }
+        .delay-2 { animation-delay: 0.2s; opacity: 0; }
+        .delay-3 { animation-delay: 0.3s; opacity: 0; }
+        .delay-4 { animation-delay: 0.4s; opacity: 0; }
+
+        /* Responsive */
+        @media (min-width: 480px) {
+            .content { padding: 24px; }
+            .header { padding: 32px 24px 40px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+    // Decode business data from URL
+    function getBusinessData() {
+        const params = new URLSearchParams(window.location.search);
+        const encoded = params.get('d');
+        if (!encoded) return null;
+
+        try {
+            const json = atob(encoded);
+            return JSON.parse(json);
+        } catch (e) {
+            console.error('Error decoding business data:', e);
+            return null;
+        }
+    }
+
+    // Category display names and colors
+    const categories = {
+        tacos: { name: 'Tacos', color: '#FFAE43' },
+        tamales: { name: 'Tamales', color: '#FFAE43' },
+        helados: { name: 'Helados', color: '#1CA8F7' },
+        jugos: { name: 'Jugos', color: '#0ABF4F' },
+        elotes: { name: 'Elotes', color: '#FFAE43' },
+        frutas: { name: 'Frutas', color: '#0ABF4F' },
+        antojitos: { name: 'Antojitos', color: '#FFAE43' },
+        bebidas: { name: 'Bebidas', color: '#1CA8F7' },
+        postres: { name: 'Postres', color: '#7D42FF' },
+        otro: { name: 'Otro', color: '#4A4A4A' }
+    };
+
+    function formatPrice(price) {
+        return '$' + Number(price).toFixed(0);
+    }
+
+    function getMapsUrl(lat, lng, name) {
+        // iOS detects this and opens Apple Maps
+        return `https://maps.apple.com/?q=${encodeURIComponent(name)}&ll=${lat},${lng}`;
+    }
+
+    function renderBusiness(biz) {
+        const cat = categories[biz.category] || categories.otro;
+        const isOpen = biz.isOpen !== false;
+        const hasLocation = biz.lat && biz.lng;
+        const hasProducts = biz.products && biz.products.length > 0;
+        const hasSchedule = biz.schedule;
+        const isMobile = biz.isStatic === false;
+
+        let html = `
+            <div class="header">
+                <div class="header-badge">Atenea 2026</div>
+                <div class="biz-emoji">${biz.emoji || '🏪'}</div>
+                <div class="biz-name">${escapeHtml(biz.name)}</div>
+                <div class="biz-category">${cat.name}</div>
+                <div class="status-pill ${isOpen ? 'status-open' : 'status-closed'}">
+                    <span class="status-dot"></span>
+                    ${isOpen ? 'Abierto ahora' : 'Cerrado'}
+                </div>
+            </div>
+
+            <div class="content">
+        `;
+
+        // Description
+        if (biz.description) {
+            html += `
+                <div class="card animate-in">
+                    <p style="font-size:15px;line-height:1.6;color:var(--dark-grey)">${escapeHtml(biz.description)}</p>
+                </div>
+            `;
+        }
+
+        // Products
+        if (hasProducts) {
+            html += `
+                <div class="card animate-in delay-1">
+                    <div class="card-title">Productos</div>
+                    ${biz.products.map(p => `
+                        <div class="product-item ${!p.available ? 'product-unavailable' : ''}">
+                            <div class="product-emoji">${p.emoji || '🍽'}</div>
+                            <div class="product-info">
+                                <div class="product-name">${escapeHtml(p.name)}</div>
+                                ${p.desc ? `<div class="product-desc">${escapeHtml(p.desc)}</div>` : ''}
+                            </div>
+                            <div class="product-price">${formatPrice(p.price)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Info card
+        html += `<div class="card animate-in delay-2">`;
+
+        if (hasSchedule) {
+            html += `
+                <div class="info-row">
+                    <div class="info-icon info-icon-schedule">&#128339;</div>
+                    <div>
+                        <div class="info-label">Horario</div>
+                        <div class="info-value">${escapeHtml(biz.schedule)}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        html += `
+            <div class="info-row">
+                <div class="info-icon info-icon-type">&#128205;</div>
+                <div>
+                    <div class="info-label">Tipo de negocio</div>
+                    <div class="info-value">${isMobile ? 'Ambulante' : 'Punto fijo'}</div>
+                </div>
+            </div>
+        `;
+
+        html += `</div>`;
+
+        // Actions
+        html += `<div class="actions animate-in delay-3">`;
+
+        if (hasLocation) {
+            html += `
+                <a href="${getMapsUrl(biz.lat, biz.lng, biz.name)}" class="btn btn-primary">
+                    <span class="btn-icon">&#128506;</span>
+                    Ver en el mapa
+                </a>
+            `;
+        }
+
+        html += `
+            <button onclick="openInApp('${biz.id || ''}')" class="btn btn-secondary">
+                <span class="btn-icon">&#128242;</span>
+                Abrir en Atenea
+            </button>
+        `;
+
+        html += `</div>`;
+
+        // Footer
+        html += `
+                <div class="footer">
+                    <div class="footer-logo">Atenea 2026 — FIFA World Cup</div>
+                </div>
+            </div>
+        `;
+
+        return html;
+    }
+
+    function renderError() {
+        return `
+            <div class="error-state">
+                <div class="error-emoji">🔍</div>
+                <div class="error-title">Negocio no encontrado</div>
+                <div class="error-desc">
+                    Este enlace no contiene informaci&oacute;n de negocio v&aacute;lida.
+                    Escanea un c&oacute;digo QR desde la app Atenea.
+                </div>
+            </div>
+        `;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Open in app with fallback
+    function openInApp(merchantId) {
+        const deepLink = 'atenea://merchant/' + merchantId;
+        const start = Date.now();
+
+        // Try to open the app
+        window.location.href = deepLink;
+
+        // If the app didn't open after 1.5s, show a message
+        setTimeout(function() {
+            if (Date.now() - start < 2000) {
+                // App likely opened, do nothing
+                return;
+            }
+            // App not installed — show toast
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#081754;color:#fff;padding:14px 24px;border-radius:16px;font-size:14px;font-weight:600;z-index:9999;text-align:center;max-width:90%;box-shadow:0 8px 24px rgba(8,23,84,0.3)';
+            toast.textContent = 'Descarga Atenea para ver este negocio en el mapa';
+            document.body.appendChild(toast);
+            setTimeout(function() { toast.remove(); }, 4000);
+        }, 1500);
+    }
+
+    // Render
+    const biz = getBusinessData();
+    const app = document.getElementById('app');
+
+    if (biz && biz.name) {
+        app.innerHTML = renderBusiness(biz);
+        document.title = `${biz.name} — Atenea`;
+    } else {
+        app.innerHTML = renderError();
+    }
+</script>
+
+</body>
+</html>

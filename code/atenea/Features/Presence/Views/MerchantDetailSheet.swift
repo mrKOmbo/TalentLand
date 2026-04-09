@@ -11,6 +11,7 @@ struct MerchantDetailSheet: View {
     let merchant: Merchant
     let presence: MerchantPresence?
     let onViewOnMap: () -> Void
+    @State private var showQR = false
 
     var body: some View {
         ScrollView {
@@ -179,24 +180,47 @@ struct MerchantDetailSheet: View {
             // Timbre
             TimbreButtonView(merchant: merchant)
 
-            // Ver en mapa
-            Button {
-                onViewOnMap()
-            } label: {
-                HStack {
-                    Image(systemName: "map.fill")
-                    Text(LocalizedString("merchant.detail.viewOnMap"))
-                        .font(.system(size: 15, weight: .semibold))
+            HStack(spacing: 10) {
+                // Ver en mapa
+                Button {
+                    onViewOnMap()
+                } label: {
+                    HStack {
+                        Image(systemName: "map.fill")
+                        Text(LocalizedString("merchant.detail.viewOnMap"))
+                            .font(.system(size: 15, weight: .semibold))
+                    }
+                    .foregroundColor(Color(hex: "#1C42E8"))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .stroke(Color(hex: "#1C42E8").opacity(0.3), lineWidth: 1)
+                    )
                 }
-                .foregroundColor(.blue)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
-                )
+
+                // QR
+                Button {
+                    showQR = true
+                } label: {
+                    HStack {
+                        Image(systemName: "qrcode")
+                        Text("QR")
+                            .font(.system(size: 15, weight: .semibold))
+                    }
+                    .foregroundColor(Color(hex: "#FFAE43"))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .stroke(Color(hex: "#FFAE43").opacity(0.3), lineWidth: 1)
+                    )
+                }
             }
             .padding(.horizontal, 24)
+        }
+        .sheet(isPresented: $showQR) {
+            BusinessQRView(merchant: merchant)
         }
     }
 
