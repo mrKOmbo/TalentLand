@@ -68,7 +68,7 @@ struct ARMenuCardView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "bell.fill")
                             .font(.system(size: 12))
-                        Text("Timbrar")
+                        Text(LocalizedString("ar.menu.ring"))
                             .font(.system(size: 13, weight: .semibold))
                     }
                     .foregroundColor(.white)

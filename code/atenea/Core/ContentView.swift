@@ -17,7 +17,7 @@ struct ContentView: View {
     @State private var showOnboarding = !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
     @State private var showOnboardingWelcome = false  // Pantalla de bienvenida personalizada
     @State private var isLoggedIn: Bool = UserDefaults.standard.bool(forKey: "isUserLoggedIn")
-    @State private var currentUserName: String = UserDefaults.standard.string(forKey: "currentUserName") ?? "Usuario"
+    @State private var currentUserName: String = UserDefaults.standard.string(forKey: "currentUserName") ?? LocalizedString("login.defaultUser")
     @State private var selectedTab = 0
     @State private var lastCollectedVenue: WorldCupVenue?
     @State private var showCollectionAnimation = false

@@ -44,15 +44,15 @@ struct SimpleTabBar: View {
                 HStack(spacing: 8) {
                     TabBarItemCollapsible(
                         icon: "house.fill",
-                        label: "Home",
+                        label: LocalizedString("tab.home"),
                         isSelected: selectedTab == 0,
                         showLabel: showLabel && selectedTabForLabel == 0,
                         action: { handleTabTap(0) }
                     )
-                    
+
                     TabBarItemCollapsible(
                         icon: "map.fill",
-                        label: "Map",
+                        label: LocalizedString("tab.map"),
                         isSelected: selectedTab == 1,
                         showLabel: showLabel && selectedTabForLabel == 1,
                         action: { handleTabTap(1) }
@@ -65,15 +65,15 @@ struct SimpleTabBar: View {
 
                     TabBarItemCollapsible(
                         icon: "person.3.fill",
-                        label: "Community",
+                        label: LocalizedString("tab.community"),
                         isSelected: selectedTab == 2,
                         showLabel: showLabel && selectedTabForLabel == 2,
                         action: { handleTabTap(2) }
                     )
-                    
+
                     TabBarItemCollapsible(
                         icon: "square.grid.3x3.fill",
-                        label: "More",
+                        label: LocalizedString("tab.more"),
                         isSelected: selectedTab == 3,
                         showLabel: showLabel && selectedTabForLabel == 3,
                         action: { handleTabTap(3) }

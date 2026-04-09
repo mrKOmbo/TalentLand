@@ -67,7 +67,7 @@ struct MerchantRegistrationView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 16, weight: .semibold))
-                        Text("Atrás")
+                        Text(LocalizedString("merchant.back"))
                             .font(.system(size: 17, weight: .regular))
                     }
                     .foregroundStyle(Color.white)
@@ -97,7 +97,7 @@ struct MerchantRegistrationView: View {
                             .scaleEffect(CGFloat(1.5))
                             .tint(.white)
 
-                        Text("Calculando ruta...")
+                        Text(LocalizedString("merchant.calculatingRoute"))
                             .font(.system(size: 16, weight: .medium))
                             .foregroundStyle(.white)
                     }
@@ -151,7 +151,7 @@ struct MerchantRegistrationView: View {
             }
             .frame(height: 6)
 
-            Text("Paso 2 de 2")
+            Text(LocalizedString("merchant.step2"))
                 .font(.system(size: 13, weight: .medium, design: .rounded))
                 .foregroundStyle(Color.white.opacity(0.85))
         }
@@ -187,12 +187,12 @@ struct MerchantRegistrationView: View {
 
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Configura tu negocio")
+            Text(LocalizedString("merchant.setupBusiness"))
                 .font(.system(size: 28, weight: .bold, design: .rounded))
                 .foregroundStyle(Color.white)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text("Completa la información de tu emprendimiento para que los clientes puedan encontrarte fácilmente")
+            Text(LocalizedString("merchant.setupDesc"))
                 .font(.system(size: 15, weight: .medium, design: .rounded))
                 .foregroundStyle(Color.white.opacity(0.85))
                 .fixedSize(horizontal: false, vertical: true)
@@ -202,7 +202,7 @@ struct MerchantRegistrationView: View {
 
     private var coppelAccountSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Integración opcional")
+            Text(LocalizedString("merchant.optionalIntegration"))
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .foregroundStyle(Color(red: 0.051, green: 0.094, blue: 0.329).opacity(0.6))
                 .textCase(.uppercase)
@@ -226,12 +226,12 @@ struct MerchantRegistrationView: View {
                         .foregroundStyle(hasCoppelAccount ? Color(red: 1.0, green: 0.824, blue: 0.141) : Color(red: 0.051, green: 0.094, blue: 0.329).opacity(0.3))
 
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Ya tengo cuenta Coppel Emprende")
+                        Text(LocalizedString("merchant.hasCoppelAccount"))
                             .font(.system(size: 16, weight: .semibold, design: .rounded))
                             .foregroundStyle(Color(red: 0.051, green: 0.094, blue: 0.329))
                             .fixedSize(horizontal: false, vertical: true)
 
-                        Text("Vincula tu cuenta para importar tu catálogo de productos")
+                        Text(LocalizedString("merchant.coppelLinkDesc"))
                             .font(.system(size: 13, weight: .medium, design: .rounded))
                             .foregroundStyle(Color(red: 0.051, green: 0.094, blue: 0.329).opacity(0.65))
                             .fixedSize(horizontal: false, vertical: true)
@@ -258,8 +258,8 @@ struct MerchantRegistrationView: View {
         VStack(alignment: .leading, spacing: 20) {
             // Business Name
             formField(
-                label: "Nombre del negocio",
-                placeholder: "Ej: Tacos Don José",
+                label: LocalizedString("merchant.businessName"),
+                placeholder: LocalizedString("merchant.businessNamePlaceholder"),
                 text: $businessName,
                 icon: "bag.fill"
             )
@@ -270,7 +270,7 @@ struct MerchantRegistrationView: View {
             // Business Type Picker
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 6) {
-                    Text("Giro del negocio")
+                    Text(LocalizedString("merchant.businessCategory"))
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(.secondary)
 
@@ -279,7 +279,7 @@ struct MerchantRegistrationView: View {
                         .foregroundStyle(.secondary.opacity(0.6))
                 }
 
-                Text("¿Qué vendes o qué servicio ofreces?")
+                Text(LocalizedString("merchant.businessCategoryDesc"))
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary.opacity(0.8))
                     .padding(.bottom, 4)
@@ -339,7 +339,7 @@ struct MerchantRegistrationView: View {
             // Business Size Picker
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 6) {
-                    Text("Tamaño del negocio")
+                    Text(LocalizedString("merchant.businessSize"))
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(.secondary)
 
@@ -348,7 +348,7 @@ struct MerchantRegistrationView: View {
                         .foregroundStyle(.secondary.opacity(0.6))
                 }
 
-                Text("¿Cuántas personas trabajan en tu negocio?")
+                Text(LocalizedString("merchant.businessSizeDesc"))
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary.opacity(0.8))
                     .padding(.bottom, 4)
@@ -399,7 +399,7 @@ struct MerchantRegistrationView: View {
 
             // Contact info display (pre-filled from step 1)
             VStack(alignment: .leading, spacing: 12) {
-                Text("Información de contacto")
+                Text(LocalizedString("merchant.contactInfo"))
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.secondary)
                     .textCase(.uppercase)
@@ -421,13 +421,13 @@ struct MerchantRegistrationView: View {
     private var mobilitySection: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Tipo de negocio")
+                Text(LocalizedString("merchant.businessType"))
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.secondary)
                     .textCase(.uppercase)
                     .kerning(0.5)
 
-                Text("Los negocios ambulantes podrán actualizar su ubicación en tiempo real")
+                Text(LocalizedString("merchant.businessTypeDesc"))
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary.opacity(0.8))
                     .fixedSize(horizontal: false, vertical: true)
@@ -436,7 +436,7 @@ struct MerchantRegistrationView: View {
             HStack(spacing: 12) {
                 // Fixed Button
                 MobilityButton(
-                    title: "Estático",
+                    title: LocalizedString("merchant.static"),
                     icon: "building.2.fill",
                     isSelected: selectedMobility == .fixed,
                     action: {
@@ -448,7 +448,7 @@ struct MerchantRegistrationView: View {
 
                 // Mobile Button
                 MobilityButton(
-                    title: "Ambulante",
+                    title: LocalizedString("merchant.mobile"),
                     icon: "figure.walk",
                     isSelected: selectedMobility == .mobile,
                     action: {
@@ -468,7 +468,7 @@ struct MerchantRegistrationView: View {
             handleMerchantRegistration()
         }) {
             HStack(spacing: 8) {
-                Text("Completar registro")
+                Text(LocalizedString("merchant.completeRegistration"))
                     .font(.system(size: 17, weight: .semibold))
 
                 Image(systemName: "checkmark")
@@ -512,7 +512,7 @@ struct MerchantRegistrationView: View {
 
     private var businessLocationButton: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(selectedMobility == .mobile ? "Ruta del recorrido" : "Ubicación del negocio")
+            Text(selectedMobility == .mobile ? LocalizedString("merchant.routeLabel") : LocalizedString("merchant.locationLabel"))
                 .font(.system(size: 14, weight: .medium))
                 .foregroundStyle(.secondary)
 
@@ -566,24 +566,24 @@ struct MerchantRegistrationView: View {
 
     private var locationButtonTitle: String {
         if selectedMobility == .mobile {
-            return routeWaypoints != nil ? "Ruta configurada" : "Configurar ruta"
+            return routeWaypoints != nil ? LocalizedString("merchant.routeConfigured") : LocalizedString("merchant.configureRoute")
         } else {
-            return businessLocation != nil ? "Ubicación configurada" : "Configurar en mapa"
+            return businessLocation != nil ? LocalizedString("merchant.locationConfigured") : LocalizedString("merchant.configureOnMap")
         }
     }
 
     private var locationButtonSubtitle: String {
         if selectedMobility == .mobile {
             if let waypoints = routeWaypoints {
-                return "\(waypoints.count) puntos marcados"
+                return String(format: LocalizedString("merchant.pointsMarked"), waypoints.count)
             } else {
-                return "Marca los puntos de tu recorrido"
+                return LocalizedString("merchant.markRoutePoints")
             }
         } else {
             if let location = businessLocation {
                 return location.address
             } else {
-                return "Toca para abrir el mapa"
+                return LocalizedString("merchant.tapToOpenMap")
             }
         }
     }
@@ -706,7 +706,7 @@ struct MerchantRegistrationView: View {
                         let business = BusinessModel(
                             ownerId: newUser.id,
                             name: businessName,
-                            address: "Negocio ambulante",
+                            address: LocalizedString("merchant.mobileBusiness"),
                             businessType: selectedBusinessType,
                             businessSize: selectedBusinessSize,
                             mobility: selectedMobility,
@@ -729,7 +729,7 @@ struct MerchantRegistrationView: View {
                         let business = BusinessModel(
                             ownerId: newUser.id,
                             name: businessName,
-                            address: "Negocio ambulante",
+                            address: LocalizedString("merchant.mobileBusiness"),
                             businessType: selectedBusinessType,
                             businessSize: selectedBusinessSize,
                             mobility: selectedMobility,
@@ -748,7 +748,7 @@ struct MerchantRegistrationView: View {
                 : BusinessModel(
                     ownerId: newUser.id,
                     name: businessName,
-                    address: businessLocation?.address ?? "Sin dirección",
+                    address: businessLocation?.address ?? LocalizedString("merchant.noAddress"),
                     businessType: selectedBusinessType,
                     businessSize: selectedBusinessSize,
                     mobility: selectedMobility,
@@ -763,27 +763,23 @@ struct MerchantRegistrationView: View {
         // Save user
         userManager.currentUser = user
 
-        // Save business (you would typically save this to a BusinessManager)
-        print("📦 Negocio registrado: \(business.name)")
-        print("   Tipo: \(business.businessType.displayName)")
-        print("   Tamaño: \(business.businessSize.displayName)")
-        print("   Movilidad: \(business.mobility.displayName)")
-        print("   Coppel: \(business.hasCoppelAccount ? "Sí" : "No")")
+        // Register merchant in MerchantManager so it appears on the main map
+        MerchantManager.shared.registerMerchant(
+            userId: user.id,
+            businessName: business.name,
+            businessType: business.businessType,
+            isStatic: business.mobility == .fixed,
+            location: businessLocation,
+            route: business.route,
+            waypoints: routeWaypoints
+        )
 
-        if let route = business.route {
-            print("   📍 Ruta: \(route.waypoints.count) puntos")
-            if let duration = route.estimatedDuration {
-                print("   ⏱️ Duración estimada: \(Int(duration / 60)) minutos")
-            }
-            if let distance = route.estimatedDistance {
-                print("   📏 Distancia estimada: \(Int(distance)) metros")
-            }
-        }
+        print("📦 Negocio registrado: \(business.name)")
 
         // Announce if needed
         if user.hasVisualDisability {
             let accessibilityManager = AccessibilitySettingsManager.shared
-            accessibilityManager.announce("Bienvenido a Atenea, \(user.name). Tu negocio ha sido registrado exitosamente.")
+            accessibilityManager.announce(String(format: LocalizedString("merchant.welcomeAccessibility"), user.name))
             accessibilityManager.provideHapticFeedback(.success)
         }
 
@@ -804,11 +800,11 @@ struct MerchantRegistrationView: View {
                 VStack(spacing: 0) {
                     // Header
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Vincula Coppel Emprende")
+                        Text(LocalizedString("merchant.linkCoppel"))
                             .font(.system(size: 28, weight: .bold, design: .rounded))
                             .foregroundStyle(Color(red: 0.051, green: 0.094, blue: 0.329))
 
-                        Text("Ingresa los datos de tu cuenta para importar tu catálogo")
+                        Text(LocalizedString("merchant.linkCoppelDesc"))
                             .font(.system(size: 15, weight: .medium, design: .rounded))
                             .foregroundStyle(Color(red: 0.051, green: 0.094, blue: 0.329).opacity(0.65))
                             .fixedSize(horizontal: false, vertical: true)
@@ -821,7 +817,7 @@ struct MerchantRegistrationView: View {
                         VStack(spacing: 20) {
                             // Email field
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("Correo Coppel Emprende")
+                                Text(LocalizedString("merchant.coppelEmail"))
                                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                                     .foregroundStyle(Color(red: 0.051, green: 0.094, blue: 0.329))
 
@@ -844,7 +840,7 @@ struct MerchantRegistrationView: View {
 
                             // Name field
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("Nombre del propietario")
+                                Text(LocalizedString("merchant.ownerName"))
                                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                                     .foregroundStyle(Color(red: 0.051, green: 0.094, blue: 0.329))
 
@@ -872,11 +868,11 @@ struct MerchantRegistrationView: View {
                                         .foregroundStyle(Color(red: 0.112, green: 0.659, blue: 0.957))
 
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("Tu catálogo será importado automáticamente")
+                                        Text(LocalizedString("merchant.catalogAutoImport"))
                                             .font(.system(size: 14, weight: .semibold, design: .rounded))
                                             .foregroundStyle(Color(red: 0.051, green: 0.094, blue: 0.329))
 
-                                        Text("Podrás modificar tu información en cualquier momento")
+                                        Text(LocalizedString("merchant.modifyAnytime"))
                                             .font(.system(size: 13, weight: .medium, design: .rounded))
                                             .foregroundStyle(Color(red: 0.051, green: 0.094, blue: 0.329).opacity(0.7))
                                     }
@@ -897,7 +893,7 @@ struct MerchantRegistrationView: View {
                     VStack(spacing: 12) {
                         Button(action: { handleCoppelLinking() }) {
                             HStack(spacing: 8) {
-                                Text("Vincular cuenta")
+                                Text(LocalizedString("merchant.linkAccount"))
                                     .font(.system(size: 17, weight: .bold, design: .rounded))
                                 Image(systemName: "checkmark")
                                     .font(.system(size: 16, weight: .semibold))
@@ -924,7 +920,7 @@ struct MerchantRegistrationView: View {
                         .disabled(coppelEmail.isEmpty || coppelName.isEmpty)
 
                         Button(action: { closeCoppelModal() }) {
-                            Text("Cancelar")
+                            Text(LocalizedString("merchant.cancel"))
                                 .font(.system(size: 17, weight: .semibold, design: .rounded))
                                 .foregroundStyle(Color(red: 0.051, green: 0.094, blue: 0.329))
                                 .frame(maxWidth: .infinity)

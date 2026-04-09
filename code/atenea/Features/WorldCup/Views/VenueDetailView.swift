@@ -2,7 +2,7 @@
 //  VenueDetailView.swift
 //  Atenea
 //
-//  Created by Claude on 10/29/25.
+//  Coppel Brand Toolkit 2024 — Venue detail modal
 //
 
 import SwiftUI
@@ -12,19 +12,16 @@ struct VenueDetailView: View {
     let venue: WorldCupVenue
     @Binding var isPresented: Bool
     @State private var funFactsExpanded = false
-    @State private var matchesExpanded = true // Partidos expandidos por defecto
+    @State private var matchesExpanded = true
     @State private var dragOffset: CGFloat = 0
     var onDismiss: (() -> Void)?
-    var onGetDirections: (() -> Void)? // Callback para abrir direcciones
+    var onGetDirections: (() -> Void)?
 
-    // Función para abrir en Apple Maps (fallback)
     private func openInMaps() {
         let coordinate = venue.coordinate
         let placemark = MKPlacemark(coordinate: coordinate)
         let mapItem = MKMapItem(placemark: placemark)
         mapItem.name = venue.name
-
-        // Abrir con direcciones en modo conducción
         mapItem.openInMaps(launchOptions: [
             MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
         ])
@@ -33,8 +30,8 @@ struct VenueDetailView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .center) {
-                // Fondo semi-transparente con blur para cerrar al tocar fuera
-                Color.black.opacity(0.5)
+                // Background overlay
+                Color.coppelDarkBlue.opacity(0.5)
                     .ignoresSafeArea()
                     .contentShape(Rectangle())
                     .onTapGesture {
@@ -43,26 +40,16 @@ struct VenueDetailView: View {
                             onDismiss?()
                         }
                     }
-                    .zIndex(0) // Fondo en el nivel más bajo
+                    .zIndex(0)
 
-                // Panel centrado y más grande
+                // Panel
                 VStack(spacing: 0) {
-                    // Marcador de sede más grande y atractivo
+                    // Soccer ball pin
                     VStack(spacing: 0) {
-                        // Pin/Marcador visual mejorado
                         ZStack {
-                            // Círculo exterior con sombra
                             Circle()
-                                .fill(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [venue.primaryColor, venue.secondaryColor]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
+                                .fill(venue.primaryColor)
                                 .frame(width: 48, height: 48)
-                                .shadow(color: venue.primaryColor.opacity(0.8), radius: 12, x: 0, y: 4)
-                                .shadow(color: .black.opacity(0.4), radius: 8, x: 0, y: 2)
 
                             Circle()
                                 .stroke(Color.white, lineWidth: 3)
@@ -71,47 +58,23 @@ struct VenueDetailView: View {
                             Image(systemName: "soccerball.circle.fill")
                                 .font(.system(size: 24, weight: .bold))
                                 .foregroundColor(.white)
-                                .shadow(color: .black.opacity(0.4), radius: 3)
                         }
                         .offset(y: 12)
 
-                        // Línea conectora más elegante
                         Rectangle()
-                            .fill(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [
-                                        venue.primaryColor.opacity(0.8),
-                                        venue.primaryColor.opacity(0.4)
-                                    ]),
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
+                            .fill(venue.primaryColor)
                             .frame(width: 3, height: 12)
                     }
                     .zIndex(10)
 
-                    // Contenido del panel
+                    // Card content
                     VStack(spacing: 0) {
-                        // Header más atractivo con background completo
+                        // Header — venue color background
                         ZStack {
-                            // Background con gradiente mejorado
-                            venue.gradient
-                                .overlay(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [
-                                            Color.black.opacity(0.3),
-                                            Color.clear,
-                                            Color.black.opacity(0.1)
-                                        ]),
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
-                                )
+                            venue.primaryColor
 
-                            // Contenido del header
                             VStack(spacing: 8) {
-                                // Barra de arrastre con gesture mejorada
+                                // Drag handle
                                 RoundedRectangle(cornerRadius: 4)
                                     .fill(Color.white.opacity(0.5))
                                     .frame(width: 50, height: 5)
@@ -120,13 +83,11 @@ struct VenueDetailView: View {
                                     .gesture(
                                         DragGesture()
                                             .onChanged { value in
-                                                // Solo permitir arrastre hacia abajo
                                                 if value.translation.height > 0 {
                                                     dragOffset = value.translation.height
                                                 }
                                             }
                                             .onEnded { value in
-                                                // Si se arrastró más de 100 puntos, cerrar el modal
                                                 if value.translation.height > 100 {
                                                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                                                         isPresented = false
@@ -134,7 +95,6 @@ struct VenueDetailView: View {
                                                     }
                                                     dragOffset = 0
                                                 } else {
-                                                    // Si no, regresar a la posición original
                                                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                                                         dragOffset = 0
                                                     }
@@ -142,33 +102,30 @@ struct VenueDetailView: View {
                                             }
                                     )
 
-                                // Nombre y ubicación mejorados
                                 VStack(spacing: 6) {
                                     Text(venue.name)
-                                        .font(.system(size: 22, weight: .bold))
+                                        .font(.system(size: 22, weight: .bold, design: .rounded))
                                         .foregroundColor(.white)
                                         .multilineTextAlignment(.center)
                                         .lineLimit(2)
                                         .minimumScaleFactor(0.8)
-                                        .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
 
                                     HStack(spacing: 6) {
                                         Image(systemName: "mappin.circle.fill")
                                             .font(.system(size: 14))
                                             .foregroundColor(.white.opacity(0.9))
                                         Text("\(venue.city), \(venue.country)")
-                                            .font(.system(size: 15, weight: .semibold))
+                                            .font(.system(size: 15, weight: .semibold, design: .rounded))
                                             .foregroundColor(.white.opacity(0.95))
                                     }
-                                    .shadow(color: .black.opacity(0.2), radius: 1)
 
-                                    // Capacidad e Inauguración con mejor diseño
+                                    // Capacity and inauguration capsules
                                     HStack(spacing: 16) {
                                         HStack(spacing: 5) {
                                             Image(systemName: "person.3.fill")
                                                 .font(.system(size: 11))
                                             Text(venue.capacity)
-                                                .font(.system(size: 12, weight: .semibold))
+                                                .font(.system(size: 12, weight: .semibold, design: .rounded))
                                         }
                                         .padding(.horizontal, 10)
                                         .padding(.vertical, 5)
@@ -181,7 +138,7 @@ struct VenueDetailView: View {
                                             Image(systemName: "calendar")
                                                 .font(.system(size: 11))
                                             Text(venue.inauguration)
-                                                .font(.system(size: 12, weight: .semibold))
+                                                .font(.system(size: 12, weight: .semibold, design: .rounded))
                                         }
                                         .padding(.horizontal, 10)
                                         .padding(.vertical, 5)
@@ -192,13 +149,11 @@ struct VenueDetailView: View {
                                     }
                                     .foregroundColor(.white.opacity(0.9))
 
-                                    // Botón para obtener direcciones mejorado
+                                    // Get directions button — coppelYellow CTA
                                     Button(action: {
-                                        // Primero cerrar el modal de detalle
                                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                                             isPresented = false
                                         }
-                                        // Luego abrir direcciones
                                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                                             onGetDirections?()
                                         }
@@ -206,23 +161,17 @@ struct VenueDetailView: View {
                                         HStack(spacing: 8) {
                                             Image(systemName: "location.fill")
                                                 .font(.system(size: 14, weight: .semibold))
-                                            Text("Cómo llegar")
-                                                .font(.system(size: 15, weight: .bold))
+                                            Text(LocalizedString("venue.howToGet"))
+                                                .font(.system(size: 15, weight: .bold, design: .rounded))
                                         }
-                                        .foregroundColor(.white)
+                                        .foregroundColor(Color.coppelDarkBlue)
                                         .frame(maxWidth: 200)
                                         .padding(.horizontal, 24)
                                         .padding(.vertical, 12)
                                         .background(
-                                            LinearGradient(
-                                                colors: [venue.primaryColor, venue.secondaryColor],
-                                                startPoint: .leading,
-                                                endPoint: .trailing
-                                            )
+                                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                                .fill(Color.coppelYellow)
                                         )
-                                        .cornerRadius(16)
-                                        .shadow(color: venue.primaryColor.opacity(0.5), radius: 8, x: 0, y: 4)
-                                        .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                                     }
                                     .padding(.top, 10)
                                 }
@@ -231,10 +180,10 @@ struct VenueDetailView: View {
                             }
                         }
 
-                        // Contenido scrolleable con mejor espaciado
+                        // Scrollable content — white/beige light background
                         ScrollView(showsIndicators: false) {
                             VStack(spacing: 16) {
-                                // Sección de Partidos (expandible mejorada)
+                                // Matches section
                                 VStack(spacing: 0) {
                                     Button(action: {
                                         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
@@ -244,53 +193,39 @@ struct VenueDetailView: View {
                                         HStack(spacing: 10) {
                                             Image(systemName: "soccerball.circle.fill")
                                                 .font(.system(size: 18))
-                                                .foregroundColor(venue.primaryColor)
+                                                .foregroundColor(Color.coppelBlue)
 
-                                            Text("PARTIDOS")
-                                                .font(.system(size: 13, weight: .bold))
-                                                .foregroundColor(.white)
+                                            Text(LocalizedString("venue.matches"))
+                                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                                .foregroundColor(Color.coppelDarkBlue)
 
                                             Text("\(venue.matches.count)")
-                                                .font(.system(size: 12, weight: .bold))
+                                                .font(.system(size: 12, weight: .bold, design: .rounded))
                                                 .foregroundColor(.white)
                                                 .padding(.horizontal, 10)
                                                 .padding(.vertical, 4)
                                                 .background(
                                                     Capsule()
-                                                        .fill(
-                                                            LinearGradient(
-                                                                colors: [venue.primaryColor, venue.primaryColor.opacity(0.8)],
-                                                                startPoint: .leading,
-                                                                endPoint: .trailing
-                                                            )
-                                                        )
+                                                        .fill(Color.coppelBlue)
                                                 )
 
                                             Spacer()
 
-                                            Image(systemName: matchesExpanded ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
-                                                .font(.system(size: 18))
-                                                .foregroundColor(venue.primaryColor)
+                                            Image(systemName: matchesExpanded ? "chevron.up" : "chevron.down")
+                                                .font(.system(size: 12, weight: .bold))
+                                                .foregroundColor(Color.coppelDarkGrey)
                                         }
                                         .padding(.horizontal, 16)
                                         .padding(.vertical, 14)
                                         .background(
                                             RoundedRectangle(cornerRadius: 12)
-                                                .fill(Color.white.opacity(0.08))
+                                                .fill(Color.white)
                                                 .overlay(
                                                     RoundedRectangle(cornerRadius: 12)
-                                                        .stroke(
-                                                            LinearGradient(
-                                                                colors: [venue.primaryColor.opacity(0.4), venue.primaryColor.opacity(0.2)],
-                                                                startPoint: .leading,
-                                                                endPoint: .trailing
-                                                            ),
-                                                            lineWidth: 1.5
-                                                        )
+                                                        .stroke(Color.coppelBeige, lineWidth: 1)
                                                 )
                                         )
                                         .padding(.horizontal, 12)
-                                        .shadow(color: venue.primaryColor.opacity(0.2), radius: 4, x: 0, y: 2)
                                     }
                                     .buttonStyle(PlainButtonStyle())
 
@@ -300,14 +235,14 @@ struct VenueDetailView: View {
                                                 CompactMatchCard(match: match, color: venue.primaryColor, index: index + 1)
                                             }
                                             if venue.matches.count > 3 {
-                                                Text("+\(venue.matches.count - 3) partidos más")
-                                                    .font(.system(size: 12, weight: .semibold))
-                                                    .foregroundColor(.white.opacity(0.6))
+                                                Text(String(format: LocalizedString("venue.moreMatches"), venue.matches.count - 3))
+                                                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                                    .foregroundColor(Color.coppelDarkGrey)
                                                     .padding(.vertical, 6)
                                                     .padding(.horizontal, 16)
                                                     .background(
                                                         Capsule()
-                                                            .fill(Color.white.opacity(0.08))
+                                                            .fill(Color.coppelBeige)
                                                     )
                                             }
                                         }
@@ -317,7 +252,7 @@ struct VenueDetailView: View {
                                     }
                                 }
 
-                                // Sección de Datos Curiosos (expandible mejorada)
+                                // Fun facts section
                                 VStack(spacing: 0) {
                                     Button(action: {
                                         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
@@ -327,53 +262,39 @@ struct VenueDetailView: View {
                                         HStack(spacing: 10) {
                                             Image(systemName: "lightbulb.fill")
                                                 .font(.system(size: 18))
-                                                .foregroundColor(.yellow)
+                                                .foregroundColor(Color.coppelYellow)
 
-                                            Text("DATOS CURIOSOS")
-                                                .font(.system(size: 13, weight: .bold))
-                                                .foregroundColor(.white)
+                                            Text(LocalizedString("venue.funFacts"))
+                                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                                .foregroundColor(Color.coppelDarkBlue)
 
                                             Text("\(venue.funFacts.count)")
-                                                .font(.system(size: 12, weight: .bold))
+                                                .font(.system(size: 12, weight: .bold, design: .rounded))
                                                 .foregroundColor(.white)
                                                 .padding(.horizontal, 10)
                                                 .padding(.vertical, 4)
                                                 .background(
                                                     Capsule()
-                                                        .fill(
-                                                            LinearGradient(
-                                                                colors: [venue.primaryColor, venue.primaryColor.opacity(0.8)],
-                                                                startPoint: .leading,
-                                                                endPoint: .trailing
-                                                            )
-                                                        )
+                                                        .fill(Color.coppelBlue)
                                                 )
 
                                             Spacer()
 
-                                            Image(systemName: funFactsExpanded ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
-                                                .font(.system(size: 18))
-                                                .foregroundColor(venue.primaryColor)
+                                            Image(systemName: funFactsExpanded ? "chevron.up" : "chevron.down")
+                                                .font(.system(size: 12, weight: .bold))
+                                                .foregroundColor(Color.coppelDarkGrey)
                                         }
                                         .padding(.horizontal, 16)
                                         .padding(.vertical, 14)
                                         .background(
                                             RoundedRectangle(cornerRadius: 12)
-                                                .fill(Color.white.opacity(0.08))
+                                                .fill(Color.white)
                                                 .overlay(
                                                     RoundedRectangle(cornerRadius: 12)
-                                                        .stroke(
-                                                            LinearGradient(
-                                                                colors: [venue.primaryColor.opacity(0.4), venue.primaryColor.opacity(0.2)],
-                                                                startPoint: .leading,
-                                                                endPoint: .trailing
-                                                            ),
-                                                            lineWidth: 1.5
-                                                        )
+                                                        .stroke(Color.coppelBeige, lineWidth: 1)
                                                 )
                                         )
                                         .padding(.horizontal, 12)
-                                        .shadow(color: venue.primaryColor.opacity(0.2), radius: 4, x: 0, y: 2)
                                     }
                                     .buttonStyle(PlainButtonStyle())
 
@@ -383,14 +304,14 @@ struct VenueDetailView: View {
                                                 CompactFunFactCard(fact: fact, index: index + 1, color: venue.primaryColor)
                                             }
                                             if venue.funFacts.count > 2 {
-                                                Text("+\(venue.funFacts.count - 2) datos más")
-                                                    .font(.system(size: 12, weight: .semibold))
-                                                    .foregroundColor(.white.opacity(0.6))
+                                                Text(String(format: LocalizedString("venue.moreFacts"), venue.funFacts.count - 2))
+                                                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                                    .foregroundColor(Color.coppelDarkGrey)
                                                     .padding(.vertical, 6)
                                                     .padding(.horizontal, 16)
                                                     .background(
                                                         Capsule()
-                                                            .fill(Color.white.opacity(0.08))
+                                                            .fill(Color.coppelBeige)
                                                     )
                                             }
                                         }
@@ -405,8 +326,9 @@ struct VenueDetailView: View {
                             .padding(.top, 12)
                         }
                         .frame(maxHeight: 280)
+                        .background(Color.coppelBeige.opacity(0.5))
 
-                        // Botón de cerrar mejorado
+                        // Close button
                         Button(action: {
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                                 isPresented = false
@@ -416,76 +338,42 @@ struct VenueDetailView: View {
                             HStack(spacing: 8) {
                                 Image(systemName: "xmark.circle.fill")
                                     .font(.system(size: 16))
-                                Text("Cerrar")
-                                    .font(.system(size: 16, weight: .semibold))
+                                Text(LocalizedString("venue.close"))
+                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
                             }
-                            .foregroundColor(.white)
+                            .foregroundColor(Color.coppelDarkBlue)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.15),
-                                        Color.white.opacity(0.08)
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
+                            .background(Color.coppelBeige)
                             .cornerRadius(12)
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 14)
-                        .background(Color.white.opacity(0.03))
+                        .background(Color.white)
                     }
                     .background(
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 20)
-                                .fill(.ultraThinMaterial)
-
-                            RoundedRectangle(cornerRadius: 20)
-                                .fill(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [
-                                            Color.white.opacity(0.15),
-                                            Color.white.opacity(0.08)
-                                        ]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                        }
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(Color.white)
                     )
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [
-                                        Color.white.opacity(0.3),
-                                        Color.white.opacity(0.1)
-                                    ]),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1.5
-                            )
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .stroke(Color.coppelBeige, lineWidth: 1)
                     )
-                    .shadow(color: venue.primaryColor.opacity(0.4), radius: 25, x: 0, y: -10)
-                    .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: -8)
+                    .shadow(color: Color.coppelDarkBlue.opacity(0.2), radius: 20, x: 0, y: 8)
                 }
                 .frame(maxWidth: 380, maxHeight: 620)
                 .padding(.horizontal, 20)
-                .padding(.bottom, 100) // Mayor padding para no pegar al tab bar
+                .padding(.bottom, 100)
                 .offset(y: dragOffset)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
-                .zIndex(1) // Panel por encima del fondo para capturar gestos
+                .zIndex(1)
             }
         }
     }
 }
 
-// Tarjeta de partido mejorada
+// MARK: - Match card — light Coppel theme
 struct CompactMatchCard: View {
     let match: WorldCupMatch
     let color: Color
@@ -493,18 +381,11 @@ struct CompactMatchCard: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            // Número de partido mejorado
+            // Match number
             ZStack {
                 Circle()
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: [color, color.opacity(0.7)]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(Color.coppelBlue)
                     .frame(width: 38, height: 38)
-                    .shadow(color: color.opacity(0.6), radius: 5, x: 0, y: 3)
 
                 Text("\(index)")
                     .font(.system(size: 14, weight: .bold))
@@ -513,29 +394,29 @@ struct CompactMatchCard: View {
 
             VStack(alignment: .leading, spacing: 5) {
                 Text(match.stage)
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(color)
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .foregroundColor(Color.coppelBlue)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
                     .background(
                         Capsule()
-                            .fill(color.opacity(0.25))
+                            .fill(Color.coppelBlue.opacity(0.10))
                     )
 
                 Text(match.date)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.white)
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundColor(Color.coppelDarkBlue)
 
                 if match.time != "Por definir" {
                     Text(match.time)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.white.opacity(0.8))
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundColor(Color.coppelDarkGrey)
                 }
 
                 if match.teams != "Por definir" {
                     Text(match.teams)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.white.opacity(0.8))
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundColor(Color.coppelDarkGrey)
                         .lineLimit(1)
                 }
             }
@@ -545,24 +426,17 @@ struct CompactMatchCard: View {
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.1))
+                .fill(Color.white)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(
-                            LinearGradient(
-                                colors: [color.opacity(0.4), color.opacity(0.2)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1.5
-                        )
+                        .stroke(Color.coppelBeige, lineWidth: 1)
                 )
         )
-        .shadow(color: color.opacity(0.2), radius: 4, x: 0, y: 2)
+        .shadow(color: Color.coppelDarkBlue.opacity(0.06), radius: 4, x: 0, y: 2)
     }
 }
 
-// Tarjeta de dato curioso mejorada
+// MARK: - Fun fact card — light Coppel theme
 struct CompactFunFactCard: View {
     let fact: String
     let index: Int
@@ -572,24 +446,18 @@ struct CompactFunFactCard: View {
         HStack(alignment: .top, spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [color.opacity(0.3), color.opacity(0.2)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(Color.coppelYellow.opacity(0.2))
                     .frame(width: 32, height: 32)
 
                 Text("\(index)")
                     .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(color)
+                    .foregroundColor(Color.coppelDarkBlue)
             }
             .padding(.top, 2)
 
             Text(fact)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.white.opacity(0.95))
+                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .foregroundColor(Color.coppelDarkBlue)
                 .fixedSize(horizontal: false, vertical: true)
                 .lineSpacing(3)
 
@@ -598,38 +466,23 @@ struct CompactFunFactCard: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.1))
+                .fill(Color.white)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(
-                            LinearGradient(
-                                colors: [color.opacity(0.3), color.opacity(0.15)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1.5
-                        )
+                        .stroke(Color.coppelBeige, lineWidth: 1)
                 )
         )
-        .shadow(color: color.opacity(0.15), radius: 4, x: 0, y: 2)
+        .shadow(color: Color.coppelDarkBlue.opacity(0.06), radius: 4, x: 0, y: 2)
     }
 }
 
 #Preview {
     ZStack {
-        // Fondo de mapa simulado
-        LinearGradient(
-            gradient: Gradient(colors: [
-                Color.blue.opacity(0.4),
-                Color.green.opacity(0.3)
-            ]),
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-        .ignoresSafeArea()
+        Color.coppelBeige
+            .ignoresSafeArea()
 
         VenueDetailView(
-            venue: WorldCupVenue.allVenues[1], // Estadio Azteca
+            venue: WorldCupVenue.allVenues[1],
             isPresented: .constant(true)
         )
     }

@@ -88,7 +88,7 @@ struct ARStreetMenuView: View {
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(.cyan)
                     .kerning(1.5)
-                Text("\(viewModel.visibleMerchants.count) vendedores visibles")
+                Text(String(format: LocalizedString("ar.street.visibleVendors"), viewModel.visibleMerchants.count))
                     .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.6))
             }
@@ -116,7 +116,7 @@ struct ARStreetMenuView: View {
             Image(systemName: "arrow.left.and.right")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.5))
-            Text("Mueve el teléfono para explorar")
+            Text(LocalizedString("ar.street.moveToExplore"))
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.5))
         }

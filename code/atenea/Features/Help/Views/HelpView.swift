@@ -26,17 +26,17 @@ struct HelpView: View {
     @State private var searchText = ""
 
     private let helpTopics = [
-        HelpTopic(icon: "map.fill", title: "Navigation", description: "Use the map to find vendors"),
-        HelpTopic(icon: "soccerball.fill", title: "World Cup", description: "Explore FIFA 2026 venues"),
-        HelpTopic(icon: "star.fill", title: "Favorites", description: "Save your favorite vendors"),
-        HelpTopic(icon: "gearshape.fill", title: "Settings", description: "Customize your app"),
+        HelpTopic(icon: "map.fill", title: LocalizedString("help.navigation"), description: LocalizedString("help.navigationDesc")),
+        HelpTopic(icon: "soccerball.fill", title: LocalizedString("help.worldCup"), description: LocalizedString("help.worldCupDesc")),
+        HelpTopic(icon: "star.fill", title: LocalizedString("help.favorites"), description: LocalizedString("help.favoritesDesc")),
+        HelpTopic(icon: "gearshape.fill", title: LocalizedString("help.settings"), description: LocalizedString("help.settingsDesc")),
     ]
 
     private let faqs = [
-        FAQItem(question: "How do I find a vendor?", answer: "Use the map search or browse the map to find vendors near you."),
-        FAQItem(question: "Can I save favorites?", answer: "Yes, tap the heart icon on any vendor to save it to your favorites."),
-        FAQItem(question: "Does the app work offline?", answer: "Basic features work offline, but navigation requires internet."),
-        FAQItem(question: "How do I change language?", answer: "Go to Settings and select your preferred language."),
+        FAQItem(question: LocalizedString("help.faq1Q"), answer: LocalizedString("help.faq1A")),
+        FAQItem(question: LocalizedString("help.faq2Q"), answer: LocalizedString("help.faq2A")),
+        FAQItem(question: LocalizedString("help.faq3Q"), answer: LocalizedString("help.faq3A")),
+        FAQItem(question: LocalizedString("help.faq4Q"), answer: LocalizedString("help.faq4A")),
     ]
 
     var body: some View {
@@ -49,11 +49,11 @@ struct HelpView: View {
                     // Header
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Help")
+                            Text(LocalizedString("help.title"))
                                 .font(.system(size: 28, weight: .bold, design: .rounded))
                                 .foregroundColor(Color(red: 0.05, green: 0.09, blue: 0.33))
 
-                            Text("Find answers and support")
+                            Text(LocalizedString("help.subtitle"))
                                 .font(.system(size: 13, weight: .medium))
                                 .foregroundColor(.gray)
                         }
@@ -71,7 +71,7 @@ struct HelpView: View {
 
                     // Popular Topics
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Popular topics")
+                        Text(LocalizedString("help.popularTopics"))
                             .font(.system(size: 16, weight: .bold, design: .rounded))
                             .foregroundColor(Color(red: 0.05, green: 0.09, blue: 0.33))
                             .padding(.horizontal, 20)
@@ -86,7 +86,7 @@ struct HelpView: View {
 
                     // FAQ Section
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Frequently asked")
+                        Text(LocalizedString("help.faq"))
                             .font(.system(size: 16, weight: .bold, design: .rounded))
                             .foregroundColor(Color(red: 0.05, green: 0.09, blue: 0.33))
                             .padding(.horizontal, 20)
@@ -113,11 +113,11 @@ struct HelpView: View {
                             }
 
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Still need help?")
+                                Text(LocalizedString("help.stillNeedHelp"))
                                     .font(.system(size: 15, weight: .semibold, design: .rounded))
                                     .foregroundColor(Color(red: 0.05, green: 0.09, blue: 0.33))
 
-                                Text("Contact our support team")
+                                Text(LocalizedString("help.contactSupport"))
                                     .font(.system(size: 12, weight: .medium))
                                     .foregroundColor(.gray)
                             }

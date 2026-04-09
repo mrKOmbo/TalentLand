@@ -44,7 +44,7 @@ struct StaffView: View {
 
                     Spacer()
 
-                    Text("Staff")
+                    Text(LocalizedString("staff.title"))
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
 
@@ -73,11 +73,11 @@ struct StaffView: View {
                         }
                         .padding(.top, 40)
 
-                        Text("Staff Access")
+                        Text(LocalizedString("staff.access"))
                             .font(.system(size: 32, weight: .bold))
                             .foregroundColor(.white)
 
-                        Text("Vista especial para el personal")
+                        Text(LocalizedString("staff.subtitle"))
                             .font(.system(size: 16))
                             .foregroundColor(.white.opacity(0.7))
                             .multilineTextAlignment(.center)
@@ -89,7 +89,7 @@ struct StaffView: View {
                         // Botones de acceso rápido
                         VStack(spacing: 16) {
                             StaffActionButton(
-                                title: "Emergencys",
+                                title: LocalizedString("staff.emergencies"),
                                 icon: "exclamationmark.triangle.fill",
                                 color: .red
                             ) {
@@ -97,7 +97,7 @@ struct StaffView: View {
                             }
 
                             StaffActionButton(
-                                title: "Estadísticas",
+                                title: LocalizedString("staff.statistics"),
                                 icon: "chart.line.uptrend.xyaxis",
                                 color: .green
                             ) {
@@ -105,7 +105,7 @@ struct StaffView: View {
                             }
 
                             StaffActionButton(
-                                title: "Gestión de Usuarios",
+                                title: LocalizedString("staff.userManagement"),
                                 icon: "person.3.fill",
                                 color: .purple
                             ) {
@@ -113,7 +113,7 @@ struct StaffView: View {
                             }
 
                             StaffActionButton(
-                                title: "Configuración",
+                                title: LocalizedString("staff.configuration"),
                                 icon: "gearshape.fill",
                                 color: .orange
                             ) {

@@ -57,7 +57,7 @@ struct VoiceTranslatorView: View {
                     controlArea
                 }
             }
-            .navigationTitle("Traductor")
+            .navigationTitle(LocalizedString("translator.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -102,7 +102,7 @@ struct VoiceTranslatorView: View {
             VStack(spacing: 4) {
                 Text("🇲🇽")
                     .font(.system(size: 28))
-                Text("Español")
+                Text(LocalizedString("translator.spanish"))
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(.white.opacity(0.7))
             }
@@ -184,12 +184,12 @@ struct VoiceTranslatorView: View {
                 .font(.system(size: 48))
                 .foregroundColor(.white.opacity(0.15))
 
-            Text("Toca el botón de micrófono para hablar")
+            Text(LocalizedString("translator.tapMicToSpeak"))
                 .font(.system(size: 15))
                 .foregroundColor(.white.opacity(0.3))
                 .multilineTextAlignment(.center)
 
-            Text("El vendedor habla en español\nEl turista escucha en su idioma")
+            Text(LocalizedString("translator.merchantSpeaksSpanish"))
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.2))
                 .multilineTextAlignment(.center)
@@ -214,12 +214,12 @@ struct VoiceTranslatorView: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(translator.currentTranscription.isEmpty ? "Escuchando..." : translator.currentTranscription)
+                Text(translator.currentTranscription.isEmpty ? LocalizedString("translator.listening") : translator.currentTranscription)
                     .font(.system(size: 14))
                     .foregroundColor(.white)
                     .lineLimit(2)
 
-                Text(isMerchantMode ? "Habla en español" : "Speak in your language")
+                Text(isMerchantMode ? LocalizedString("translator.speakInSpanish") : LocalizedString("translator.speakInYourLanguage"))
                     .font(.system(size: 11))
                     .foregroundColor(.white.opacity(0.4))
             }
@@ -246,14 +246,14 @@ struct VoiceTranslatorView: View {
             // Toggle merchant/tourist
             HStack(spacing: 12) {
                 ModeButton(
-                    label: "Vendedor",
+                    label: LocalizedString("translator.merchant"),
                     emoji: "🇲🇽",
                     isActive: isMerchantMode,
                     color: .orange
                 ) { isMerchantMode = true }
 
                 ModeButton(
-                    label: "Turista",
+                    label: LocalizedString("translator.tourist"),
                     emoji: availableLanguages.first { $0.code == selectedTouristLanguage }?.flag ?? "🌍",
                     isActive: !isMerchantMode,
                     color: .cyan
@@ -292,7 +292,7 @@ struct VoiceTranslatorView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "speaker.wave.3.fill")
                         .font(.system(size: 12))
-                    Text("Reproduciendo traducción...")
+                    Text(LocalizedString("translator.playingTranslation"))
                         .font(.system(size: 12))
                 }
                 .foregroundColor(.green)
@@ -333,11 +333,11 @@ struct VoiceTranslatorView: View {
                     }
                 }
             }
-            .navigationTitle("Idioma del turista")
+            .navigationTitle(LocalizedString("translator.touristLanguage"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Listo") { showLanguagePicker = false }
+                    Button(LocalizedString("translator.done")) { showLanguagePicker = false }
                 }
             }
         }
@@ -354,7 +354,7 @@ private struct MessageBubble: View {
         VStack(alignment: message.isFromMerchant ? .leading : .trailing, spacing: 6) {
             // Sender label
             HStack(spacing: 4) {
-                Text(message.isFromMerchant ? "🇲🇽 Vendedor" : "🌍 Turista")
+                Text(message.isFromMerchant ? "🇲🇽 \(LocalizedString("translator.merchantLabel"))" : "🌍 \(LocalizedString("translator.touristLabel"))")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(.white.opacity(0.4))
 

@@ -125,7 +125,7 @@ struct OnboardingWelcomeView: View {
 
             // Personalized greeting
             VStack(spacing: 8) {
-                Text("¡Bienvenido")
+                Text(LocalizedString("welcome.greeting"))
                     .font(.system(size: 40, weight: .black, design: .default))
                     .foregroundColor(.white)
                     .tracking(-1)
@@ -139,7 +139,7 @@ struct OnboardingWelcomeView: View {
             }
 
             // Tagline
-            Text("Tu camino al éxito continúa aquí")
+            Text(LocalizedString("welcome.tagline"))
                 .font(.system(size: 18, weight: .medium))
                 .foregroundColor(.white.opacity(0.9))
                 .tracking(-0.3)
@@ -187,7 +187,7 @@ struct OnboardingWelcomeView: View {
                         .font(.system(size: 22, weight: .bold))
                         .foregroundColor(.coppelBlue)
 
-                    Text("Ingresar")
+                    Text(LocalizedString("welcome.enter"))
                         .font(.system(size: 18, weight: .black))
                         .foregroundColor(.coppelBlue)
                         .tracking(-0.3)
@@ -211,7 +211,7 @@ struct OnboardingWelcomeView: View {
             Button(action: {
                 // TODO: Handle switch account
             }) {
-                Text("Quiero entrar con otra cuenta")
+                Text(LocalizedString("welcome.switchAccount"))
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white)
                     .underline(true, color: .white.opacity(0.3))

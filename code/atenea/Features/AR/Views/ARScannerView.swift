@@ -38,10 +38,10 @@ struct ARScannerView: View {
 
                 // Title
                 VStack(spacing: 8) {
-                    Text("Escanear Poster")
+                    Text(LocalizedString("ar.scanner.scanPoster"))
                         .font(.largeTitle.bold())
 
-                    Text("Descubre información de cada sede")
+                    Text(LocalizedString("ar.scanner.discoverInfo"))
                         .font(.title3)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -65,7 +65,7 @@ struct ARScannerView: View {
                 }) {
                     HStack(spacing: 12) {
                         Image(systemName: "camera.fill")
-                        Text("Iniciar Escaneo")
+                        Text(LocalizedString("ar.scanner.startScanning"))
                             .font(.headline)
                     }
                     .foregroundColor(.white)

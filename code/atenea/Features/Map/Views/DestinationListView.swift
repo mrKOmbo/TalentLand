@@ -99,13 +99,13 @@ struct DestinationListView: View {
         NavigationStack {
             List {
                 // Sección de modelo 3D
-                Section(header: Text("Modelo 3D")) {
+                Section(header: Text(LocalizedString("menu.3dModel"))) {
                     Button(action: {
                         showTangaraView = true
                     }) {
                         HStack {
                             Image(systemName: "cube.fill").foregroundColor(.purple)
-                            Text("Ver Tren Tangara 3D")
+                            Text(LocalizedString("menu.viewTangara3D"))
                             Spacer()
                             Image(systemName: "arrow.right.circle").foregroundColor(.gray)
                         }
@@ -114,7 +114,7 @@ struct DestinationListView: View {
                 }
 
                 // Sección de navegación
-                Section(header: Text("Navegación")) {
+                Section(header: Text(LocalizedString("menu.navigation"))) {
                     ForEach(destinations) { destination in
                         Button(action: {
                             // Check if the current location is available and valid before proceeding
@@ -148,7 +148,7 @@ struct DestinationListView: View {
                     }
                 }
             }
-            .navigationTitle("Choose Destination") // Title for the navigation stack
+            .navigationTitle(LocalizedString("destination.chooseTitle")) // Title for the navigation stack
             // Present the navigation view full screen when OD pair is set
             .fullScreenCover(item: $preparedNavigation) { preparedNavigation in
                 NavigationViewWrapper(

@@ -46,7 +46,7 @@ struct UltraThinkRecommendationsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Text("UltraThink")
+                    Text(LocalizedString("ultrathink.title"))
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                 }
@@ -60,12 +60,12 @@ struct UltraThinkRecommendationsView: View {
                 }
             }
             .toolbarBackground(.hidden, for: .navigationBar)
-            .alert("API Key Requerida", isPresented: $showAPIKeyAlert) {
-                Button("Cerrar", role: .cancel) {
+            .alert(LocalizedString("ultrathink.apiKeyRequired"), isPresented: $showAPIKeyAlert) {
+                Button(LocalizedString("action.close"), role: .cancel) {
                     isPresented = false
                 }
             } message: {
-                Text("Por favor configura tu Claude API key en la configuración para usar UltraThink.")
+                Text(LocalizedString("ultrathink.apiKeyMessage"))
             }
         }
         .onAppear {
@@ -96,11 +96,11 @@ struct UltraThinkRecommendationsView: View {
                 )
                 .shadow(color: .purple.opacity(0.5), radius: 20)
 
-            Text("UltraThink")
+            Text(LocalizedString("ultrathink.title"))
                 .font(.system(size: 42, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
 
-            Text("Análisis Contextual Avanzado")
+            Text(LocalizedString("ultrathink.advancedAnalysis"))
                 .font(.system(size: 18, weight: .medium))
                 .foregroundColor(.white.opacity(0.7))
 
@@ -114,7 +114,7 @@ struct UltraThinkRecommendationsView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "sparkles")
                         .font(.system(size: 16))
-                    Text("Generar Recomendaciones")
+                    Text(LocalizedString("ultrathink.generateRecommendations"))
                         .font(.system(size: 18, weight: .semibold))
                     Image(systemName: "sparkles")
                         .font(.system(size: 16))
@@ -146,11 +146,11 @@ struct UltraThinkRecommendationsView: View {
                 .scaleEffect(x: 1.5, y: 1.5)
                 .tint(.white)
 
-            Text("Analizando contexto...")
+            Text(LocalizedString("ultrathink.analyzingContext"))
                 .font(.system(size: 20, weight: .medium))
                 .foregroundColor(.white.opacity(0.9))
 
-            Text("Considerando ubicación, hora, clima y preferencias")
+            Text(LocalizedString("ultrathink.analyzingSubtitle"))
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.6))
                 .multilineTextAlignment(.center)
@@ -166,7 +166,7 @@ struct UltraThinkRecommendationsView: View {
                 .font(.system(size: 60))
                 .foregroundColor(.orange)
 
-            Text("Error al generar análisis")
+            Text(LocalizedString("ultrathink.errorGenerating"))
                 .font(.system(size: 22, weight: .semibold))
                 .foregroundColor(.white)
 
@@ -184,7 +184,7 @@ struct UltraThinkRecommendationsView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 14))
-                    Text("Reintentar")
+                    Text(LocalizedString("ultrathink.retry"))
                         .font(.system(size: 16, weight: .semibold))
                 }
                 .foregroundColor(.white)
@@ -212,7 +212,7 @@ struct UltraThinkRecommendationsView: View {
                 contextHeaderView(analysis: analysis)
                 contextSummaryCard(summary: analysis.contextSummary)
 
-                Text("Recomendaciones")
+                Text(LocalizedString("ultrathink.recommendations"))
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.white)
                     .padding(.horizontal, 20)
@@ -291,7 +291,7 @@ struct UltraThinkRecommendationsView: View {
             HStack {
                 Image(systemName: "brain")
                     .foregroundColor(.purple)
-                Text("Análisis de Contexto")
+                Text(LocalizedString("ultrathink.contextAnalysis"))
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white)
             }
@@ -324,7 +324,7 @@ struct UltraThinkRecommendationsView: View {
             HStack(spacing: 8) {
                 Image(systemName: "arrow.clockwise")
                     .font(.system(size: 15, weight: .semibold))
-                Text("Actualizar Análisis")
+                Text(LocalizedString("ultrathink.refreshAnalysis"))
                     .font(.system(size: 16, weight: .semibold))
             }
             .foregroundColor(.white)
@@ -447,13 +447,13 @@ struct UltraThinkRecommendationsView: View {
         do {
             let placemarks = try await geocoder.reverseGeocodeLocation(location)
             if let placemark = placemarks.first {
-                return placemark.locality ?? placemark.administrativeArea ?? "Ubicación actual"
+                return placemark.locality ?? placemark.administrativeArea ?? LocalizedString("ultrathink.currentLocation")
             }
         } catch {
             print("Error geocoding: \(error)")
         }
 
-        return "Ubicación actual"
+        return LocalizedString("ultrathink.currentLocation")
     }
 }
 
@@ -556,7 +556,7 @@ struct RecommendationCard: View {
                         HStack(spacing: 6) {
                             Image(systemName: "location.fill")
                                 .font(.system(size: 13))
-                            Text("Ver en Mapa")
+                            Text(LocalizedString("ultrathink.viewOnMap"))
                                 .font(.system(size: 14, weight: .semibold))
                         }
                         .foregroundColor(.white)
@@ -578,7 +578,7 @@ struct RecommendationCard: View {
                         HStack(spacing: 6) {
                             Image(systemName: "arrow.triangle.turn.up.right.diamond.fill")
                                 .font(.system(size: 13))
-                            Text("Direcciones")
+                            Text(LocalizedString("ultrathink.directions"))
                                 .font(.system(size: 14, weight: .semibold))
                         }
                         .foregroundColor(.white)
@@ -606,7 +606,7 @@ struct RecommendationCard: View {
             }) {
                 HStack(spacing: 6) {
                     Spacer()
-                    Text(isExpanded ? "Mostrar menos" : "Mostrar más")
+                    Text(isExpanded ? LocalizedString("ultrathink.showLess") : LocalizedString("ultrathink.showMore"))
                         .font(.system(size: 13, weight: .medium))
                         .foregroundColor(.white.opacity(0.7))
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")

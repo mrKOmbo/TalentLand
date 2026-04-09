@@ -42,7 +42,7 @@ struct HomeView: View {
                         .environmentObject(languageManager)
                 }
             } else {
-                CustomerHomeView(selectedTab: $selectedTab, pendingMerchantPlace: $pendingMerchantPlace, user: User(email: "", name: "Visitante", role: .user))
+                CustomerHomeView(selectedTab: $selectedTab, pendingMerchantPlace: $pendingMerchantPlace, user: User(email: "", name: LocalizedString("home.visitor"), role: .user))
                     .environmentObject(languageManager)
             }
         }
@@ -208,21 +208,27 @@ struct MerchantHomeView: View {
     private var merchantHeader: some View {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Hola, \(user.name)")
+                Text(String(format: LocalizedString("home.hello"), user.name))
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundColor(Color(hex: "#081754"))
-                Text("Tu negocio hoy")
+                Text(LocalizedString("home.yourBusinessToday"))
                     .font(.system(size: 13, weight: .regular, design: .rounded))
                     .foregroundColor(Color(hex: "#4A4A4A"))
             }
             Spacer()
-            ZStack {
-                Circle()
-                    .fill(Color(hex: "#FFAE43"))
-                    .frame(width: 48, height: 48)
-                Text(String(user.name.prefix(1)).uppercased())
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
+            Button(action: {
+                MenuStateManager.shared.toggleMenu()
+                let generator = UIImpactFeedbackGenerator(style: .medium)
+                generator.impactOccurred()
+            }) {
+                ZStack {
+                    Circle()
+                        .fill(Color(hex: "#FFAE43"))
+                        .frame(width: 48, height: 48)
+                    Text(String(user.name.prefix(1)).uppercased())
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                }
             }
         }
         .padding(.horizontal, 16)
@@ -238,10 +244,10 @@ struct MerchantHomeView: View {
     private var businessStatusCard: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text(isBusinessActive.wrappedValue ? "Negocio activo" : "Negocio pausado")
+                Text(isBusinessActive.wrappedValue ? LocalizedString("home.businessActive") : LocalizedString("home.businessPaused"))
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
                     .foregroundColor(Color(hex: "#081754"))
-                Text(isBusinessActive.wrappedValue ? "Los clientes pueden encontrarte" : "No apareces en el mapa")
+                Text(isBusinessActive.wrappedValue ? LocalizedString("home.businessActiveDesc") : LocalizedString("home.businessPausedDesc"))
                     .font(.system(size: 13, weight: .regular, design: .rounded))
                     .foregroundColor(Color(hex: "#4A4A4A"))
             }
@@ -269,7 +275,7 @@ struct MerchantHomeView: View {
 
     private var metricsGrid: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Hoy")
+            Text(LocalizedString("home.today"))
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .foregroundColor(Color(hex: "#081754"))
 
@@ -277,20 +283,20 @@ struct MerchantHomeView: View {
                 MetricCard(
                     icon: "person.fill",
                     value: "\(presenceManager.activeMerchantCount)",
-                    label: "Vendedores",
+                    label: LocalizedString("home.sellers"),
                     color: Color(hex: "#1C42E8")
                 )
                 MetricCard(
                     icon: "eye.fill",
                     value: "\(profileViews)",
-                    label: "Vistas",
+                    label: LocalizedString("home.views"),
                     color: Color(hex: "#7D42FF")
                 )
                 Button(action: { showTimbreHistory = true }) {
                     MetricCard(
                         icon: "bell.fill",
                         value: "\(timbreManager.unreadCount)",
-                        label: "Timbres",
+                        label: LocalizedString("home.timbres"),
                         color: timbreManager.unreadCount > 0 ? Color(hex: "#FFAE43") : Color(hex: "#4A4A4A")
                     )
                 }
@@ -308,15 +314,15 @@ struct MerchantHomeView: View {
 
     private var quickActionsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Acciones rápidas")
+            Text(LocalizedString("home.quickActions"))
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .foregroundColor(Color(hex: "#081754"))
 
             VStack(spacing: 10) {
                 MerchantActionRow(
                     icon: "mappin.and.ellipse",
-                    title: "Actualizar ubicación",
-                    subtitle: "Deja que los clientes te encuentren",
+                    title: LocalizedString("home.updateLocation"),
+                    subtitle: LocalizedString("home.updateLocationDesc"),
                     color: Color(hex: "#1C42E8")
                 ) {
                     NavigationStateManager.shared.merchantLocationEditMode = true
@@ -325,8 +331,8 @@ struct MerchantHomeView: View {
 
                 MerchantActionRow(
                     icon: "map.fill",
-                    title: "Ver zonas de demanda",
-                    subtitle: "\(demandManager.totalDemandLastHour()) búsquedas esta hora",
+                    title: LocalizedString("home.viewDemandZones"),
+                    subtitle: String(format: LocalizedString("home.searchesThisHour"), demandManager.totalDemandLastHour()),
                     color: Color(hex: "#0ABF4F")
                 ) {
                     showDemandInsights = true
@@ -346,10 +352,10 @@ struct MerchantHomeView: View {
         let topZone = demandManager.topZones(limit: 1).first
         let tipTitle = topZone != nil
             ? "Demanda \(topZone!.intensity.displayName.lowercased()) de \(topZone!.topCategory?.displayName ?? "comida")"
-            : "Sin datos aún"
+            : LocalizedString("home.noDataYet")
         let tipSubtitle = topZone != nil
             ? "\(topZone!.demandScore) búsquedas en zona"
-            : "Los datos aparecerán aquí"
+            : LocalizedString("home.dataWillAppear")
 
         return Button(action: { showDemandInsights = true }) {
             HStack(spacing: 12) {
@@ -489,7 +495,7 @@ struct CustomerHomeView: View {
 
                 if !merchant.products.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("PRODUCTOS")
+                        Text(LocalizedString("home.products"))
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundColor(.secondary)
                             .kerning(1.2)
@@ -529,13 +535,13 @@ struct CustomerHomeView: View {
                     Image(systemName: "antenna.radiowaves.left.and.right")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(radarService.isScanning ? Color(hex: "#0ABF4F") : Color(hex: "#4A4A4A"))
-                    Text("Detectar comerciantes")
+                    Text(LocalizedString("home.detectMerchants"))
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundColor(Color(hex: "#081754"))
                 }
                 Spacer()
                 if radarService.activeMerchantCount > 0 {
-                    Text("\(radarService.activeMerchantCount) cerca")
+                    Text(String(format: LocalizedString("home.nearby"), radarService.activeMerchantCount))
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundColor(Color(hex: "#0ABF4F"))
                 }
@@ -557,7 +563,7 @@ struct CustomerHomeView: View {
                     ProgressView()
                         .tint(Color(hex: "#0ABF4F"))
                         .scaleEffect(CGFloat(0.8))
-                    Text("Buscando comerciantes...")
+                    Text(LocalizedString("home.searchingMerchants"))
                         .font(.system(size: 13, weight: .regular, design: .rounded))
                         .foregroundColor(Color(hex: "#4A4A4A"))
                 }
@@ -594,10 +600,10 @@ struct CustomerHomeView: View {
     private var customerHeader: some View {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Hola, \(user.name)")
+                Text(String(format: LocalizedString("home.hello"), user.name))
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundColor(Color(hex: "#081754"))
-                Text("¿Qué se te antoja hoy?")
+                Text(LocalizedString("home.whatDoYouCrave"))
                     .font(.system(size: 13, weight: .regular, design: .rounded))
                     .foregroundColor(Color(hex: "#4A4A4A"))
             }
@@ -636,7 +642,7 @@ struct CustomerHomeView: View {
     private var nearbyMerchantsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Comerciantes cerca")
+                Text(LocalizedString("home.merchantsNearby"))
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .foregroundColor(Color(hex: "#081754"))
                 Spacer()
@@ -701,10 +707,10 @@ struct CustomerHomeView: View {
                     .cornerRadius(12)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Pregúntale a Atenea IA")
+                    Text(LocalizedString("home.askAteneaAI"))
                         .font(.system(size: 15, weight: .semibold, design: .rounded))
                         .foregroundColor(Color(hex: "#081754"))
-                    Text("¿Dónde están los mejores tacos cerca del Azteca?")
+                    Text(LocalizedString("home.askAteneaAIDesc"))
                         .font(.system(size: 13, weight: .regular, design: .rounded))
                         .foregroundColor(Color(hex: "#4A4A4A"))
                         .lineLimit(2)
@@ -741,10 +747,10 @@ struct CustomerHomeView: View {
                     .cornerRadius(12)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Traductor de voz")
+                    Text(LocalizedString("home.voiceTranslator"))
                         .font(.system(size: 15, weight: .semibold, design: .rounded))
                         .foregroundColor(Color(hex: "#081754"))
-                    Text("Habla y el vendedor te entiende al instante")
+                    Text(LocalizedString("home.voiceTranslatorDesc"))
                         .font(.system(size: 13, weight: .regular, design: .rounded))
                         .foregroundColor(Color(hex: "#4A4A4A"))
                         .lineLimit(2)
@@ -768,23 +774,23 @@ struct CustomerHomeView: View {
 
     private var customerQuickActions: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Acciones rápidas")
+            Text(LocalizedString("home.quickActions"))
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .foregroundColor(Color(hex: "#081754"))
 
             HStack(spacing: 12) {
-                CustomerActionButton(icon: "camera.viewfinder", label: "Menú AR", color: Color(hex: "#7D42FF")) {
+                CustomerActionButton(icon: "camera.viewfinder", label: LocalizedString("home.menuAR"), color: Color(hex: "#7D42FF")) {
                     showARStreetMenu = true
                 }
-                CustomerActionButton(icon: "wave.3.right", label: "Pagar", color: Color(hex: "#1CA8F7")) {
+                CustomerActionButton(icon: "wave.3.right", label: LocalizedString("home.pay"), color: Color(hex: "#1CA8F7")) {
                     showTapToPay = true
                 }
-                CustomerActionButton(icon: "bell.fill", label: "Timbre", color: Color(hex: "#FFAE43")) {
+                CustomerActionButton(icon: "bell.fill", label: LocalizedString("home.timbre"), color: Color(hex: "#FFAE43")) {
                     if let first = merchantManager.activeMerchants().first {
                         selectedMerchantForTimbre = first
                     }
                 }
-                CustomerActionButton(icon: "mappin.and.ellipse", label: "Buscar", color: Color(hex: "#1C42E8")) {
+                CustomerActionButton(icon: "mappin.and.ellipse", label: LocalizedString("home.search"), color: Color(hex: "#1C42E8")) {
                     selectedTab = 1
                 }
             }
@@ -809,10 +815,10 @@ struct CustomerHomeView: View {
                     .cornerRadius(12)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Hoy hay partido")
+                    Text(LocalizedString("home.matchToday"))
                         .font(.system(size: 15, weight: .semibold, design: .rounded))
                         .foregroundColor(Color(hex: "#081754"))
-                    Text("México vs Brasil · Estadio Azteca · 6:00 PM")
+                    Text(LocalizedString("home.matchTodayDesc"))
                         .font(.system(size: 13, weight: .regular, design: .rounded))
                         .foregroundColor(Color(hex: "#4A4A4A"))
                         .lineLimit(2)
@@ -958,7 +964,7 @@ struct NearbyMerchantChip: View {
                 .font(.system(size: 11, weight: .regular, design: .rounded))
                 .foregroundColor(Color(hex: "#4A4A4A"))
 
-            Text(isStatic ? "Fijo" : "Nómada")
+            Text(isStatic ? LocalizedString("home.fixed") : LocalizedString("home.nomad"))
                 .font(.system(size: 9, weight: .semibold, design: .rounded))
                 .foregroundColor(isStatic ? Color(hex: "#1C42E8") : Color(hex: "#FFAE43"))
                 .padding(.horizontal, 8)
@@ -1015,7 +1021,7 @@ struct InteractivePeerButton: View {
                     .foregroundColor(Color(hex: "#081754"))
                     .lineLimit(1)
 
-                Text("En vivo")
+                Text(LocalizedString("home.live"))
                     .font(.system(size: 10, weight: .semibold, design: .rounded))
                     .foregroundColor(Color(hex: "#0ABF4F"))
                     .padding(.horizontal, 8)

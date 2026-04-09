@@ -126,7 +126,7 @@ struct SidebarPushMenuContainer<Content: View>: View {
 
                         menuSectionTitle("FIFA World Cup 2026™")
 
-                        menuItem(icon: "location.fill", title: "Venues") {
+                        menuItem(icon: "location.fill", title: LocalizedString("sidebar.venues")) {
                             onShowVenues?()
                             closeMenu()
                         }
@@ -280,7 +280,7 @@ struct SidebarPushMenuContainer<Content: View>: View {
                     .foregroundColor(.white)
                     .frame(width: 28)
 
-                Text("Logout")
+                Text(LocalizedString("sidebar.logout"))
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white)
 

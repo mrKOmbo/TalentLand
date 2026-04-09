@@ -75,7 +75,7 @@ struct StaffUsersView: View {
                         HStack(spacing: 8) {
                             Image(systemName: "chevron.left")
                                 .font(.system(size: 16, weight: .semibold))
-                            Text("Atrás")
+                            Text(LocalizedString("staff.users.back"))
                                 .font(.system(size: 16, weight: .medium))
                         }
                         .foregroundColor(.white.opacity(0.7))
@@ -83,7 +83,7 @@ struct StaffUsersView: View {
 
                     Spacer()
 
-                    Text("Usuarios")
+                    Text(LocalizedString("staff.users.title"))
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.white)
 
@@ -102,7 +102,7 @@ struct StaffUsersView: View {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(.white.opacity(0.5))
 
-                    TextField("Buscar usuarios...", text: $searchText)
+                    TextField(LocalizedString("staff.users.searchPlaceholder"), text: $searchText)
                         .foregroundColor(.white)
                         .tint(.purple)
 
@@ -123,9 +123,9 @@ struct StaffUsersView: View {
 
                 // Estadísticas rápidas
                 HStack(spacing: 12) {
-                    QuickStatView(title: "Total", value: "\(sampleUsers.count)", color: .blue)
-                    QuickStatView(title: "Activos", value: "\(sampleUsers.filter { $0.status == .active }.count)", color: .green)
-                    QuickStatView(title: "Suspendidos", value: "\(sampleUsers.filter { $0.status == .suspended }.count)", color: .red)
+                    QuickStatView(title: LocalizedString("staff.users.total"), value: "\(sampleUsers.count)", color: .blue)
+                    QuickStatView(title: LocalizedString("staff.users.active"), value: "\(sampleUsers.filter { $0.status == .active }.count)", color: .green)
+                    QuickStatView(title: LocalizedString("staff.users.suspended"), value: "\(sampleUsers.filter { $0.status == .suspended }.count)", color: .red)
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)

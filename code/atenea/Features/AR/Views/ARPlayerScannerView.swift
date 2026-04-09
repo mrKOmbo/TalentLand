@@ -77,12 +77,12 @@ struct ARPlayerScannerView: View {
                             .shadow(radius: 10)
 
                         VStack(spacing: 8) {
-                            Text("Escanea una Tarjeta de Jugador")
+                            Text(LocalizedString("ar.player.scanCard"))
                                 .font(.system(size: CGFloat(24), weight: .bold))
                                 .foregroundColor(.white)
                                 .shadow(radius: 10)
 
-                            Text("Apunta tu cámara a la imagen del jugador")
+                            Text(LocalizedString("ar.player.pointCamera"))
                                 .font(.system(size: CGFloat(16)))
                                 .foregroundColor(.white.opacity(0.9))
                                 .shadow(radius: 10)
@@ -105,7 +105,7 @@ struct ARPlayerScannerView: View {
                             .fill(Color.green)
                             .frame(width: 8, height: 8)
 
-                        Text("AR Listo")
+                        Text(LocalizedString("ar.player.arReady"))
                             .font(.system(size: CGFloat(14), weight: .medium))
                             .foregroundColor(.white)
                     }
@@ -195,7 +195,7 @@ struct PlayerDetectedOverlay: View {
 
                 // Player Info
                 VStack(spacing: 12) {
-                    Text("¡Jugador Encontrado!")
+                    Text(LocalizedString("ar.playerFound"))
                         .font(.system(size: CGFloat(28), weight: .bold))
                         .foregroundColor(.white)
 
@@ -203,7 +203,7 @@ struct PlayerDetectedOverlay: View {
                         .font(.system(size: CGFloat(22), weight: .semibold))
                         .foregroundColor(.yellow)
 
-                    Text("Abriendo álbum en página \(player.albumPage + 1)...")
+                    Text(String(format: LocalizedString("ar.openingAlbum"), player.albumPage + 1))
                         .font(.system(size: CGFloat(16)))
                         .foregroundColor(.white.opacity(0.9))
                 }

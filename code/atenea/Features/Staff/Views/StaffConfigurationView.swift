@@ -36,7 +36,7 @@ struct StaffConfigurationView: View {
                         HStack(spacing: 8) {
                             Image(systemName: "chevron.left")
                                 .font(.system(size: 16, weight: .semibold))
-                            Text("Atrás")
+                            Text(LocalizedString("staff.config.back"))
                                 .font(.system(size: 16, weight: .medium))
                         }
                         .foregroundColor(.white.opacity(0.7))
@@ -44,7 +44,7 @@ struct StaffConfigurationView: View {
 
                     Spacer()
 
-                    Text("Configuración")
+                    Text(LocalizedString("staff.config.title"))
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.white)
 
@@ -74,11 +74,11 @@ struct StaffConfigurationView: View {
                         .padding(.top, 20)
 
                         // Sección de Notificaciones
-                        ConfigSection(title: "Notificaciones") {
+                        ConfigSection(title: LocalizedString("staff.config.notifications")) {
                             VStack(spacing: 0) {
                                 ConfigToggleRow(
-                                    title: "Notificaciones Push",
-                                    description: "Recibir notificaciones en tiempo real",
+                                    title: LocalizedString("staff.config.pushNotifications"),
+                                    description: LocalizedString("staff.config.pushDesc"),
                                     icon: "bell.fill",
                                     color: .blue,
                                     isOn: $notificationsEnabled
@@ -89,8 +89,8 @@ struct StaffConfigurationView: View {
                                     .padding(.horizontal, 16)
 
                                 ConfigToggleRow(
-                                    title: "Alertas de Emergencia",
-                                    description: "Notificaciones prioritarias de emergencias",
+                                    title: LocalizedString("staff.config.emergencyAlerts"),
+                                    description: LocalizedString("staff.config.emergencyAlertsDesc"),
                                     icon: "exclamationmark.triangle.fill",
                                     color: .red,
                                     isOn: $emergencyAlertsEnabled
@@ -99,11 +99,11 @@ struct StaffConfigurationView: View {
                         }
 
                         // Sección de Sistema
-                        ConfigSection(title: "Sistema") {
+                        ConfigSection(title: LocalizedString("staff.config.system")) {
                             VStack(spacing: 0) {
                                 ConfigToggleRow(
-                                    title: "Analytics",
-                                    description: "Recopilar datos de uso y rendimiento",
+                                    title: LocalizedString("staff.config.analytics"),
+                                    description: LocalizedString("staff.config.analyticsDesc"),
                                     icon: "chart.bar.fill",
                                     color: .green,
                                     isOn: $analyticsEnabled
@@ -114,8 +114,8 @@ struct StaffConfigurationView: View {
                                     .padding(.horizontal, 16)
 
                                 ConfigToggleRow(
-                                    title: "Backup Automático",
-                                    description: "Crear respaldos diarios de datos",
+                                    title: LocalizedString("staff.config.autoBackup"),
+                                    description: LocalizedString("staff.config.autoBackupDesc"),
                                     icon: "cloud.fill",
                                     color: .cyan,
                                     isOn: $autoBackupEnabled
@@ -126,8 +126,8 @@ struct StaffConfigurationView: View {
                                     .padding(.horizontal, 16)
 
                                 ConfigToggleRow(
-                                    title: "Modo Mantenimiento",
-                                    description: "Desactivar app temporalmente",
+                                    title: LocalizedString("staff.config.maintenanceMode"),
+                                    description: LocalizedString("staff.config.maintenanceModeDesc"),
                                     icon: "wrench.fill",
                                     color: .orange,
                                     isOn: $maintenanceMode
@@ -136,10 +136,10 @@ struct StaffConfigurationView: View {
                         }
 
                         // Sección de Acciones
-                        ConfigSection(title: "Acciones") {
+                        ConfigSection(title: LocalizedString("staff.config.actions")) {
                             VStack(spacing: 12) {
                                 ConfigActionButton(
-                                    title: "Limpiar Caché",
+                                    title: LocalizedString("staff.config.clearCache"),
                                     icon: "trash.fill",
                                     color: .yellow
                                 ) {
@@ -147,7 +147,7 @@ struct StaffConfigurationView: View {
                                 }
 
                                 ConfigActionButton(
-                                    title: "Exportar Datos",
+                                    title: LocalizedString("staff.config.exportData"),
                                     icon: "square.and.arrow.up.fill",
                                     color: .blue
                                 ) {
@@ -155,7 +155,7 @@ struct StaffConfigurationView: View {
                                 }
 
                                 ConfigActionButton(
-                                    title: "Reiniciar Servicios",
+                                    title: LocalizedString("staff.config.restartServices"),
                                     icon: "arrow.clockwise.circle.fill",
                                     color: .purple
                                 ) {
@@ -163,7 +163,7 @@ struct StaffConfigurationView: View {
                                 }
 
                                 ConfigActionButton(
-                                    title: "Ver Logs del Sistema",
+                                    title: LocalizedString("staff.config.viewSystemLogs"),
                                     icon: "doc.text.fill",
                                     color: .cyan
                                 ) {
@@ -174,11 +174,11 @@ struct StaffConfigurationView: View {
 
                         // Información de versión
                         VStack(spacing: 8) {
-                            Text("Atenea Staff Panel")
+                            Text(LocalizedString("staff.config.staffPanel"))
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.5))
 
-                            Text("v1.0.0 (Build 2024)")
+                            Text(LocalizedString("staff.config.version"))
                                 .font(.system(size: 12))
                                 .foregroundColor(.white.opacity(0.3))
                         }

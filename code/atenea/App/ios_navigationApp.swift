@@ -20,6 +20,7 @@ struct ios_navigationApp: App {
                 .onAppear {
                     handleAppIntentRequests()
                     initializeSpotlightIndex()
+                    MastodonService.shared.preload()
                 }
                 .environmentObject(emergencyModeManager)
                 .environmentObject(navigationStateManager)

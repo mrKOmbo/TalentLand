@@ -55,7 +55,7 @@ struct BusinessLocationMapView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 16, weight: .semibold))
-                        Text("Atrás")
+                        Text(LocalizedString("businessLocation.back"))
                             .font(.system(size: 17, weight: .regular))
                     }
                     .foregroundStyle(.white)
@@ -161,7 +161,7 @@ struct BusinessLocationMapView: View {
                     .font(.system(size: 16))
                     .foregroundStyle(.secondary)
 
-                TextField("Buscar dirección o lugar", text: $searchText)
+                TextField(LocalizedString("businessLocation.searchAddress"), text: $searchText)
                     .font(.system(size: 16))
                     .foregroundStyle(.primary)
 
@@ -196,7 +196,7 @@ struct BusinessLocationMapView: View {
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundStyle(.purple)
 
-                            Text("Distancia")
+                            Text(LocalizedString("businessLocation.distance"))
                                 .font(.system(size: 12))
                                 .foregroundStyle(.secondary)
                         }
@@ -213,7 +213,7 @@ struct BusinessLocationMapView: View {
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundStyle(.purple)
 
-                            Text("Duración")
+                            Text(LocalizedString("businessLocation.duration"))
                                 .font(.system(size: 12))
                                 .foregroundStyle(.secondary)
                         }
@@ -229,7 +229,7 @@ struct BusinessLocationMapView: View {
                             .font(.system(size: 18, weight: .bold))
                             .foregroundStyle(.purple)
 
-                        Text("Puntos")
+                        Text(LocalizedString("businessLocation.points"))
                             .font(.system(size: 12))
                             .foregroundStyle(.secondary)
                     }
@@ -251,13 +251,13 @@ struct BusinessLocationMapView: View {
                     .symbolEffect(.pulse, isActive: isCalculatingRoute)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(isCalculatingRoute ? "Calculando ruta..." : (isMobileBusinesse ? "Marca tu ruta" : "Ubica tu negocio"))
+                    Text(isCalculatingRoute ? LocalizedString("businessLocation.calculatingRoute") : (isMobileBusinesse ? LocalizedString("businessLocation.markRoute") : LocalizedString("businessLocation.locateBusiness")))
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.primary)
 
                     Text(isMobileBusinesse
-                         ? "Mantén presionado en el mapa para añadir puntos. Pellizca para hacer zoom."
-                         : "Mantén presionado en el mapa para marcar tu ubicación")
+                         ? LocalizedString("businessLocation.holdToAddPoints")
+                         : LocalizedString("businessLocation.holdToMark"))
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -282,7 +282,7 @@ struct BusinessLocationMapView: View {
                             Button(action: {
                                 reverseRoute()
                             }) {
-                                Label("Invertir", systemImage: "arrow.left.arrow.right")
+                                Label(LocalizedString("businessLocation.reverse"), systemImage: "arrow.left.arrow.right")
                                     .font(.system(size: 15, weight: .medium))
                                     .foregroundStyle(.blue)
                                     .frame(maxWidth: .infinity)
@@ -301,7 +301,7 @@ struct BusinessLocationMapView: View {
                             estimatedDistance = nil
                             estimatedDuration = nil
                         }) {
-                            Label("Borrar", systemImage: "trash")
+                            Label(LocalizedString("businessLocation.clear"), systemImage: "trash")
                                 .font(.system(size: 15, weight: .medium))
                                 .foregroundStyle(.red)
                                 .frame(maxWidth: .infinity)
@@ -328,7 +328,7 @@ struct BusinessLocationMapView: View {
                             }
                         }
                     }) {
-                        Label("Deshacer último punto", systemImage: "arrow.uturn.backward")
+                        Label(LocalizedString("businessLocation.undoLastPoint"), systemImage: "arrow.uturn.backward")
                             .font(.system(size: 15, weight: .medium))
                             .foregroundStyle(.orange)
                             .frame(maxWidth: .infinity)
@@ -348,7 +348,7 @@ struct BusinessLocationMapView: View {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 18))
 
-                    Text(isMobileBusinesse ? "Guardar ruta" : "Confirmar ubicación")
+                    Text(isMobileBusinesse ? LocalizedString("businessLocation.saveRoute") : LocalizedString("businessLocation.confirmLocation"))
                         .font(.system(size: 17, weight: .semibold))
                 }
                 .foregroundStyle(.white)
@@ -414,7 +414,7 @@ struct RouteConfigurationSheet: View {
                 Section {
                     ForEach(waypoints.sorted(by: { $0.order < $1.order })) { waypoint in
                         HStack {
-                            Text("Punto \(waypoint.order + 1)")
+                            Text(String(format: LocalizedString("businessLocation.pointN"), waypoint.order + 1))
                                 .font(.system(size: 16, weight: .medium))
 
                             Spacer()
@@ -433,20 +433,20 @@ struct RouteConfigurationSheet: View {
                         reorderWaypoints()
                     }
                 } header: {
-                    Text("Puntos de la ruta")
+                    Text(LocalizedString("businessLocation.routePoints"))
                 }
             }
-            .navigationTitle("Configurar ruta")
+            .navigationTitle(LocalizedString("businessLocation.configureRoute"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Guardar") {
+                    Button(LocalizedString("action.save")) {
                         onSave()
                         dismiss()
                     }
                 }
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") {
+                    Button(LocalizedString("action.cancel")) {
                         dismiss()
                     }
                 }

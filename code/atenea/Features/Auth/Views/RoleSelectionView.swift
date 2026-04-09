@@ -46,16 +46,16 @@ struct RoleSelectionView: View {
             )
             .environmentObject(languageManager)
         }
-        .alert("Verificación de identidad", isPresented: $showIdentityVerificationDialog) {
-            Button("Verificar ahora", role: .none) {
+        .alert(LocalizedString("role.verifyTitle"), isPresented: $showIdentityVerificationDialog) {
+            Button(LocalizedString("role.verifyNow"), role: .none) {
                 // TODO: Implement identity verification flow
                 completeUserRegistration()
             }
-            Button("Más tarde", role: .cancel) {
+            Button(LocalizedString("role.verifyLater"), role: .cancel) {
                 completeUserRegistration()
             }
         } message: {
-            Text("Para acceder a todas las funciones de Atenea, te recomendamos verificar tu identidad. ¿Deseas hacerlo ahora?")
+            Text(LocalizedString("role.verifyMessage"))
         }
     }
 
@@ -99,7 +99,7 @@ struct RoleSelectionView: View {
             }
             .frame(height: 6)
 
-            Text("Paso 1 de 2")
+            Text(LocalizedString("role.step"))
                 .font(.system(size: 13, weight: .medium, design: .rounded))
                 .foregroundStyle(Color.white.opacity(0.85))
         }
@@ -107,12 +107,12 @@ struct RoleSelectionView: View {
 
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("¿Cómo quieres usar Atenea?")
+            Text(LocalizedString("role.question"))
                 .font(.system(size: 32, weight: .bold, design: .rounded))
                 .foregroundStyle(Color.white)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text("Elige el perfil que mejor describa cómo planeas usar la aplicación. Podrás cambiar esto después en tu configuración.")
+            Text(LocalizedString("role.description"))
                 .font(.system(size: 15, weight: .medium, design: .rounded))
                 .foregroundStyle(Color.white.opacity(0.85))
                 .fixedSize(horizontal: false, vertical: true)
@@ -125,9 +125,9 @@ struct RoleSelectionView: View {
         VStack(spacing: 20) {
             // User Role Card
             RoleCard(
-                title: "Soy cliente",
-                description: "Quiero descubrir y encontrar comerciantes cerca de mí durante el Mundial.",
-                features: ["Navega con AR", "Recomendaciones IA", "Mensajes directos"],
+                title: LocalizedString("role.client"),
+                description: LocalizedString("role.clientDesc"),
+                features: [LocalizedString("role.clientFeature1"), LocalizedString("role.clientFeature2"), LocalizedString("role.clientFeature3")],
                 icon: "person.crop.circle.fill",
                 accentColor: Color(red: 1.0, green: 0.824, blue: 0.141),
                 action: { handleUserRoleSelection() }
@@ -135,9 +135,9 @@ struct RoleSelectionView: View {
 
             // Merchant Role Card
             RoleCard(
-                title: "Soy comerciante",
-                description: "Quiero dar a conocer mi negocio y atraer más clientes.",
-                features: ["Ubicación en tiempo real", "Gestión de productos", "Zona de demanda"],
+                title: LocalizedString("role.merchant"),
+                description: LocalizedString("role.merchantDesc"),
+                features: [LocalizedString("role.merchantFeature1"), LocalizedString("role.merchantFeature2"), LocalizedString("role.merchantFeature3")],
                 icon: "briefcase.fill",
                 accentColor: Color(red: 0.112, green: 0.659, blue: 0.957),
                 action: { handleMerchantRoleSelection() }
@@ -188,7 +188,7 @@ struct RoleSelectionView: View {
         // Announce if needed
         if newUser.hasVisualDisability {
             let accessibilityManager = AccessibilitySettingsManager.shared
-            accessibilityManager.announce("Bienvenido a Atenea, \(newUser.name). Tu perfil de accesibilidad ha sido configurado.")
+            accessibilityManager.announce(String(format: LocalizedString("role.welcomeAccessibility"), newUser.name))
             accessibilityManager.provideHapticFeedback(.success)
         }
 
@@ -267,7 +267,7 @@ struct RoleCard: View {
                 HStack {
                     Spacer()
                     HStack(spacing: 6) {
-                        Text("Seleccionar")
+                        Text(LocalizedString("role.select"))
                             .font(.system(size: 16, weight: .bold, design: .rounded))
                             .foregroundStyle(accentColor)
                         Image(systemName: "arrow.right")

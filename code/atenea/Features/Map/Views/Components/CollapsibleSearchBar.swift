@@ -31,7 +31,7 @@ struct CollapsibleSearchBar: View {
 
                     // Elementos que aparecen solo al expandir
                     if isExpanded {
-                        TextField("Buscar...", text: $searchViewModel.searchText)
+                        TextField(LocalizedString("search.placeholder"), text: $searchViewModel.searchText)
                             .textFieldStyle(.plain)
                             .font(.system(size: 16))
                             .focused($isSearchFocused)

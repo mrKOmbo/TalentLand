@@ -11,6 +11,11 @@ import SwiftUI
 struct CommunityView: View {
     @State private var selectedFilter = LocalizedString("community.filter.all")
     @Binding var selectedTab: Int
+    @ObservedObject private var mastodonService = MastodonService.shared
+
+    private var posts: [CommunityPost] {
+        mastodonService.posts + CommunityPost.samplePosts
+    }
 
     var filters: [String] {
         [
@@ -63,9 +68,9 @@ struct CommunityView: View {
 
                     HStack(spacing: 8) {
                         Circle()
-                            .fill(Color.secondary)
+                            .fill(Color.green)
                             .frame(width: 8, height: 8)
-                        Text(LocalizedString("status.noPostsAvailable"))
+                        Text("\(posts.count) publicaciones")
                             .font(.system(size: 13, weight: .medium))
                             .foregroundStyle(.secondary)
                     }
@@ -130,7 +135,7 @@ struct CommunityView: View {
                 CommunityStatCard(
                     icon: "flame.fill",
                     title: LocalizedString("community.filter.trending"),
-                    value: "0",
+                    value: "\(posts.filter { $0.likes >= 200 }.count)",
                     color: .orange
                 )
 
@@ -140,7 +145,7 @@ struct CommunityView: View {
                 CommunityStatCard(
                     icon: "soccerball",
                     title: LocalizedString("community.filter.worldCup"),
-                    value: "0",
+                    value: "\(posts.filter { $0.keywords.contains("mundial") || $0.keywords.contains("fifa") }.count)",
                     color: .green
                 )
 
@@ -150,7 +155,7 @@ struct CommunityView: View {
                 CommunityStatCard(
                     icon: "newspaper.fill",
                     title: LocalizedString("community.filter.creator"),
-                    value: "0",
+                    value: "\(posts.filter { $0.source == "Instagram" || $0.source == "X" || $0.source == "Mastodon" }.count)",
                     color: .blue
                 )
             }
@@ -192,7 +197,11 @@ struct CommunityView: View {
     // MARK: - Community Feed
     private var communityFeed: some View {
         Group {
-            emptyState
+            if filteredPosts.isEmpty {
+                emptyState
+            } else {
+                postsScrollView
+            }
         }
     }
 
@@ -286,7 +295,9 @@ struct CommunityView: View {
             .padding(.vertical, 20)
             .padding(.bottom, 100)
         }
-        .refreshable {}
+        .refreshable {
+                await mastodonService.refresh()
+            }
     }
 
     // MARK: - Helper Functions
@@ -302,7 +313,23 @@ struct CommunityView: View {
     }
 
     // MARK: - Filtered Posts
-    private var filteredPosts: [CommunityPost] { [] }
+    private var filteredPosts: [CommunityPost] {
+        let allFilter = LocalizedString("community.filter.all")
+        let worldCupFilter = LocalizedString("community.filter.worldCup")
+        let trendingFilter = LocalizedString("community.filter.trending")
+        let creatorFilter = LocalizedString("community.filter.creator")
+
+        if selectedFilter == allFilter {
+            return posts
+        } else if selectedFilter == worldCupFilter {
+            return posts.filter { $0.keywords.contains("mundial") || $0.keywords.contains("fifa") }
+        } else if selectedFilter == trendingFilter {
+            return posts.filter { $0.likes >= 200 }
+        } else if selectedFilter == creatorFilter {
+            return posts.filter { $0.source == "Instagram" || $0.source == "X" || $0.source == "Mastodon" }
+        }
+        return posts
+    }
 }
 
 // MARK: - Filter Chip Component
@@ -453,6 +480,8 @@ struct CommunityPostCard: View {
             return "camera.fill"
         case "twitter", "x":
             return "message.fill"
+        case "mastodon":
+            return "person.crop.circle.fill"
         default:
             return "globe"
         }

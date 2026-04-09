@@ -16,6 +16,16 @@ struct VenuesListView: View {
 
     let countries = ["All", "Mexico", "USA", "Canada"]
 
+    private func countryDisplayName(_ country: String) -> String {
+        switch country {
+        case "All": return LocalizedString("venue.allCountries")
+        case "Mexico": return LocalizedString("venue.mexico")
+        case "USA": return LocalizedString("venue.usa")
+        case "Canada": return LocalizedString("venue.canada")
+        default: return country
+        }
+    }
+
     var filteredVenues: [WorldCupVenue] {
         if selectedCountry == "All" {
             return WorldCupVenue.allVenues
@@ -26,39 +36,47 @@ struct VenuesListView: View {
 
     var body: some View {
         ZStack {
-            Color(.systemBackground)
+            Color.white
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Header
-                HStack {
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(Color.coppelDarkBlue)
-                            .frame(width: 40, height: 40)
+                // Header — coppelDarkBlue background, coppelYellow headline
+                VStack(spacing: 0) {
+                    HStack {
+                        Button(action: { dismiss() }) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(Color.coppelYellow)
+                                .frame(width: 44, height: 44)
+                        }
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(LocalizedString("venue.fifa2026"))
+                                .font(.system(size: 22, weight: .bold, design: .rounded))
+                                .foregroundColor(Color.coppelYellow)
+
+                            Text(String(format: LocalizedString("venue.venueCount"), filteredVenues.count))
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.white.opacity(0.8))
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "soccerball")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(Color.coppelYellow)
+                            .frame(width: 44, height: 44)
                     }
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("FIFA 2026")
-                            .font(.system(size: 22, weight: .bold, design: .rounded))
-                            .foregroundColor(Color.coppelDarkBlue)
-
-                        Text("\(filteredVenues.count) venues")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.gray)
-                    }
-
-                    Spacer()
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                .background(Color.coppelDarkBlue)
 
-                // Country Filter
+                // Country filter
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 10) {
                         ForEach(countries, id: \.self) { country in
-                            filterChip(country: country, isSelected: selectedCountry == country) {
+                            filterChip(country: countryDisplayName(country), isSelected: selectedCountry == country) {
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                                     selectedCountry = country
                                 }
@@ -68,8 +86,9 @@ struct VenuesListView: View {
                     .padding(.horizontal, 16)
                 }
                 .padding(.vertical, 12)
+                .background(Color.coppelBeige)
 
-                // Venues List
+                // Venues list
                 ScrollView(.vertical, showsIndicators: false) {
                     LazyVStack(spacing: 12) {
                         ForEach(filteredVenues, id: \.id) { venue in
@@ -84,7 +103,7 @@ struct VenuesListView: View {
                 }
             }
 
-            // Detail Modal
+            // Detail modal
             if showVenueDetail, let venue = selectedVenue {
                 VenueDetailView(
                     venue: venue,
@@ -108,13 +127,13 @@ struct VenuesListView: View {
     private func filterChip(country: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(country)
-                .font(.system(size: 14, weight: isSelected ? .semibold : .medium, design: .rounded))
-                .foregroundColor(isSelected ? .white : Color(red: 0.05, green: 0.09, blue: 0.33))
+                .font(.system(size: 14, weight: isSelected ? .bold : .medium, design: .rounded))
+                .foregroundColor(isSelected ? .white : Color.coppelDarkBlue)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .background(
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .fill(isSelected ? Color(red: 0.11, green: 0.26, blue: 0.91) : Color.gray.opacity(0.1))
+                        .fill(isSelected ? Color.coppelBlue : Color.white)
                 )
         }
     }
@@ -122,27 +141,21 @@ struct VenuesListView: View {
     private func venueCard(_ venue: WorldCupVenue, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 0) {
-                // Top with gradient
+                // Top color bar with venue name
                 ZStack(alignment: .topTrailing) {
-                    venue.gradient
+                    // Solid color bar (no diagonal gradients)
+                    venue.primaryColor
                         .frame(height: 100)
                         .clipShape(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        )
-                        .overlay(
-                            LinearGradient(
-                                gradient: Gradient(colors: [
-                                    Color.black.opacity(0.2),
-                                    Color.clear
-                                ]),
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                            .clipShape(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            UnevenRoundedRectangle(
+                                topLeadingRadius: 16,
+                                bottomLeadingRadius: 0,
+                                bottomTrailingRadius: 0,
+                                topTrailingRadius: 16
                             )
                         )
 
+                    // Country badge
                     HStack(spacing: 4) {
                         Image(systemName: "flag.fill")
                             .font(.system(size: 10, weight: .bold))
@@ -155,10 +168,11 @@ struct VenuesListView: View {
                     .padding(.vertical, 6)
                     .background(
                         Capsule()
-                            .fill(Color.black.opacity(0.3))
+                            .fill(Color.coppelDarkBlue.opacity(0.6))
                     )
                     .padding(10)
 
+                    // Venue name centered
                     VStack(spacing: 4) {
                         Text(venue.name)
                             .font(.system(size: 18, weight: .bold, design: .rounded))
@@ -171,7 +185,7 @@ struct VenuesListView: View {
                                 .font(.system(size: 10))
 
                             Text(venue.city)
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
                         }
                         .foregroundColor(.white.opacity(0.9))
                     }
@@ -179,7 +193,7 @@ struct VenuesListView: View {
                     .padding(.top, 30)
                 }
 
-                // Details
+                // Details section
                 VStack(spacing: 10) {
                     HStack(spacing: 12) {
                         HStack(spacing: 6) {
@@ -188,7 +202,7 @@ struct VenuesListView: View {
                                 .foregroundColor(Color.coppelBlue)
 
                             Text(venue.capacity)
-                                .font(.system(size: 12, weight: .medium))
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
                                 .foregroundColor(Color.coppelDarkBlue)
                                 .lineLimit(1)
                         }
@@ -201,7 +215,7 @@ struct VenuesListView: View {
                                 .foregroundColor(Color.coppelYellow)
 
                             Text(venue.inauguration)
-                                .font(.system(size: 12, weight: .medium))
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
                                 .foregroundColor(Color.coppelDarkBlue)
                                 .lineLimit(1)
                         }
@@ -214,30 +228,35 @@ struct VenuesListView: View {
                                 .foregroundColor(Color.coppelGreen)
 
                             Text("\(venue.matches.count)")
-                                .font(.system(size: 12, weight: .medium))
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
                                 .foregroundColor(Color.coppelDarkBlue)
                         }
                     }
                     .padding(.horizontal, 14)
 
                     HStack(spacing: 8) {
-                        Text("View details")
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        Text(LocalizedString("venue.viewDetails"))
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
 
                         Image(systemName: "arrow.right.circle.fill")
                             .font(.system(size: 13, weight: .semibold))
                     }
-                    .foregroundColor(Color(red: 0.11, green: 0.26, blue: 0.91))
+                    .foregroundColor(Color.coppelBlue)
                     .padding(.horizontal, 14)
                 }
                 .padding(.vertical, 12)
+                .background(Color.white)
             }
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(.systemBackground))
-                    .stroke(Color.gray.opacity(0.1), lineWidth: 1)
+                    .fill(Color.white)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color.coppelBeige, lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .shadow(color: Color.coppelDarkBlue.opacity(0.08), radius: 8, x: 0, y: 4)
         }
         .buttonStyle(PlainButtonStyle())
     }

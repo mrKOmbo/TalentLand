@@ -13,7 +13,7 @@ struct QRCodeDisplayView: View {
                 Button(action: onCancel) {
                     HStack(spacing: 6) {
                         Image(systemName: "chevron.left")
-                        Text("Cancelar")
+                        Text(LocalizedString("payment.cancel"))
                     }
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white.opacity(0.7))
@@ -27,13 +27,13 @@ struct QRCodeDisplayView: View {
 
             // Amount
             VStack(spacing: 4) {
-                Text("Cobro por")
+                Text(LocalizedString("payment.chargeFor"))
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white.opacity(0.5))
                 Text(viewModel.formattedAmount)
                     .font(.system(size: 40, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
-                Text("MXN")
+                Text(LocalizedString("payment.currency"))
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white.opacity(0.5))
                 if !viewModel.saleDescription.isEmpty {
@@ -71,7 +71,7 @@ struct QRCodeDisplayView: View {
                     .fill(Color.orange)
                     .frame(width: 8, height: 8)
                     .opacity(pulseOpacity)
-                Text("Esperando pago...")
+                Text(LocalizedString("payment.waitingPayment"))
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white.opacity(0.6))
             }
@@ -82,7 +82,7 @@ struct QRCodeDisplayView: View {
                 }
             }
 
-            Text("El cliente escanea este código\npara pagar con tarjeta")
+            Text(LocalizedString("payment.customerScanQR"))
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.35))
                 .multilineTextAlignment(.center)

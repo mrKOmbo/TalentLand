@@ -227,7 +227,7 @@ struct ARNavigationView: View {
                             .font(.system(size: 16))
                             .foregroundColor(.purple)
 
-                        Text("Planos detectados: \(detectedPlanesCount)")
+                        Text(String(format: LocalizedString("navigation.planesDetected"), detectedPlanesCount))
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white)
                     }
@@ -615,11 +615,11 @@ class ARButtonHandler: NSObject {
         guard let navigationViewController = navigationViewController else { return }
 
         let alert = UIAlertController(
-            title: "AR No Soportado",
-            message: "Tu dispositivo no soporta funciones de realidad aumentada.",
+            title: LocalizedString("navigation.arNotSupported"),
+            message: LocalizedString("navigation.arNotSupportedDesc"),
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        alert.addAction(UIAlertAction(title: LocalizedString("action.accept"), style: .default))
 
         DispatchQueue.main.async {
             navigationViewController.present(alert, animated: true)
@@ -630,13 +630,13 @@ class ARButtonHandler: NSObject {
         guard let navigationViewController = navigationViewController else { return }
 
         let alert = UIAlertController(
-            title: "Permiso de Cámara Requerido",
-            message: "Por favor habilita el acceso a la cámara en Ajustes para usar navegación AR.",
+            title: LocalizedString("navigation.cameraRequired"),
+            message: LocalizedString("navigation.cameraRequiredDesc"),
             preferredStyle: .alert
         )
 
-        alert.addAction(UIAlertAction(title: "Cancelar", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Abrir Ajustes", style: .default) { _ in
+        alert.addAction(UIAlertAction(title: LocalizedString("action.cancel"), style: .cancel))
+        alert.addAction(UIAlertAction(title: LocalizedString("action.openSettings"), style: .default) { _ in
             if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
                 UIApplication.shared.open(settingsURL)
             }
@@ -758,7 +758,7 @@ class Coordinator: NSObject, NavigationViewControllerDelegate {
         let initialState = NavigationActivityAttributes.ContentState(
             distanceRemaining: 0,
             estimatedMinutes: 0,
-            currentInstruction: "🚀 Iniciando navegación...",
+            currentInstruction: LocalizedString("navigation.startingNavigation"),
             currentStreet: "",
             currentSpeed: 0,
             lastUpdate: Date(),
@@ -792,9 +792,11 @@ class Coordinator: NSObject, NavigationViewControllerDelegate {
                 }
 
                 // Crear alerta animada para mostrar inicio de navegación
+                let startedTitle = LocalizedString("navigation.started")
+                let headingBody = "\(LocalizedString("navigation.headingTo")) \(destinationName)"
                 let alertConfig = AlertConfiguration(
-                    title: "Navegación iniciada",
-                    body: "Dirigiéndote a \(destinationName)",
+                    title: LocalizedStringResource(stringLiteral: startedTitle),
+                    body: LocalizedStringResource(stringLiteral: headingBody),
                     sound: .default
                 )
 
@@ -832,7 +834,7 @@ class Coordinator: NSObject, NavigationViewControllerDelegate {
                 let readyState = NavigationActivityAttributes.ContentState(
                     distanceRemaining: 0,
                     estimatedMinutes: 0,
-                    currentInstruction: "Calculando ruta...",
+                    currentInstruction: LocalizedString("navigation.calculatingRoute"),
                     currentStreet: "",
                     currentSpeed: 0,
                     lastUpdate: Date(),
@@ -923,7 +925,7 @@ class Coordinator: NSObject, NavigationViewControllerDelegate {
 
         // Actualizar Live Activity con el progreso actual
         let currentStep = progress.currentLegProgress.currentStepProgress.step
-        let instruction = currentStep.instructions.isEmpty ? "Continuar recto" : currentStep.instructions
+        let instruction = currentStep.instructions.isEmpty ? LocalizedString("navigation.continueStraight") : currentStep.instructions
         let distanceRemaining = progress.distanceRemaining
         let timeRemaining = progress.durationRemaining
 
@@ -971,7 +973,7 @@ struct NavigationViewWrapper: UIViewControllerRepresentable {
         context.coordinator.navigationViewController = navigationViewController
 
         // Iniciar Live Activity para Dynamic Island
-        let destinationName = routes.waypoints.last?.name ?? "Destino"
+        let destinationName = routes.waypoints.last?.name ?? LocalizedString("navigation.destination")
         context.coordinator.startLiveActivity(destinationName: destinationName)
 
         // Marcar navegación como activa

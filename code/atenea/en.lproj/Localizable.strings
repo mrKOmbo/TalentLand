@@ -5,9 +5,11 @@
 */
 
 // MARK: - Main Tabs
+"tab.home" = "Home";
 "tab.map" = "Map";
 "tab.community" = "Community";
 "tab.album" = "Album";
+"tab.more" = "More";
 
 // MARK: - Common Actions
 "action.start" = "Start";
@@ -504,6 +506,7 @@
 "emergency.callAmbulance" = "Call Ambulance";
 "emergency.shareLocation" = "Share My Location";
 "emergency.endEmergency" = "End Emergency";
+"emergency.locationShare" = "Emergency Location Share";
 
 // MARK: - FIFA 2026 Menu
 "menu.exploreVenues" = "Explore all venues";
@@ -586,3 +589,735 @@
 "ai.api.save" = "Save API Key";
 "ai.api.saveSuccess" = "API Key saved successfully";
 "ai.api.securityNote" = "Your API key is stored securely on your device";
+
+// MARK: - Welcome Screen
+"welcome.greeting" = "Welcome";
+"welcome.tagline" = "Your path to success continues here";
+"welcome.enter" = "Enter";
+"welcome.switchAccount" = "I want to enter with another account";
+
+// MARK: - Login Screen
+"login.helpTitle" = "Help";
+"login.helpMessage" = "Need help logging in? Contact support@atenea.com";
+"login.helpAccessibilityHint" = "Shows help information";
+"login.tabSearch" = "Search";
+"login.tabUsers" = "Users";
+"login.searchUser" = "Search user";
+"login.defaultUser" = "User";
+"login.selected" = "Selected";
+"login.notSelected" = "Not selected";
+"login.selectUserHint" = "Double tap to select this user";
+
+// MARK: - Role Selection
+"role.step" = "Step 1 of 2";
+"role.question" = "How do you want to use Atenea?";
+"role.description" = "Choose the profile that best describes how you plan to use the app. You can change this later in settings.";
+"role.client" = "I'm a customer";
+"role.clientDesc" = "I want to discover and find merchants near me during the World Cup.";
+"role.clientFeature1" = "Navigate with AR";
+"role.clientFeature2" = "AI recommendations";
+"role.clientFeature3" = "Direct messages";
+"role.merchant" = "I'm a merchant";
+"role.merchantDesc" = "I want to promote my business and attract more customers.";
+"role.merchantFeature1" = "Real-time location";
+"role.merchantFeature2" = "Product management";
+"role.merchantFeature3" = "Demand zone";
+"role.select" = "Select";
+"role.verifyTitle" = "Identity verification";
+"role.verifyNow" = "Verify now";
+"role.verifyLater" = "Later";
+"role.verifyMessage" = "To access all Atenea features, we recommend verifying your identity. Would you like to do it now?";
+"role.welcomeAccessibility" = "Welcome to Atenea, %@. Your accessibility profile has been configured.";
+
+// MARK: - Merchant Registration
+"merchant.back" = "Back";
+"merchant.step2" = "Step 2 of 2";
+"merchant.setupBusiness" = "Set up your business";
+"merchant.setupDesc" = "Complete your business information so customers can easily find you";
+"merchant.optionalIntegration" = "Optional integration";
+"merchant.hasCoppelAccount" = "I already have a Coppel Emprende account";
+"merchant.coppelLinkDesc" = "Link your account to import your product catalog";
+"merchant.businessName" = "Business name";
+"merchant.businessNamePlaceholder" = "E.g.: Don José's Tacos";
+"merchant.businessCategory" = "Business category";
+"merchant.businessCategoryDesc" = "What do you sell or what service do you offer?";
+"merchant.businessSize" = "Business size";
+"merchant.businessSizeDesc" = "How many people work in your business?";
+"merchant.contactInfo" = "Contact information";
+"merchant.businessType" = "Business type";
+"merchant.businessTypeDesc" = "Mobile businesses can update their location in real time";
+"merchant.static" = "Fixed";
+"merchant.mobile" = "Mobile";
+"merchant.completeRegistration" = "Complete registration";
+"merchant.routeLabel" = "Route path";
+"merchant.locationLabel" = "Business location";
+"merchant.routeConfigured" = "Route configured";
+"merchant.configureRoute" = "Configure route";
+"merchant.locationConfigured" = "Location configured";
+"merchant.configureOnMap" = "Configure on map";
+"merchant.pointsMarked" = "%d points marked";
+"merchant.markRoutePoints" = "Mark the points of your route";
+"merchant.tapToOpenMap" = "Tap to open the map";
+"merchant.calculatingRoute" = "Calculating route...";
+"merchant.mobileBusiness" = "Mobile business";
+"merchant.noAddress" = "No address";
+"merchant.welcomeAccessibility" = "Welcome to Atenea, %@. Your business has been registered successfully.";
+"merchant.linkCoppel" = "Link Coppel Emprende";
+"merchant.linkCoppelDesc" = "Enter your account details to import your catalog";
+"merchant.coppelEmail" = "Coppel Emprende email";
+"merchant.ownerName" = "Owner name";
+"merchant.catalogAutoImport" = "Your catalog will be imported automatically";
+"merchant.modifyAnytime" = "You can modify your information at any time";
+"merchant.linkAccount" = "Link account";
+"merchant.cancel" = "Cancel";
+
+// MARK: - Home Merchant
+"home.hello" = "Hello, %@";
+"home.yourBusinessToday" = "Your business today";
+"home.businessActive" = "Business active";
+"home.businessPaused" = "Business paused";
+"home.businessActiveDesc" = "Customers can find you";
+"home.businessPausedDesc" = "You don't appear on the map";
+"home.today" = "Today";
+"home.sellers" = "Sellers";
+"home.views" = "Views";
+"home.timbres" = "Timbres";
+"home.quickActions" = "Quick actions";
+"home.updateLocation" = "Update location";
+"home.updateLocationDesc" = "Let customers find you";
+"home.viewDemandZones" = "View demand zones";
+"home.searchesThisHour" = "%d searches this hour";
+"home.demandOf" = "Demand %@ of %@";
+"home.noDataYet" = "No data yet";
+"home.searchesInZone" = "%d searches in zone";
+"home.dataWillAppear" = "Data will appear here";
+"home.visitor" = "Visitor";
+
+// MARK: - Settings
+"settings.title" = "Settings";
+"settings.subtitle" = "Personalize your experience";
+"settings.notifications" = "Notifications";
+"settings.pushNotifications" = "Push notifications";
+"settings.pushDesc" = "Stay updated with alerts";
+"settings.sounds" = "Sounds";
+"settings.soundsDesc" = "App sound effects";
+"settings.haptics" = "Haptics";
+"settings.hapticsDesc" = "Vibration feedback";
+"settings.navigation" = "Navigation";
+"settings.autoNavigate" = "Auto-navigate";
+"settings.autoNavigateDesc" = "Start routes automatically";
+"settings.language" = "Language";
+"settings.currentLanguage" = "Current language";
+"settings.about" = "About";
+"settings.version" = "Version";
+"settings.built" = "Built";
+"settings.resetSettings" = "Reset settings";
+"settings.restoreDefaults" = "Restore defaults";
+"settings.madeInMexico" = "Made with care in Mexico";
+"settings.resetQuestion" = "Reset settings?";
+"settings.resetMessage" = "All settings will be restored to defaults.";
+"settings.reset" = "Reset";
+
+// MARK: - Profile
+"profile.title" = "Profile";
+"profile.subtitle" = "Manage your account";
+"profile.routes" = "Routes";
+"profile.points" = "Points";
+"profile.badges" = "Badges";
+"profile.name" = "Name";
+"profile.email" = "Email";
+"profile.memberSince" = "Member since";
+"profile.editProfile" = "Edit profile";
+"profile.save" = "Save";
+"profile.changesSaved" = "Changes saved";
+// MARK: - Sidebar Menu
+"menu.profile" = "Profile";
+"menu.settings" = "Settings";
+"menu.accessibility" = "Accessibility";
+"menu.favorites" = "Favorites";
+"menu.help" = "Help";
+"menu.mapStyle" = "Map Style";
+"menu.mapStandard" = "Standard";
+"menu.mapSatellite" = "Satellite";
+"menu.mapHybrid" = "Hybrid";
+"menu.language" = "Language";
+"menu.metroLines" = "Metro Lines";
+"menu.line" = "Line %@";
+"menu.exploreVenues2" = "Explore Venues";
+"menu.scanPosters" = "Scan Posters";
+"menu.reserve2" = "Reserve";
+"menu.staffAccess" = "Staff Access";
+"menu.defaultUser" = "User";
+"menu.defaultEmail" = "user@email.com";
+
+"profile.defaultUser" = "User";
+
+// MARK: - Help
+"help.title" = "Help";
+"help.subtitle" = "Find answers and support";
+"help.navigation" = "Navigation";
+"help.navigationDesc" = "Use the map to find vendors";
+"help.worldCup" = "World Cup";
+"help.worldCupDesc" = "Explore FIFA 2026 venues";
+"help.favorites" = "Favorites";
+"help.favoritesDesc" = "Save your favorite vendors";
+"help.settings" = "Settings";
+"help.settingsDesc" = "Customize your app";
+"help.popularTopics" = "Popular topics";
+"help.faq" = "Frequently asked";
+"help.faq1Q" = "How do I find a vendor?";
+"help.faq1A" = "Use the map search or browse the map to find vendors near you.";
+"help.faq2Q" = "Can I save favorites?";
+"help.faq2A" = "Yes, tap the heart icon on any vendor to save it to your favorites.";
+"help.faq3Q" = "Does the app work offline?";
+"help.faq3A" = "Basic features work offline, but navigation requires internet.";
+"help.faq4Q" = "How do I change language?";
+"help.faq4A" = "Go to Settings and select your preferred language.";
+"help.stillNeedHelp" = "Still need help?";
+"help.contactSupport" = "Contact our support team";
+
+// MARK: - Payment / Sale Flow
+"payment.charge" = "Charge";
+"payment.currency" = "MXN";
+"payment.conceptOptional" = "Concept (optional)";
+"payment.generating" = "Generating...";
+"payment.chargeWithCard" = "Charge with card";
+"payment.tapToPay" = "Tap to Pay";
+"payment.chargeCash" = "Charge cash";
+"payment.back" = "Back";
+"payment.cashPayment" = "Cash payment";
+"payment.totalToCharge" = "Total to charge";
+"payment.cashReceived" = "Cash received";
+"payment.change" = "Change";
+"payment.quickAmount" = "Quick amount";
+"payment.confirmCharge" = "Confirm charge";
+"payment.received" = "Payment received!";
+"payment.newCharge" = "New charge";
+"payment.close" = "Close";
+"payment.saleAtenea" = "Atenea Sale";
+"payment.cancel" = "Cancel";
+"payment.chargeFor" = "Charge for";
+"payment.waitingPayment" = "Waiting for payment...";
+"payment.customerScanQR" = "The customer scans this code\nto pay with card";
+"payment.searchingMerchant" = "Searching for merchant...";
+"payment.ensureMerchantOpen" = "Make sure the merchant\nhas the charge screen open";
+"payment.bringCloser" = "Bring your iPhone closer";
+"payment.payTo" = "Pay to %@";
+"payment.keepDevicesClose" = "Keep devices close";
+"payment.connecting" = "Connecting...";
+"payment.processing" = "Processing...";
+"payment.paymentSent" = "Payment sent!";
+"payment.error" = "Error";
+"payment.merchant" = "Merchant";
+"payment.connected" = "Connected";
+"payment.searching" = "Searching...";
+"payment.searchingNearbyDevice" = "Searching for nearby device...";
+"payment.bringOtherIphone" = "Bring the other iPhone closer";
+"payment.deviceDetected" = "Device detected — bring closer";
+"payment.waitingNearbyDevice" = "Waiting for nearby device...";
+"payment.simulateContact" = "Simulate contact (debug)";
+"payment.readingDevice" = "Reading device...";
+"payment.processingPayment" = "Processing payment...";
+"payment.approved" = "Approved";
+"payment.declined" = "Declined";
+"payment.tryAgain" = "Try again";
+
+// MARK: - Venues List
+"venue.fifa2026" = "FIFA 2026";
+"venue.allCountries" = "All";
+"venue.mexico" = "Mexico";
+"venue.usa" = "USA";
+"venue.canada" = "Canada";
+"venue.venueCount" = "%d venues";
+"venue.viewDetails" = "View details";
+
+// MARK: - Main Map
+"map.predictions" = "Predictions";
+"map.staff" = "Staff";
+"map.staffAccess" = "Staff Access";
+"map.staffDesc" = "Special access for staff";
+"map.line" = "Line %@";
+"map.active" = "Active";
+"map.comingSoon" = "Coming soon";
+"map.emergencyName" = "🚨 Emergency: %@";
+"map.emergencyActive" = "Emergency Active";
+"map.emergencyCategory" = "Emergency";
+
+// MARK: - Voice Translator
+"translator.title" = "Translator";
+"translator.spanish" = "Spanish";
+"translator.tapMicToSpeak" = "Tap the microphone button to speak";
+"translator.merchantSpeaksSpanish" = "The merchant speaks in Spanish\nThe tourist listens in their language";
+"translator.listening" = "Listening...";
+"translator.speakInSpanish" = "Speak in Spanish";
+"translator.speakInYourLanguage" = "Speak in your language";
+"translator.merchant" = "Merchant";
+"translator.tourist" = "Tourist";
+"translator.playingTranslation" = "Playing translation...";
+"translator.touristLanguage" = "Tourist language";
+"translator.done" = "Done";
+"translator.merchantLabel" = "Merchant";
+"translator.touristLabel" = "Tourist";
+"translator.respondedWith" = "You responded: %@";
+
+// MARK: - UltraThink
+"ultrathink.title" = "UltraThink";
+"ultrathink.apiKeyRequired" = "API Key Required";
+"ultrathink.apiKeyMessage" = "Please configure your Claude API key in settings to use UltraThink.";
+"ultrathink.advancedAnalysis" = "Advanced Contextual Analysis";
+"ultrathink.generateRecommendations" = "Generate Recommendations";
+"ultrathink.analyzingContext" = "Analyzing context...";
+"ultrathink.analyzingSubtitle" = "Considering location, time, weather and preferences";
+"ultrathink.errorGenerating" = "Error generating analysis";
+"ultrathink.retry" = "Retry";
+"ultrathink.recommendations" = "Recommendations";
+"ultrathink.contextAnalysis" = "Context Analysis";
+"ultrathink.refreshAnalysis" = "Refresh Analysis";
+"ultrathink.viewOnMap" = "View on Map";
+"ultrathink.directions" = "Directions";
+"ultrathink.showLess" = "Show less";
+"ultrathink.showMore" = "Show more";
+"ultrathink.currentLocation" = "Current location";
+
+// MARK: - Staff
+"staff.title" = "Staff";
+"staff.access" = "Staff Access";
+"staff.subtitle" = "Special view for staff";
+"staff.emergencies" = "Emergencies";
+"staff.statistics" = "Statistics";
+"staff.userManagement" = "User Management";
+"staff.configuration" = "Configuration";
+
+// MARK: - Staff Configuration
+"staff.config.back" = "Back";
+"staff.config.title" = "Configuration";
+"staff.config.notifications" = "Notifications";
+"staff.config.pushNotifications" = "Push Notifications";
+"staff.config.pushDesc" = "Receive real-time notifications";
+"staff.config.emergencyAlerts" = "Emergency Alerts";
+"staff.config.emergencyAlertsDesc" = "Priority emergency notifications";
+"staff.config.system" = "System";
+"staff.config.analytics" = "Analytics";
+"staff.config.analyticsDesc" = "Collect usage and performance data";
+"staff.config.autoBackup" = "Auto Backup";
+"staff.config.autoBackupDesc" = "Create daily data backups";
+"staff.config.maintenanceMode" = "Maintenance Mode";
+"staff.config.maintenanceModeDesc" = "Temporarily disable app";
+"staff.config.actions" = "Actions";
+"staff.config.clearCache" = "Clear Cache";
+"staff.config.exportData" = "Export Data";
+"staff.config.restartServices" = "Restart Services";
+"staff.config.viewSystemLogs" = "View System Logs";
+"staff.config.staffPanel" = "Atenea Staff Panel";
+"staff.config.version" = "v1.0.0 (Build 2024)";
+
+// MARK: - Staff Emergencies
+"staff.emergencies.title" = "Emergencies";
+"staff.emergencies.back" = "Back";
+"staff.emergencies.filterAll" = "All";
+"staff.emergencies.filterActive" = "Active";
+"staff.emergencies.filterResponding" = "Responding";
+"staff.emergencies.filterDisconnected" = "Disconnected";
+"staff.emergencies.filterResolved" = "Resolved";
+"staff.emergencies.active" = "Active";
+"staff.emergencies.disconnected" = "Disconnected";
+"staff.emergencies.resolved" = "Resolved";
+"staff.emergencies.noActive" = "No Active Emergencies";
+"staff.emergencies.noActiveDesc" = "No emergencies reported at this time";
+"staff.emergencies.monitoring" = "System monitoring 24/7";
+"staff.emergencies.autoAlerts" = "Automatic alerts enabled";
+"staff.emergencies.realTimeTracking" = "Real-time tracking";
+"staff.emergencies.whatToDo" = "What do you want to do?";
+"staff.emergencies.arNavigation" = "AR Navigation (Augmented Reality)";
+"staff.emergencies.showLocation" = "Show Location";
+"staff.emergencies.startNavigation" = "Start Navigation";
+"staff.emergencies.markResolved" = "Mark as Resolved";
+"staff.emergencies.removeFromHistory" = "Remove from History";
+"staff.emergencies.emergencyOf" = "Emergency from %@ at %@";
+"staff.emergencies.medical" = "Medical";
+"staff.emergencies.security" = "Security";
+"staff.emergencies.fire" = "Fire";
+"staff.emergencies.other" = "Other";
+"staff.emergencies.statusActive" = "Active";
+"staff.emergencies.statusResponding" = "Responding";
+"staff.emergencies.statusDisconnected" = "Disconnected";
+"staff.emergencies.statusResolved" = "Resolved";
+
+// MARK: - Staff Users
+"staff.users.title" = "Users";
+"staff.users.back" = "Back";
+"staff.users.searchPlaceholder" = "Search users...";
+"staff.users.total" = "Total";
+"staff.users.active" = "Active";
+"staff.users.suspended" = "Suspended";
+"staff.users.statusActive" = "Active";
+"staff.users.statusInactive" = "Inactive";
+"staff.users.statusSuspended" = "Suspended";
+
+// MARK: - Staff Statistics
+"staff.stats.title" = "Statistics";
+"staff.stats.back" = "Back";
+"staff.stats.totalUsers" = "Total Users";
+"staff.stats.activeToday" = "Active Today";
+"staff.stats.reservations" = "Reservations";
+"staff.stats.emergencies" = "Emergencies";
+"staff.stats.placesVisited" = "Places Visited";
+"staff.stats.aiSearches" = "AI Searches";
+"staff.stats.weeklyActivity" = "Weekly Activity";
+
+// MARK: - Visual Accessibility
+"accessibility.visualMode" = "Visual Accessibility Mode";
+"accessibility.visualModeDesc" = "Optimized settings for visually impaired users";
+"accessibility.display" = "Display";
+"accessibility.highContrast" = "High Contrast Mode";
+"accessibility.highContrastDesc" = "Increase contrast for better visibility";
+"accessibility.textSize" = "Text Size";
+"accessibility.textSizeControl" = "Text size control";
+"accessibility.textSizePreview" = "Text size preview";
+"accessibility.textSizeAdjusted" = "Text size adjusted";
+"accessibility.audioAndVoice" = "Audio & Voice";
+"accessibility.voiceOver" = "VoiceOver";
+"accessibility.voiceOverDesc" = "Screen reading with voice";
+"accessibility.voiceOverEnabled" = "VoiceOver enabled";
+"accessibility.voiceOverDisabled" = "VoiceOver disabled";
+"accessibility.audioNavigation" = "Audio Navigation";
+"accessibility.audioNavigationDesc" = "Spoken navigation instructions";
+"accessibility.detailLevel" = "Detail Level";
+"accessibility.verbosity" = "Verbosity";
+"accessibility.detailLevelChanged" = "Detail level: %@";
+"accessibility.tactileFeedback" = "Tactile Feedback";
+"accessibility.hapticFeedback" = "Haptic Feedback";
+"accessibility.hapticFeedbackDesc" = "Vibrations on interaction";
+"accessibility.colorBlindness" = "Color Blindness";
+"accessibility.colorMode" = "Color Mode";
+"accessibility.colorModeChanged" = "Color mode: %@";
+"accessibility.tests" = "Tests";
+"accessibility.testAudioVibration" = "Test Audio and Vibration";
+"accessibility.testMessage" = "This is a text-to-speech test. Accessibility features are working correctly.";
+"accessibility.testLabel" = "Test audio and vibration";
+"accessibility.testHint" = "Plays a test message and activates haptic feedback";
+"accessibility.visualTitle" = "Visual Accessibility";
+"accessibility.done" = "Done";
+"accessibility.closeConfig" = "Close configuration";
+"accessibility.configSaved" = "Configuration saved";
+"accessibility.visualConfig" = "Visual accessibility configuration";
+"accessibility.enabled" = "Enabled";
+"accessibility.disabled" = "Disabled";
+
+// MARK: - Demand Insights
+"demand.title" = "Demand zones";
+"demand.lastHour" = "Last hour";
+"demand.searches" = "Searches";
+"demand.activeZones" = "Active zones";
+"demand.topCategory" = "Top category";
+"demand.topZones" = "TOP ZONES";
+"demand.noDataYet" = "No demand data yet";
+"demand.byCategory" = "BY CATEGORY";
+"demand.go" = "Go";
+
+// MARK: - Merchant Detail
+"merchant.detail.products" = "PRODUCTS";
+"merchant.detail.soldOut" = "Sold out";
+"merchant.detail.active" = "Active";
+"merchant.detail.inactive" = "Inactive";
+"merchant.detail.fixedStall" = "Fixed stall";
+"merchant.detail.ambulant" = "Ambulant";
+"merchant.detail.open" = "Open";
+"merchant.detail.closed" = "Closed";
+"merchant.detail.viewOnMap" = "View on map";
+"merchant.detail.now" = "Now";
+"merchant.detail.recent" = "Recent";
+"merchant.detail.stale" = "Inactive";
+"merchant.detail.verifiedByAtenea" = "Verified by Atenea";
+
+// MARK: - Nearby Merchants
+"nearby.fixed" = "Fixed";
+"nearby.nomad" = "Nomad";
+
+// MARK: - Timbre
+"timbre.sent" = "Timbre sent";
+"timbre.ring" = "Ring";
+"timbre.whatToCommunicate" = "What do you want to communicate?";
+"timbre.optionalMessage" = "Optional message...";
+"timbre.cancel" = "Cancel";
+"timbre.send" = "Send";
+
+// MARK: - Timbre History
+"timbre.history.title" = "Timbres received";
+"timbre.history.unread" = "%d unread";
+"timbre.history.markAll" = "Mark all";
+"timbre.history.noTimbres" = "No timbres yet";
+"timbre.history.respondedWith" = "You responded: %@";
+
+// MARK: - Schedule Match
+"schedule.toBeAssigned" = "To be assigned";
+
+// MARK: - Street Cred
+"streetcred.verifiedByAtenea" = "Verified by Atenea";
+"streetcred.ptsFor" = "%d pts for %@";
+"streetcred.maxLevel" = "Maximum level reached";
+"streetcred.consecutiveDays" = "%d consecutive days";
+"streetcred.pointsFor" = "%d points for %@";
+"streetcred.competenceProfile" = "COMPETENCE PROFILE";
+"streetcred.breakdown" = "BREAKDOWN";
+"streetcred.coppelCredit" = "COPPEL EMPRENDE CREDIT";
+"streetcred.eligibleForFinancing" = "Eligible for financing";
+"streetcred.keepBuilding" = "Keep building your history";
+"streetcred.needSilver" = "Need Silver level (400+ pts) to access";
+"streetcred.creditHistory" = "Your sales history on Atenea supports your microcredit application with Coppel Emprende";
+"streetcred.achievements" = "ACHIEVEMENTS";
+"streetcred.evolution" = "EVOLUTION";
+"streetcred.done" = "Done";
+
+// MARK: - Radar
+"radar.title" = "Radar";
+"radar.merchantsInRange" = "%d merchants in range";
+"radar.merchantsInRangeLabel" = "MERCHANTS IN RANGE";
+"radar.live" = "LIVE";
+"radar.towardsThe" = "Towards the %@";
+"radar.north" = "North";
+"radar.northeast" = "Northeast";
+"radar.east" = "East";
+"radar.southeast" = "Southeast";
+"radar.south" = "South";
+"radar.southwest" = "Southwest";
+"radar.west" = "West";
+"radar.northwest" = "Northwest";
+
+// MARK: - Merchant Stats
+"merchantStats.title" = "Statistics";
+"merchantStats.today" = "Today";
+"merchantStats.week" = "Week";
+"merchantStats.month" = "Month";
+"merchantStats.earnedToday" = "earned today";
+"merchantStats.thisWeek" = "this week";
+"merchantStats.thisMonth" = "this month";
+"merchantStats.bestHour" = "Best hour";
+"merchantStats.bestDay" = "Best day";
+"merchantStats.bestWeek" = "Best week";
+"merchantStats.recentSales" = "RECENT SALES";
+
+// MARK: - Coppel Verification
+"coppel.step1of2" = "Step 1 of 2";
+"coppel.verifyTitle" = "Verify Coppel Emprende account";
+"coppel.verifySubtitle" = "Enter your name and email to verify your account";
+"coppel.fullName" = "Full name";
+"coppel.fullNamePlaceholder" = "Your registered name";
+"coppel.email" = "Email";
+"coppel.emailPlaceholder" = "Your registered email";
+"coppel.whereOperate" = "Where do you operate?";
+"coppel.mobileRoute" = "Ambulant (route)";
+"coppel.mobileRouteDesc" = "Multiple points on the map";
+"coppel.fixedLocal" = "Fixed point (local)";
+"coppel.fixedLocalDesc" = "A single location";
+"coppel.verifyAccount" = "Verify account";
+"coppel.back" = "Back";
+
+// MARK: - AI Chat Error
+"ai.chat.errorMessage" = "Sorry, there was an error processing your message: %@";
+
+// MARK: - Home Customer
+"home.whatDoYouCrave" = "What are you craving today?";
+"home.detectMerchants" = "Detect merchants";
+"home.nearby" = "%d nearby";
+"home.searchingMerchants" = "Searching for merchants...";
+"home.merchantsNearby" = "Merchants nearby";
+"home.askAteneaAI" = "Ask Atenea AI";
+"home.askAteneaAIDesc" = "Where are the best tacos near Azteca?";
+"home.voiceTranslator" = "Voice translator";
+"home.voiceTranslatorDesc" = "Speak and the vendor understands you instantly";
+"home.matchToday" = "There's a match today";
+"home.matchTodayDesc" = "Check the schedule and find the best places to watch it";
+"home.products" = "PRODUCTS";
+"home.menuAR" = "AR Menu";
+"home.pay" = "Pay";
+"home.timbre" = "Ring";
+"home.search" = "Search";
+"home.fixed" = "Fixed";
+"home.nomad" = "Nomad";
+"home.live" = "Live";
+
+// MARK: - Favorites
+"favorites.title" = "Favorites";
+"favorites.savedCount" = "%d saved vendors";
+"favorites.empty" = "No favorites yet";
+"favorites.emptyDesc" = "Save vendors to find them faster";
+"favorites.explore" = "Explore";
+"favorites.category.food" = "Food";
+"favorites.category.beverage" = "Beverage";
+"favorites.category.crafts" = "Crafts";
+
+// MARK: - Merchant Location Edit
+"merchant.location.editTitle" = "Edit my location";
+"merchant.location.dragToAdjust" = "Drag the pin to adjust";
+"merchant.location.editMode" = "EDIT MODE";
+"merchant.location.gettingAddress" = "Getting address...";
+"merchant.location.saved" = "Location saved";
+"merchant.location.confirm" = "Confirm location";
+
+// MARK: - Destination List
+"destination.chooseTitle" = "Choose Destination";
+
+// MARK: - Navigation Extras
+"navigation.planesDetected" = "Planes detected: %d";
+"navigation.arNotSupported" = "AR Not Supported";
+"navigation.arNotSupportedDesc" = "Your device does not support augmented reality features.";
+"navigation.cameraRequired" = "Camera Permission Required";
+"navigation.cameraRequiredDesc" = "Please enable camera access in Settings to use AR navigation.";
+"navigation.calculatingRoute" = "Calculating route...";
+"navigation.continueStraight" = "Continue straight";
+"navigation.destination" = "Destination";
+"navigation.started" = "Navigation started";
+"navigation.headingTo" = "Heading to";
+"navigation.startingNavigation" = "Starting navigation...";
+
+// MARK: - Categories
+"category.restaurants" = "Restaurants";
+"category.hotels" = "Hotels";
+"category.museums" = "Museums";
+"category.transport" = "Transport";
+"category.stadiums" = "Stadiums";
+
+// MARK: - Search
+"search.placeholder" = "Search...";
+
+// MARK: - AR Sticker Scanner
+"ar.sticker.scanning" = "Scanning...";
+"ar.sticker.collectStickers" = "Collect Stickers";
+"ar.sticker.getCloser" = "Get closer to the venue";
+"ar.sticker.mustBeWithin" = "You must be within 100m";
+"ar.sticker.noVenuesNearby" = "No venues nearby";
+"ar.sticker.visitVenue" = "Visit a 2026 World Cup venue";
+"ar.sticker.collectWithAR" = "Collect Stickers with AR";
+"ar.sticker.openScanner" = "Open the AR scanner when you're nearby";
+"ar.sticker.collectOnePerVenue" = "Collect 1 sticker per venue";
+"ar.sticker.stickersCollected" = "Stickers Collected!";
+"ar.sticker.stickerAdded" = "+1 Sticker";
+"ar.sticker.copaDetected" = "COPA Sticker Detected";
+"ar.sticker.addToAlbum" = "Add to Album";
+"ar.sticker.stickerRegistered" = "Sticker Registered!";
+"ar.sticker.backDetected" = "Back detected correctly";
+"ar.sticker.goToAlbum" = "Go to Album";
+"ar.sticker.flipSticker" = "Flip the Sticker";
+"ar.sticker.scanBackForAlbum" = "Scan the back to go to the album";
+
+// MARK: - AR Poster
+"ar.poster.initializing" = "Initializing AR...";
+"ar.poster.preparingDetection" = "Preparing poster detection";
+"ar.poster.worldCupAR" = "World Cup 2026 AR";
+"ar.poster.worldCupVenue" = "🏟️ WORLD CUP 2026 VENUE";
+"ar.poster.addToAlbum" = "Add to Album";
+"ar.poster.collectThisVenue" = "Collect this venue";
+"ar.poster.viewOnMap" = "View on Map";
+"ar.poster.viewAlbum" = "View %@ album";
+"ar.poster.pointAtPoster" = "Point at a World Cup 2026 poster";
+"ar.poster.keepCentered" = "Keep the poster in the center of the screen";
+"ar.poster.openAppleMaps" = "Open in Apple Maps";
+"ar.poster.close" = "Close";
+
+// MARK: - AR Scanner
+"ar.scanner.scanPoster" = "Scan Poster";
+"ar.scanner.discoverInfo" = "Discover information about each venue";
+"ar.scanner.startScanning" = "Start Scanning";
+
+// MARK: - AR Player Scanner
+"ar.player.scanCard" = "Scan a Player Card";
+"ar.player.pointCamera" = "Point your camera at the player image";
+"ar.player.arReady" = "AR Ready";
+
+// MARK: - Prediction
+"prediction.title" = "Atenea Predict";
+"prediction.positionAt" = "Position at: %@";
+"prediction.arriveBy" = "Arrive by %@";
+"prediction.people" = "people";
+"prediction.topZones" = "top zones";
+"prediction.topSales" = "top sales";
+"prediction.done" = "Done";
+"prediction.simulateWeather" = "Simulate weather";
+"prediction.timeline" = "Time flow";
+"prediction.recommendedZones" = "Recommended zones";
+"prediction.topDemandProducts" = "Most demanded products";
+
+// MARK: - Business Location Map
+"businessLocation.back" = "Back";
+"businessLocation.searchAddress" = "Search address or place";
+"businessLocation.distance" = "Distance";
+"businessLocation.duration" = "Duration";
+"businessLocation.points" = "Points";
+"businessLocation.calculatingRoute" = "Calculating route...";
+"businessLocation.markRoute" = "Mark your route";
+"businessLocation.locateBusiness" = "Locate your business";
+"businessLocation.holdToAddPoints" = "Hold on the map to add points. Pinch to zoom.";
+"businessLocation.holdToMark" = "Hold on the map to mark your location";
+"businessLocation.reverse" = "Reverse";
+"businessLocation.clear" = "Clear";
+"businessLocation.undoLastPoint" = "Undo last point";
+"businessLocation.saveRoute" = "Save route";
+"businessLocation.confirmLocation" = "Confirm location";
+"businessLocation.routePoints" = "Route points";
+"businessLocation.pointN" = "Point %d";
+"businessLocation.configureRoute" = "Configure route";
+
+// MARK: - Line 3 Simulation
+"simulation.title" = "Simulation %@";
+"simulation.arrivalForecast" = "Arrival Forecast";
+"simulation.destination" = "Destination";
+"simulation.next" = "Next";
+"simulation.speed" = "Speed";
+"simulation.onRoute" = "On route";
+"simulation.stopped" = "Stopped";
+"simulation.completed" = "%d%% completed";
+
+// MARK: - Tangara Map
+"tangara.title" = "Tangara 3D Train";
+"tangara.subtitle" = "Model on Map";
+"tangara.moveModelTo" = "Move model to:";
+"tangara.cdmx" = "Mexico City";
+"tangara.modelIntegrated" = "The 3D model is integrated in the map";
+
+// MARK: - Routes View
+"routes.title" = "Routes";
+"routes.savedRoutes" = "Here you can see your saved routes";
+
+// MARK: - Navigation Dynamic Island
+"navigation.inDistance" = "In %@";
+
+// MARK: - Staff AR Navigation
+"staff.ar.clientEmergency" = "CLIENT IN EMERGENCY";
+"staff.ar.followArrow" = "Follow the arrow to reach the client";
+"staff.ar.calculatingLocation" = "Calculating location...";
+
+// MARK: - Staff Emergencies Extra
+"staff.emergencies.emergencyFormat" = "Emergency from %@ at %@";
+
+// MARK: - Navigation Live Activity
+"liveActivity.remaining" = "Remaining";
+"liveActivity.minutes" = "minutes";
+
+// MARK: - Live Track Island
+"liveTrack.arrived" = "Arrived";
+"liveTrack.distance" = "distance";
+"liveTrack.arrival" = "arrival";
+"liveTrack.merchantArrived" = "%@ arrived";
+"liveTrack.lookNearby" = "Look for them near your location";
+
+// MARK: - Profile Map Container
+"profileMap.atenea2026" = "Atenea 2026";
+
+// MARK: - Sidebar Menu Extra
+"sidebar.venues" = "Venues";
+"sidebar.logout" = "Logout";
+
+// MARK: - AR Menu Card
+"ar.menu.ring" = "Ring";
+
+// MARK: - AR Street Menu
+"ar.street.visibleVendors" = "%d visible vendors";
+"ar.street.moveToExplore" = "Move the phone to explore";
+
+// MARK: - Debug AR
+"debug.ar.simulateNearVenue" = "Simulate being near a venue";
+
+// MARK: - Demand Insights Extra
+"demand.zonePrefix" = "Zone %@...";
+"demand.searchesAndIntensity" = "%d searches · %@";

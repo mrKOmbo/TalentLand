@@ -114,6 +114,62 @@ class MerchantManager: ObservableObject {
         return R * c
     }
 
+    // MARK: - Register New Merchant
+
+    func registerMerchant(
+        userId: UUID,
+        businessName: String,
+        businessType: BusinessType,
+        isStatic: Bool,
+        location: BusinessLocation?,
+        route: MerchantRoute?,
+        waypoints: [RouteWaypoint]?
+    ) {
+        let category = Self.merchantCategory(from: businessType)
+
+        let merchantLocation: MerchantLocation?
+        if let loc = location {
+            merchantLocation = MerchantLocation(latitude: loc.latitude, longitude: loc.longitude)
+        } else if let firstWaypoint = waypoints?.first {
+            merchantLocation = MerchantLocation(latitude: firstWaypoint.latitude, longitude: firstWaypoint.longitude)
+        } else {
+            merchantLocation = nil
+        }
+
+        let merchantRoute: MerchantRoute?
+        if !isStatic, let waypoints = waypoints, waypoints.count >= 2 {
+            merchantRoute = route ?? MerchantRoute(
+                merchantId: userId,
+                waypoints: waypoints,
+                isActive: true
+            )
+        } else {
+            merchantRoute = nil
+        }
+
+        let merchant = Merchant(
+            userId: userId,
+            businessName: businessName,
+            category: category,
+            isActive: true,
+            isStatic: isStatic,
+            currentLocation: merchantLocation,
+            route: merchantRoute
+        )
+
+        merchants.append(merchant)
+        currentMerchantProfile = merchant
+        print("✅ Merchant registrado en MerchantManager: \(businessName)")
+    }
+
+    private static func merchantCategory(from businessType: BusinessType) -> MerchantCategory {
+        switch businessType {
+        case .food: return .tacos
+        case .beverages: return .bebidas
+        case .clothing, .crafts, .electronics, .services, .other: return .otro
+        }
+    }
+
     // MARK: - Mock Data
 
     private func loadMockMerchants() {

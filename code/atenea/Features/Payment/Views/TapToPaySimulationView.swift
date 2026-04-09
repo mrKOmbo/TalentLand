@@ -15,14 +15,14 @@ struct TapToPaySimulationView: View {
         if let user = UserManager.shared.currentUser {
             merchantName = user.name
         } else {
-            merchantName = "Comerciante"
+            merchantName = LocalizedString("payment.merchant")
         }
 
         _peerService = StateObject(wrappedValue: TapToPayPeerService(
             role: .merchant,
             amount: viewModel.amountInCents,
             merchantName: merchantName,
-            description: viewModel.saleDescription.isEmpty ? "Venta Atenea" : viewModel.saleDescription
+            description: viewModel.saleDescription.isEmpty ? LocalizedString("payment.saleAtenea") : viewModel.saleDescription
         ))
     }
 
@@ -35,7 +35,7 @@ struct TapToPaySimulationView: View {
                     viewModel.reset()
                     onCancel()
                 }) {
-                    Text("Cancelar")
+                    Text(LocalizedString("payment.cancel"))
                         .font(.system(size: 17, weight: .medium))
                         .foregroundColor(.white.opacity(0.7))
                 }
@@ -46,7 +46,7 @@ struct TapToPaySimulationView: View {
                     Circle()
                         .fill(peerService.isConnected ? .green : .orange)
                         .frame(width: 8, height: 8)
-                    Text(peerService.isConnected ? "Conectado" : "Buscando...")
+                    Text(peerService.isConnected ? LocalizedString("payment.connected") : LocalizedString("payment.searching"))
                         .font(.system(size: 13, weight: .medium))
                         .foregroundColor(.white.opacity(0.5))
                 }
@@ -93,7 +93,7 @@ struct TapToPaySimulationView: View {
                 Text(viewModel.formattedAmount)
                     .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
-                Text("MXN")
+                Text(LocalizedString("payment.currency"))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.4))
                 if !viewModel.saleDescription.isEmpty {
@@ -139,7 +139,7 @@ struct TapToPaySimulationView: View {
             ProgressView()
                 .scaleEffect(CGSize(width: 1.5, height: 1.5))
                 .tint(.white)
-            Text("Buscando dispositivo cercano...")
+            Text(LocalizedString("payment.searchingNearbyDevice"))
                 .font(.system(size: 18, weight: .medium))
                 .foregroundColor(.white.opacity(0.6))
         }
@@ -171,14 +171,14 @@ struct TapToPaySimulationView: View {
                 pulseScale = 1.15
             }
 
-            Text("Acerca el otro iPhone")
+            Text(LocalizedString("payment.bringOtherIphone"))
                 .font(.system(size: 22, weight: .semibold))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
 
             Text(peerService.isConnected
-                 ? "Dispositivo detectado — acerca más"
-                 : "Esperando dispositivo cercano...")
+                 ? LocalizedString("payment.deviceDetected")
+                 : LocalizedString("payment.waitingNearbyDevice"))
                 .font(.system(size: 15))
                 .foregroundColor(.white.opacity(0.4))
                 .multilineTextAlignment(.center)
@@ -197,7 +197,7 @@ struct TapToPaySimulationView: View {
                     }
                 }
             } label: {
-                Text("Simular contacto (debug)")
+                Text(LocalizedString("payment.simulateContact"))
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(.white.opacity(0.3))
                     .padding(.horizontal, 20)
@@ -222,7 +222,7 @@ struct TapToPaySimulationView: View {
                     .symbolEffect(.pulse, options: .repeating)
             }
 
-            Text("Leyendo dispositivo...")
+            Text(LocalizedString("payment.readingDevice"))
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(.white)
         }
@@ -244,7 +244,7 @@ struct TapToPaySimulationView: View {
                     .tint(.orange)
             }
 
-            Text("Procesando pago...")
+            Text(LocalizedString("payment.processingPayment"))
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(.white)
 
@@ -272,7 +272,7 @@ struct TapToPaySimulationView: View {
             }
             .transition(.scale.combined(with: .opacity))
 
-            Text("Aprobado")
+            Text(LocalizedString("payment.approved"))
                 .font(.system(size: 24, weight: .bold))
                 .foregroundColor(.green)
 
@@ -298,7 +298,7 @@ struct TapToPaySimulationView: View {
                     .foregroundColor(.red)
             }
 
-            Text("Declinada")
+            Text(LocalizedString("payment.declined"))
                 .font(.system(size: 24, weight: .bold))
                 .foregroundColor(.red)
 
@@ -310,7 +310,7 @@ struct TapToPaySimulationView: View {
                 peerService.stop()
                 peerService.start()
             } label: {
-                Text("Intentar de nuevo")
+                Text(LocalizedString("payment.tryAgain"))
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.black)
                     .padding(.horizontal, 28)

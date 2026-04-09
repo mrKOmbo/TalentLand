@@ -30,7 +30,7 @@ struct PaymentConfirmedView: View {
             .scaleEffect(checkmarkScale)
             .padding(.bottom, 32)
 
-            Text("¡Pago recibido!")
+            Text(LocalizedString("payment.received"))
                 .font(.system(size: 28, weight: .bold))
                 .foregroundColor(.white)
 
@@ -39,7 +39,7 @@ struct PaymentConfirmedView: View {
                 .foregroundColor(.white)
                 .padding(.top, 8)
 
-            Text("MXN")
+            Text(LocalizedString("payment.currency"))
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundColor(.white.opacity(0.5))
 
@@ -64,7 +64,7 @@ struct PaymentConfirmedView: View {
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "plus.circle.fill")
-                        Text("Nuevo cobro")
+                        Text(LocalizedString("payment.newCharge"))
                     }
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white)
@@ -80,7 +80,7 @@ struct PaymentConfirmedView: View {
                 Button {
                     onClose()
                 } label: {
-                    Text("Cerrar")
+                    Text(LocalizedString("payment.close"))
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white.opacity(0.6))
                         .frame(maxWidth: .infinity)
@@ -122,7 +122,7 @@ struct PaymentConfirmedView: View {
                         ? "Tap to Pay — \(ttpResult.cardBrand) •••• \(ttpResult.lastFour)"
                         : viewModel.saleDescription
                 } else {
-                    description = viewModel.saleDescription.isEmpty ? "Venta Atenea" : viewModel.saleDescription
+                    description = viewModel.saleDescription.isEmpty ? LocalizedString("payment.saleAtenea") : viewModel.saleDescription
                 }
                 let record = SaleRecord(
                     id: UUID(),

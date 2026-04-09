@@ -78,7 +78,7 @@ struct LiveTrackIslandView: View {
             .frame(width: 30, height: 30)
 
             if tracker.hasArrived {
-                Text("Llego")
+                Text(LocalizedString("liveTrack.arrived"))
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(.green)
             } else {
@@ -220,7 +220,7 @@ struct LiveTrackIslandView: View {
                         .font(.system(size: 20, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                         .contentTransition(.numericText())
-                    Text("distancia")
+                    Text(LocalizedString("liveTrack.distance"))
                         .font(.system(size: 10))
                         .foregroundColor(.white.opacity(0.4))
                 }
@@ -234,7 +234,7 @@ struct LiveTrackIslandView: View {
                         .font(.system(size: 20, weight: .bold, design: .rounded))
                         .foregroundColor(.cyan)
                         .contentTransition(.numericText())
-                    Text("llegada")
+                    Text(LocalizedString("liveTrack.arrival"))
                         .font(.system(size: 10))
                         .foregroundColor(.white.opacity(0.4))
                 }
@@ -262,12 +262,12 @@ struct LiveTrackIslandView: View {
                     .font(.system(size: 24))
                     .foregroundColor(.green)
 
-                Text("\(tracker.merchantName) llego")
+                Text(String(format: LocalizedString("liveTrack.merchantArrived"), tracker.merchantName))
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.green)
             }
 
-            Text("Buscalo cerca de tu ubicacion")
+            Text(LocalizedString("liveTrack.lookNearby"))
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.6))
         }

@@ -18,9 +18,9 @@ struct FavoriteVendor: Identifiable {
 struct FavoritesView: View {
     @Environment(\.dismiss) var dismiss
     @State private var favorites: [FavoriteVendor] = [
-        FavoriteVendor(name: "Tacos El Rey", category: "Food", distance: "150m", color: Color(red: 1, green: 0.68, blue: 0.26)),
-        FavoriteVendor(name: "Helados Don Taco", category: "Beverage", distance: "320m", color: Color(red: 0.05, green: 0.75, blue: 0.31)),
-        FavoriteVendor(name: "Artesanías Maya", category: "Crafts", distance: "850m", color: Color(red: 0.49, green: 0.26, blue: 1)),
+        FavoriteVendor(name: "Tacos El Rey", category: LocalizedString("favorites.category.food"), distance: "150m", color: Color(red: 1, green: 0.68, blue: 0.26)),
+        FavoriteVendor(name: "Helados Don Taco", category: LocalizedString("favorites.category.beverage"), distance: "320m", color: Color(red: 0.05, green: 0.75, blue: 0.31)),
+        FavoriteVendor(name: "Artesanías Maya", category: LocalizedString("favorites.category.crafts"), distance: "850m", color: Color(red: 0.49, green: 0.26, blue: 1)),
     ]
 
     var body: some View {
@@ -33,11 +33,11 @@ struct FavoritesView: View {
                     // Header
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Favorites")
+                            Text(LocalizedString("favorites.title"))
                                 .font(.system(size: 28, weight: .bold, design: .rounded))
                                 .foregroundColor(Color.coppelDarkBlue)
 
-                            Text("\(favorites.count) saved vendors")
+                            Text(String(format: LocalizedString("favorites.savedCount"), favorites.count))
                                 .font(.system(size: 13, weight: .medium))
                                 .foregroundColor(.gray)
                         }
@@ -83,11 +83,11 @@ struct FavoritesView: View {
             }
 
             VStack(spacing: 8) {
-                Text("No favorites yet")
+                Text(LocalizedString("favorites.empty"))
                     .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundColor(Color.coppelDarkBlue)
 
-                Text("Save vendors to find them faster")
+                Text(LocalizedString("favorites.emptyDesc"))
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.gray)
                     .multilineTextAlignment(.center)
@@ -98,7 +98,7 @@ struct FavoritesView: View {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 16, weight: .semibold))
 
-                    Text("Explore")
+                    Text(LocalizedString("favorites.explore"))
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                 }
                 .foregroundColor(.white)

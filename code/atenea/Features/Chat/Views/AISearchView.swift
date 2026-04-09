@@ -697,7 +697,7 @@ struct AISearchView: View {
             } catch {
                 await MainActor.run {
                     chatMessages.append(ChatMessage(
-                        text: "Lo siento, hubo un error al procesar tu mensaje: \(error.localizedDescription)",
+                        text: String(format: LocalizedString("ai.chat.errorMessage"), error.localizedDescription),
                         isUser: false
                     ))
                 }
@@ -1242,7 +1242,7 @@ struct MemorySettingsView: View {
                         .padding(.top, 20)
                         .padding(.bottom, 16)
 
-                        Text("Update your Memory")
+                        Text(LocalizedString("ai.memory.title"))
                             .font(.system(size: 32, weight: .bold))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -1368,7 +1368,7 @@ struct MemorySettingsView: View {
                                     isPresented = false
                                 }
                             }) {
-                                Text("Update Memory")
+                                Text(LocalizedString("ai.memory.update"))
                                     .font(.system(size: 18, weight: .semibold))
                                     .foregroundColor(.black)
                                     .frame(maxWidth: .infinity)
@@ -1978,7 +1978,7 @@ struct APIKeySettingsView: View {
                             // Header
                             HStack {
                                 VStack(alignment: .leading, spacing: 8) {
-                                    Text("API Configuration")
+                                    Text(LocalizedString("ai.api.title"))
                                         .font(.system(size: 28, weight: .bold))
                                         .foregroundColor(.white)
 
@@ -1987,7 +1987,7 @@ struct APIKeySettingsView: View {
                                             .fill(APIConfiguration.shared.hasClaudeAPIKey ? Color.green : Color.orange)
                                             .frame(width: 8, height: 8)
 
-                                        Text(APIConfiguration.shared.hasClaudeAPIKey ? "Configurado" : "No configurado")
+                                        Text(APIConfiguration.shared.hasClaudeAPIKey ? LocalizedString("ai.api.configured") : LocalizedString("ai.api.notConfigured"))
                                             .font(.system(size: 14, weight: .medium))
                                             .foregroundColor(.white.opacity(0.7))
                                     }
@@ -2015,7 +2015,7 @@ struct APIKeySettingsView: View {
                                         .font(.system(size: 20))
                                         .foregroundColor(Color(hex: "#C8FF00"))
 
-                                    Text("Necesitas una API key de Claude para usar el chat de IA")
+                                    Text(LocalizedString("ai.api.infoMessage"))
                                         .font(.system(size: 15))
                                         .foregroundColor(.white.opacity(0.8))
                                 }
@@ -2033,15 +2033,15 @@ struct APIKeySettingsView: View {
 
                             // Pasos para obtener API Key
                             VStack(alignment: .leading, spacing: 20) {
-                                Text("Cómo obtener tu API Key:")
+                                Text(LocalizedString("ai.api.howToTitle"))
                                     .font(.system(size: 18, weight: .semibold))
                                     .foregroundColor(.white)
 
                                 VStack(alignment: .leading, spacing: 16) {
-                                    StepView(number: 1, text: "Visita la Consola de Anthropic")
-                                    StepView(number: 2, text: "Inicia sesión o crea una cuenta")
-                                    StepView(number: 3, text: "Ve a 'API Keys' y genera una nueva key")
-                                    StepView(number: 4, text: "Copia la key y pégala abajo")
+                                    StepView(number: 1, text: LocalizedString("ai.api.step1"))
+                                    StepView(number: 2, text: LocalizedString("ai.api.step2"))
+                                    StepView(number: 3, text: LocalizedString("ai.api.step3"))
+                                    StepView(number: 4, text: LocalizedString("ai.api.step4"))
                                 }
 
                                 // Botón para abrir el link
@@ -2054,7 +2054,7 @@ struct APIKeySettingsView: View {
                                         Image(systemName: "key.fill")
                                             .font(.system(size: 16))
 
-                                        Text("Obtener API Key")
+                                        Text(LocalizedString("ai.api.getKey"))
                                             .font(.system(size: 16, weight: .semibold))
 
                                         Image(systemName: "arrow.up.right")
@@ -2077,7 +2077,7 @@ struct APIKeySettingsView: View {
 
                             // Campo de texto para API Key
                             VStack(alignment: .leading, spacing: 12) {
-                                Text("Tu API Key")
+                                Text(LocalizedString("ai.api.yourKey"))
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(.white)
 
@@ -2103,7 +2103,7 @@ struct APIKeySettingsView: View {
                                         .font(.system(size: 20))
                                         .foregroundColor(.green)
 
-                                    Text("API Key guardada exitosamente")
+                                    Text(LocalizedString("ai.api.saveSuccess"))
                                         .font(.system(size: 15))
                                         .foregroundColor(.white)
                                 }
@@ -2130,7 +2130,7 @@ struct APIKeySettingsView: View {
                                     }
                                 }
                             }) {
-                                Text("Guardar API Key")
+                                Text(LocalizedString("ai.api.save"))
                                     .font(.system(size: 18, weight: .semibold))
                                     .foregroundColor(.black)
                                     .frame(maxWidth: .infinity)
@@ -2149,7 +2149,7 @@ struct APIKeySettingsView: View {
                                         .font(.system(size: 14))
                                         .foregroundColor(.white.opacity(0.5))
 
-                                    Text("Tu API key se guarda de forma segura en tu dispositivo")
+                                    Text(LocalizedString("ai.api.securityNote"))
                                         .font(.system(size: 13))
                                         .foregroundColor(.white.opacity(0.5))
                                 }

@@ -64,10 +64,10 @@ struct LoginView: View {
                     .allowsHitTesting(false)
                 }
             }
-            .alert("Help", isPresented: $showingHelp) {
+            .alert(LocalizedString("login.helpTitle"), isPresented: $showingHelp) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text("Need help logging in? Contact support@atenea.com")
+                Text(LocalizedString("login.helpMessage"))
             }
             .onAppear {
                 // Always start unchecked by default
@@ -181,7 +181,7 @@ struct LoginView: View {
                 .symbolRenderingMode(.hierarchical)
         }
         .accessibilityLabel(LocalizedString("login.help"))
-        .accessibilityHint("Muestra información de ayuda")
+        .accessibilityHint(LocalizedString("login.helpAccessibilityHint"))
         .accessibilityAddTraits(.isButton)
     }
 
@@ -228,7 +228,7 @@ struct LoginView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 14, weight: .medium))
-                        Text("Buscador")
+                        Text(LocalizedString("login.tabSearch"))
                             .font(.system(size: 14, weight: .medium))
                     }
                     .foregroundStyle(selectedTab == 0 ? .primary : .secondary)
@@ -251,7 +251,7 @@ struct LoginView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "person.2.fill")
                             .font(.system(size: 14, weight: .medium))
-                        Text("Usuarios")
+                        Text(LocalizedString("login.tabUsers"))
                             .font(.system(size: 14, weight: .medium))
                     }
                     .foregroundStyle(selectedTab == 1 ? .primary : .secondary)
@@ -312,7 +312,7 @@ struct LoginView: View {
 
     private var searchSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Buscar usuario")
+            Text(LocalizedString("login.searchUser"))
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
@@ -546,13 +546,13 @@ struct LoginView: View {
                 }
 
                 // Guardar nombre del usuario para OnboardingWelcomeView
-                var userName = "Usuario"
+                var userName = LocalizedString("login.defaultUser")
                 if let fullName = fullName {
                     let firstName = fullName.givenName ?? ""
                     let lastName = fullName.familyName ?? ""
                     userName = "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)
                     if userName.isEmpty {
-                        userName = "Usuario"
+                        userName = LocalizedString("login.defaultUser")
                     }
                     print("   Name: \(userName)")
                 }
@@ -667,8 +667,8 @@ struct UserSelectionCard: View {
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(user.name), \(user.email), \(user.role.displayName)")
-        .accessibilityValue(isSelected ? "Seleccionado" : "No seleccionado")
-        .accessibilityHint("Toca dos veces para seleccionar este usuario")
+        .accessibilityValue(isSelected ? LocalizedString("login.selected") : LocalizedString("login.notSelected"))
+        .accessibilityHint(LocalizedString("login.selectUserHint"))
         .accessibilityAddTraits(.isButton)
     }
 

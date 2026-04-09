@@ -161,14 +161,14 @@ struct RadarView: View {
     private var radarHeader: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Radar")
+                Text(LocalizedString("radar.title"))
                     .font(.system(size: 28, weight: .bold))
                     .foregroundColor(.white)
                 HStack(spacing: 6) {
                     Circle()
                         .fill(radarService.isScanning ? Color.green : Color.gray)
                         .frame(width: 6, height: 6)
-                    Text("\(radarMerchants.count) comerciantes en rango")
+                    Text(String(format: LocalizedString("radar.merchantsInRange"), radarMerchants.count))
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.6))
                 }
@@ -375,7 +375,7 @@ struct RadarView: View {
     private var merchantList: some View {
         VStack(alignment: .leading, spacing: 8) {
             if !radarMerchants.isEmpty {
-                Text("COMERCIANTES EN RANGO")
+                Text(LocalizedString("radar.merchantsInRangeLabel"))
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(.white.opacity(0.4))
                     .kerning(1.5)
@@ -405,7 +405,7 @@ struct RadarView: View {
                                         .font(.system(size: 12))
                                         .foregroundColor(.white.opacity(0.5))
                                     if merchant.mpcPeer != nil {
-                                        Text("· EN VIVO")
+                                        Text("· \(LocalizedString("radar.live"))")
                                             .font(.system(size: 9, weight: .bold))
                                             .foregroundColor(.green)
                                     }
@@ -555,7 +555,7 @@ struct DirectionArrowView: View {
                 Button(action: onBack) {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.left")
-                        Text("Radar")
+                        Text(LocalizedString("radar.title"))
                     }
                     .font(.system(size: 15, weight: .medium))
                     .foregroundColor(.cyan)
@@ -652,8 +652,13 @@ struct DirectionArrowView: View {
     }
 
     private func directionLabel(_ bearing: Double) -> String {
-        let dirs = ["Norte", "Noreste", "Este", "Sureste", "Sur", "Suroeste", "Oeste", "Noroeste"]
+        let dirs = [
+            LocalizedString("radar.north"), LocalizedString("radar.northeast"),
+            LocalizedString("radar.east"), LocalizedString("radar.southeast"),
+            LocalizedString("radar.south"), LocalizedString("radar.southwest"),
+            LocalizedString("radar.west"), LocalizedString("radar.northwest")
+        ]
         let index = Int((bearing + 22.5) / 45) % 8
-        return "Hacia el \(dirs[index])"
+        return String(format: LocalizedString("radar.towardsThe"), dirs[index])
     }
 }

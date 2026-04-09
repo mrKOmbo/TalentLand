@@ -148,35 +148,35 @@ struct MapCategory: Identifiable, Equatable {
     static let allCategories: [MapCategory] = [
         MapCategory(
             id: "restaurants",
-            name: "Restaurantes",
+            name: LocalizedString("category.restaurants"),
             icon: "fork.knife",
             color: .red,
             searchTerm: "Restaurante"
         ),
         MapCategory(
             id: "hotels",
-            name: "Hoteles",
+            name: LocalizedString("category.hotels"),
             icon: "bed.double.fill",
             color: .blue,
             searchTerm: "Hotel"
         ),
         MapCategory(
             id: "museums",
-            name: "Museos",
+            name: LocalizedString("category.museums"),
             icon: "building.columns.fill",
             color: .purple,
             searchTerm: "Museo"
         ),
         MapCategory(
             id: "transport",
-            name: "Transporte",
+            name: LocalizedString("category.transport"),
             icon: "tram.fill",
             color: .orange,
             searchTerm: "Metro"
         ),
         MapCategory(
             id: "stadiums",
-            name: "Estadios",
+            name: LocalizedString("category.stadiums"),
             icon: "trophy.fill",
             color: .green,
             searchTerm: "Estadio"

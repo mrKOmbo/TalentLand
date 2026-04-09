@@ -86,7 +86,7 @@ struct MerchantDetailSheet: View {
                 Circle()
                     .fill(merchant.isActive ? Color.green : Color.gray)
                     .frame(width: 8, height: 8)
-                Text(merchant.isActive ? "Activo" : "Inactivo")
+                Text(merchant.isActive ? LocalizedString("merchant.detail.active") : LocalizedString("merchant.detail.inactive"))
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(merchant.isActive ? .green : .gray)
             }
@@ -98,7 +98,7 @@ struct MerchantDetailSheet: View {
             HStack(spacing: 4) {
                 Image(systemName: merchant.isStatic ? "mappin.circle.fill" : "figure.walk")
                     .font(.system(size: 10))
-                Text(merchant.isStatic ? "Puesto fijo" : "Ambulante")
+                Text(merchant.isStatic ? LocalizedString("merchant.detail.fixedStall") : LocalizedString("merchant.detail.ambulant"))
                     .font(.system(size: 12, weight: .medium))
             }
             .foregroundColor(merchant.isStatic ? .blue : .orange)
@@ -125,7 +125,7 @@ struct MerchantDetailSheet: View {
 
     private var productsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("PRODUCTOS")
+            Text(LocalizedString("merchant.detail.products"))
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundColor(.secondary)
                 .kerning(1.2)
@@ -149,7 +149,7 @@ struct MerchantDetailSheet: View {
                         .foregroundColor(.orange)
 
                     if !product.isAvailable {
-                        Text("Agotado")
+                        Text(LocalizedString("merchant.detail.soldOut"))
                             .font(.system(size: 10, weight: .medium))
                             .foregroundColor(.red)
                     }
@@ -167,7 +167,7 @@ struct MerchantDetailSheet: View {
             Text("\(schedule.openTime) - \(schedule.closeTime)")
                 .font(.system(size: 14))
             Spacer()
-            Text(schedule.isOpenNow ? "Abierto" : "Cerrado")
+            Text(schedule.isOpenNow ? LocalizedString("merchant.detail.open") : LocalizedString("merchant.detail.closed"))
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(schedule.isOpenNow ? .green : .red)
         }
@@ -185,7 +185,7 @@ struct MerchantDetailSheet: View {
             } label: {
                 HStack {
                     Image(systemName: "map.fill")
-                    Text("Ver en mapa")
+                    Text(LocalizedString("merchant.detail.viewOnMap"))
                         .font(.system(size: 15, weight: .semibold))
                 }
                 .foregroundColor(.blue)
@@ -213,9 +213,9 @@ struct MerchantDetailSheet: View {
 
     private func presenceText(_ status: MerchantPresence.ActivityStatus) -> String {
         switch status {
-        case .active: return "Ahora"
-        case .recent: return "Reciente"
-        case .stale: return "Inactivo"
+        case .active: return LocalizedString("merchant.detail.now")
+        case .recent: return LocalizedString("merchant.detail.recent")
+        case .stale: return LocalizedString("merchant.detail.stale")
         }
     }
 }

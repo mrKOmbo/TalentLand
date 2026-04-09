@@ -21,6 +21,7 @@ struct MainMapView: View {
     @ObservedObject private var menuState = MenuStateManager.shared
     @ObservedObject private var demandManager = DemandZoneManager.shared
     @ObservedObject private var userManager = UserManager.shared
+    @ObservedObject private var merchantManager = MerchantManager.shared
     @Binding var selectedTab: Int
     @Binding var isLoggedIn: Bool
     @State private var selectedSearchPlace: SearchPlace? = nil
@@ -794,6 +795,7 @@ struct MainMapView: View {
                 centerOnLocation: $centerOnLocation,
                 searchMarkers: allMapMarkers,
                 venueMarkers: showVenueMarkers ? WorldCupVenue.allVenues : [],
+                merchantMarkers: merchantManager.merchants.filter { $0.isActive && $0.currentLocation != nil },
                 routePolylines: routePolylines,
                 selectedRouteIndex: selectedDirectionsRouteIndex,
                 selectedTransportMode: selectedTransportMode,
@@ -809,6 +811,9 @@ struct MainMapView: View {
                 },
                 onVenueTapped: { venue in
                     handleVenueTap(venue)
+                },
+                onMerchantTapped: { merchant in
+                    print("🏪 Merchant tocado: \(merchant.businessName)")
                 },
                 onMapTapped: { coordinate in
                     handleMapTap(at: coordinate)
@@ -1691,10 +1696,10 @@ struct FullScreenCoversModifier: ViewModifier {
 
                         let emergencyMarker = SearchPlace(
                             id: UUID().uuidString,
-                            name: "🚨 Emergencia: \(userName)",
-                            subtitle: "Emergencia Activa",
+                            name: String(format: LocalizedString("map.emergencyName"), userName),
+                            subtitle: LocalizedString("map.emergencyActive"),
                             fullAddress: "",
-                            category: "Emergencia",
+                            category: LocalizedString("map.emergencyCategory"),
                             icon: "exclamationmark.triangle.fill",
                             coordinate: coordinate
                         )
@@ -1940,6 +1945,7 @@ struct MapboxMainMapView: UIViewRepresentable {
     @Binding var centerOnLocation: Bool
     var searchMarkers: [SearchPlace]
     var venueMarkers: [WorldCupVenue]
+    var merchantMarkers: [Merchant]
     var routePolylines: [MKPolyline]
     var selectedRouteIndex: Int
     var selectedTransportMode: TransportMode
@@ -1952,6 +1958,7 @@ struct MapboxMainMapView: UIViewRepresentable {
     var showHeatMap: Bool
     var onMarkerTapped: ((SearchPlace) -> Void)?
     var onVenueTapped: ((WorldCupVenue) -> Void)?
+    var onMerchantTapped: ((Merchant) -> Void)?
     var onMapTapped: ((CLLocationCoordinate2D) -> Void)?
 
     func makeUIView(context: Context) -> MapView {
@@ -1984,6 +1991,10 @@ struct MapboxMainMapView: UIViewRepresentable {
                 // Agregar marcadores de sedes FIFA después de cargar el estilo
                 if !self.venueMarkers.isEmpty {
                     context.coordinator.updateVenueMarkers(self.venueMarkers, on: mapView)
+                }
+                // Agregar marcadores de comerciantes
+                if !self.merchantMarkers.isEmpty {
+                    context.coordinator.updateMerchantMarkers(self.merchantMarkers, on: mapView)
                 }
                 // Agregar heatmap pendiente o activo
                 print("🔥 [styleLoaded] showHeatMap=\(self.showHeatMap), zones=\(self.demandZones.count), pending=\(context.coordinator.pendingHeatmapZones?.count ?? -1)")
@@ -2094,6 +2105,8 @@ struct MapboxMainMapView: UIViewRepresentable {
                     context.coordinator.updateSearchMarkers(searchMarkers, on: mapView)
                     // Re-agregar marcadores de sedes
                     context.coordinator.updateVenueMarkers(venueMarkers, on: mapView)
+                    // Re-agregar marcadores de comerciantes
+                    context.coordinator.updateMerchantMarkers(self.merchantMarkers, on: mapView)
                     // Re-agregar rutas
                     context.coordinator.updateRoutePolylines(routePolylines, selectedIndex: selectedRouteIndex, transportMode: selectedTransportMode, on: mapView)
                     // Re-agregar heatmap si estaba activo
@@ -2116,6 +2129,13 @@ struct MapboxMainMapView: UIViewRepresentable {
             DispatchQueue.main.async {
                 context.coordinator.updateVenueMarkers(venueMarkers, on: mapView)
                 context.coordinator.currentVenueMarkers = venueMarkers
+            }
+        }
+
+        // Actualizar marcadores de comerciantes si cambiaron
+        if context.coordinator.currentMerchantMarkers.count != merchantMarkers.count {
+            DispatchQueue.main.async {
+                context.coordinator.updateMerchantMarkers(merchantMarkers, on: mapView)
             }
         }
 
@@ -2202,7 +2222,7 @@ struct MapboxMainMapView: UIViewRepresentable {
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(initialStyle: mapStyle, onMarkerTapped: onMarkerTapped, onVenueTapped: onVenueTapped, onMapTapped: onMapTapped)
+        Coordinator(initialStyle: mapStyle, onMarkerTapped: onMarkerTapped, onVenueTapped: onVenueTapped, onMerchantTapped: onMerchantTapped, onMapTapped: onMapTapped)
     }
 
     class Coordinator {
@@ -2222,8 +2242,11 @@ struct MapboxMainMapView: UIViewRepresentable {
         var emergencyPulseTimer: Timer?
         var searchAnnotationManager: PointAnnotationManager?
         var venueAnnotationManager: PointAnnotationManager?
+        var merchantAnnotationManager: PointAnnotationManager?
+        var currentMerchantMarkers: [Merchant] = []
         var onMarkerTapped: ((SearchPlace) -> Void)?
         var onVenueTapped: ((WorldCupVenue) -> Void)?
+        var onMerchantTapped: ((Merchant) -> Void)?
         var onMapTapped: ((CLLocationCoordinate2D) -> Void)?
         var currentShowHeatMap: Bool = false
         var currentDemandZoneCount: Int = 0
@@ -2231,10 +2254,11 @@ struct MapboxMainMapView: UIViewRepresentable {
         var styleLoaded: Bool = false
         var pendingHeatmapZones: [DemandZone]?
 
-        init(initialStyle: MapStyle, onMarkerTapped: ((SearchPlace) -> Void)?, onVenueTapped: ((WorldCupVenue) -> Void)?, onMapTapped: ((CLLocationCoordinate2D) -> Void)?) {
+        init(initialStyle: MapStyle, onMarkerTapped: ((SearchPlace) -> Void)?, onVenueTapped: ((WorldCupVenue) -> Void)?, onMerchantTapped: ((Merchant) -> Void)?, onMapTapped: ((CLLocationCoordinate2D) -> Void)?) {
             self.currentStyle = initialStyle
             self.onMarkerTapped = onMarkerTapped
             self.onVenueTapped = onVenueTapped
+            self.onMerchantTapped = onMerchantTapped
             self.onMapTapped = onMapTapped
         }
 
@@ -2353,6 +2377,99 @@ struct MapboxMainMapView: UIViewRepresentable {
             manager.annotations = annotations
 
             print("⚽ \(annotations.count) marcadores de sedes FIFA 2026 agregados al mapa")
+        }
+
+        // MARK: - Merchant Markers
+
+        func updateMerchantMarkers(_ merchants: [Merchant], on mapView: MapView) {
+            if merchantAnnotationManager == nil {
+                merchantAnnotationManager = mapView.annotations.makePointAnnotationManager()
+                merchantAnnotationManager?.delegate = self
+            }
+
+            merchantAnnotationManager?.annotations = []
+
+            var annotations: [PointAnnotation] = []
+
+            for merchant in merchants {
+                guard let location = merchant.currentLocation else { continue }
+
+                var annotation = PointAnnotation(
+                    id: "merchant-\(merchant.id.uuidString)",
+                    coordinate: location.coordinate
+                )
+
+                let color: UIColor = merchant.isStatic ? .systemPurple : .systemOrange
+                let markerImage = createMerchantMarkerImage(emoji: merchant.emoji, color: color)
+                annotation.image = .init(image: markerImage, name: "merchant-\(merchant.id.uuidString)")
+                annotation.iconAnchor = .bottom
+
+                annotation.textField = merchant.businessName
+                annotation.textOffset = [0, -3.5]
+                annotation.textSize = 11
+                annotation.textColor = StyleColor(.white)
+                annotation.textHaloColor = StyleColor(.black)
+                annotation.textHaloWidth = 1.5
+
+                annotations.append(annotation)
+            }
+
+            merchantAnnotationManager?.annotations = annotations
+            currentMerchantMarkers = merchants
+            print("🏪 \(annotations.count) marcadores de comerciantes agregados al mapa")
+        }
+
+        private func createMerchantMarkerImage(emoji: String, color: UIColor) -> UIImage {
+            let size = CGSize(width: 50, height: 60)
+            let renderer = UIGraphicsImageRenderer(size: size)
+
+            return renderer.image { context in
+                let ctx = context.cgContext
+                let centerX: CGFloat = size.width / 2
+                let topY: CGFloat = 5
+                let radius: CGFloat = 18
+
+                // Sombra
+                ctx.saveGState()
+                ctx.setShadow(offset: CGSize(width: 0, height: 2), blur: 4, color: UIColor.black.withAlphaComponent(0.3).cgColor)
+
+                // Círculo de fondo
+                let circlePath = UIBezierPath(
+                    arcCenter: CGPoint(x: centerX, y: topY + radius),
+                    radius: radius,
+                    startAngle: 0,
+                    endAngle: .pi * 2,
+                    clockwise: true
+                )
+
+                // Punta inferior
+                let pinPath = UIBezierPath()
+                pinPath.move(to: CGPoint(x: centerX - 8, y: topY + radius + 12))
+                pinPath.addLine(to: CGPoint(x: centerX, y: size.height - 3))
+                pinPath.addLine(to: CGPoint(x: centerX + 8, y: topY + radius + 12))
+
+                color.setFill()
+                circlePath.fill()
+                pinPath.fill()
+                ctx.restoreGState()
+
+                // Borde blanco
+                UIColor.white.setStroke()
+                circlePath.lineWidth = 2
+                circlePath.stroke()
+
+                // Emoji en el centro
+                let emojiFont = UIFont.systemFont(ofSize: 18)
+                let emojiStr = emoji as NSString
+                let emojiSize = emojiStr.size(withAttributes: [.font: emojiFont])
+                let emojiRect = CGRect(
+                    x: centerX - emojiSize.width / 2,
+                    y: topY + radius - emojiSize.height / 2,
+                    width: emojiSize.width,
+                    height: emojiSize.height
+                )
+                emojiStr.draw(in: emojiRect, withAttributes: [.font: emojiFont])
+            }
         }
 
         // Crear marcador hermoso estilo Google Maps
@@ -3309,6 +3426,16 @@ extension MapboxMainMapView.Coordinator: AnnotationInteractionDelegate {
             return
         }
 
+        // Verificar si es un marcador de comerciante
+        if tappedAnnotation.id.hasPrefix("merchant-") {
+            let merchantIdStr = String(tappedAnnotation.id.dropFirst("merchant-".count))
+            if let tappedMerchant = currentMerchantMarkers.first(where: { $0.id.uuidString == merchantIdStr }) {
+                print("🏪 Tap detectado en comerciante: \(tappedMerchant.businessName)")
+                onMerchantTapped?(tappedMerchant)
+                return
+            }
+        }
+
         // Luego verificar si es un marcador de búsqueda
         if let tappedMarker = currentSearchMarkers.first(where: { marker in
             marker.id == tappedAnnotation.id
@@ -3825,7 +3952,7 @@ struct DrawerMenuView: View {
 
                             // Sección de Predicciones (colapsable)
                             VStack(alignment: .leading, spacing: 12) {
-                                Text("Predicciones")
+                                Text(LocalizedString("map.predictions"))
                                     .font(.system(size: 14, weight: .semibold))
                                     .foregroundColor(.secondary)
                                     .padding(.horizontal, 24)
@@ -3839,7 +3966,7 @@ struct DrawerMenuView: View {
                                         }
                                     }) {
                                         HStack {
-                                            Text("Líneas del Metro")
+                                            Text(LocalizedString("menu.metroLines"))
                                                 .font(.system(size: 15, weight: .medium))
                                                 .foregroundColor(.primary)
 
@@ -3919,7 +4046,7 @@ struct DrawerMenuView: View {
                             // Sección de Staff (solo visible para administradores)
                             if userManager.hasStaffAccess {
                                 VStack(alignment: .leading, spacing: 12) {
-                                    Text("Staff")
+                                    Text(LocalizedString("map.staff"))
                                         .font(.system(size: 14, weight: .semibold))
                                         .foregroundColor(.secondary)
                                         .padding(.horizontal, 24)
@@ -3944,11 +4071,11 @@ struct DrawerMenuView: View {
                                             }
 
                                             VStack(alignment: .leading, spacing: 2) {
-                                                Text("Staff Access")
+                                                Text(LocalizedString("map.staffAccess"))
                                                     .font(.system(size: 15, weight: .semibold))
                                                     .foregroundColor(.primary)
 
-                                                Text("Acceso especial para personal")
+                                                Text(LocalizedString("map.staffDesc"))
                                                     .font(.system(size: 12))
                                                     .foregroundColor(.secondary)
                                             }
@@ -4161,7 +4288,7 @@ struct MetroLineOption: View {
                 }
 
                 // Texto de la línea
-                Text("Línea \(lineNumber)")
+                Text(String(format: LocalizedString("map.line"), lineNumber))
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(isEnabled ? .primary : .secondary.opacity(0.5))
 
@@ -4173,12 +4300,12 @@ struct MetroLineOption: View {
                         Circle()
                             .fill(Color.green)
                             .frame(width: 8, height: 8)
-                        Text("Activa")
+                        Text(LocalizedString("map.active"))
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundColor(.green)
                     }
                 } else {
-                    Text("Próximamente")
+                    Text(LocalizedString("map.comingSoon"))
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.secondary.opacity(0.7))
                         .padding(.horizontal, 8)

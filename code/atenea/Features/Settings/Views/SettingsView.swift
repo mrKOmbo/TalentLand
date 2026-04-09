@@ -30,11 +30,11 @@ struct SettingsView: View {
                     // Header
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Settings")
+                            Text(LocalizedString("settings.title"))
                                 .font(.system(size: 28, weight: .bold, design: .rounded))
                                 .foregroundColor(Color.coppelDarkBlue)
 
-                            Text("Personalize your experience")
+                            Text(LocalizedString("settings.subtitle"))
                                 .font(.system(size: 13, weight: .medium))
                                 .foregroundColor(.gray)
                         }
@@ -51,41 +51,41 @@ struct SettingsView: View {
                     .padding(.top, 16)
 
                     // Notifications
-                    settingSection(title: "Notifications", icon: "bell.fill") {
+                    settingSection(title: LocalizedString("settings.notifications"), icon: "bell.fill") {
                         toggleItem(
                             icon: "bell.badge.fill",
-                            title: "Push notifications",
-                            subtitle: "Stay updated with alerts",
+                            title: LocalizedString("settings.pushNotifications"),
+                            subtitle: LocalizedString("settings.pushDesc"),
                             isOn: $notificationsEnabled
                         )
 
                         toggleItem(
                             icon: "speaker.wave.2.fill",
-                            title: "Sounds",
-                            subtitle: "App sound effects",
+                            title: LocalizedString("settings.sounds"),
+                            subtitle: LocalizedString("settings.soundsDesc"),
                             isOn: $soundEnabled
                         )
 
                         toggleItem(
                             icon: "waveform.circle.fill",
-                            title: "Haptics",
-                            subtitle: "Vibration feedback",
+                            title: LocalizedString("settings.haptics"),
+                            subtitle: LocalizedString("settings.hapticsDesc"),
                             isOn: $hapticEnabled
                         )
                     }
 
                     // Navigation
-                    settingSection(title: "Navigation", icon: "location.fill") {
+                    settingSection(title: LocalizedString("settings.navigation"), icon: "location.fill") {
                         toggleItem(
                             icon: "arrow.triangle.turn.up.right.circle.fill",
-                            title: "Auto-navigate",
-                            subtitle: "Start routes automatically",
+                            title: LocalizedString("settings.autoNavigate"),
+                            subtitle: LocalizedString("settings.autoNavigateDesc"),
                             isOn: $autoNavigation
                         )
                     }
 
                     // Language
-                    settingSection(title: "Language", icon: "globe.fill") {
+                    settingSection(title: LocalizedString("settings.language"), icon: "globe.fill") {
                         HStack(spacing: 14) {
                             ZStack {
                                 Circle()
@@ -98,7 +98,7 @@ struct SettingsView: View {
                             }
 
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Current language")
+                                Text(LocalizedString("settings.currentLanguage"))
                                     .font(.system(size: 12, weight: .medium))
                                     .foregroundColor(.gray)
 
@@ -123,10 +123,10 @@ struct SettingsView: View {
                     }
 
                     // About
-                    settingSection(title: "About", icon: "info.circle.fill") {
+                    settingSection(title: LocalizedString("settings.about"), icon: "info.circle.fill") {
                         VStack(spacing: 12) {
-                            infoItem(label: "Version", value: "1.0.0")
-                            infoItem(label: "Built", value: "Genius Arena 2026")
+                            infoItem(label: LocalizedString("settings.version"), value: "1.0.0")
+                            infoItem(label: LocalizedString("settings.built"), value: "Genius Arena 2026")
                         }
                     }
 
@@ -145,11 +145,11 @@ struct SettingsView: View {
                                 }
 
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("Reset settings")
+                                    Text(LocalizedString("settings.resetSettings"))
                                         .font(.system(size: 15, weight: .semibold, design: .rounded))
                                         .foregroundColor(Color.coppelRed)
 
-                                    Text("Restore defaults")
+                                    Text(LocalizedString("settings.restoreDefaults"))
                                         .font(.system(size: 12, weight: .medium))
                                         .foregroundColor(.gray)
                                 }
@@ -168,7 +168,7 @@ struct SettingsView: View {
                     .padding(.horizontal, 20)
 
                     // Footer
-                    Text("Made with care in Mexico")
+                    Text(LocalizedString("settings.madeInMexico"))
                         .font(.system(size: 12, weight: .medium, design: .monospaced))
                         .foregroundColor(.gray.opacity(0.6))
                         .padding(.vertical, 20)
@@ -177,13 +177,13 @@ struct SettingsView: View {
                 }
             }
         }
-        .alert("Reset settings?", isPresented: $showResetAlert) {
-            Button("Cancel", role: .cancel) { }
-            Button("Reset", role: .destructive) {
+        .alert(LocalizedString("settings.resetQuestion"), isPresented: $showResetAlert) {
+            Button(LocalizedString("action.cancel"), role: .cancel) { }
+            Button(LocalizedString("settings.reset"), role: .destructive) {
                 resetSettings()
             }
         } message: {
-            Text("All settings will be restored to defaults.")
+            Text(LocalizedString("settings.resetMessage"))
         }
     }
 

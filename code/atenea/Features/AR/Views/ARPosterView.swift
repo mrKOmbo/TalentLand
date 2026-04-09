@@ -38,11 +38,11 @@ struct ARPosterView: View {
                         .scaleEffect(CGFloat(1.5))
                         .tint(.white)
 
-                    Text("Inicializando AR...")
+                    Text(LocalizedString("ar.poster.initializing"))
                         .font(.headline)
                         .foregroundColor(.white)
 
-                    Text("Preparando detección de posters")
+                    Text(LocalizedString("ar.poster.preparingDetection"))
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.7))
                 }
@@ -138,7 +138,7 @@ struct ARPosterView: View {
 
             Spacer()
 
-            Text("Mundial 2026 AR")
+            Text(LocalizedString("ar.poster.worldCupAR"))
                 .font(.headline)
                 .foregroundColor(.white)
                 .padding(.horizontal, 16)
@@ -197,7 +197,7 @@ struct ARPosterView: View {
 
             // Contenido principal
             VStack(spacing: 10) {
-                Text("🏟️ SEDE MUNDIAL 2026")
+                Text(LocalizedString("ar.poster.worldCupVenue"))
                     .font(.caption.bold())
                     .foregroundColor(.white)
                     .padding(.horizontal, 20)
@@ -239,10 +239,10 @@ struct ARPosterView: View {
                     .font(.title2)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Agregar al Álbum")
+                    Text(LocalizedString("ar.poster.addToAlbum"))
                         .font(.headline)
 
-                    Text("Colecciona esta sede")
+                    Text(LocalizedString("ar.poster.collectThisVenue"))
                         .font(.caption)
                         .opacity(0.8)
                 }
@@ -281,7 +281,7 @@ struct ARPosterView: View {
                     .font(.title2)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Ver en el Mapa")
+                    Text(LocalizedString("ar.poster.viewOnMap"))
                         .font(.headline)
 
                     Text(venue.name)
@@ -321,10 +321,10 @@ struct ARPosterView: View {
                     .font(.title2)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Agregar al Álbum")
+                    Text(LocalizedString("ar.poster.addToAlbum"))
                         .font(.headline)
 
-                    Text("Ver álbum de \(playerName)")
+                    Text(String(format: LocalizedString("ar.poster.viewAlbum"), playerName))
                         .font(.caption)
                         .opacity(0.8)
                         .lineLimit(1)
@@ -361,11 +361,11 @@ struct ARPosterView: View {
                 .font(.title2)
                 .foregroundColor(.white)
 
-            Text("Apunta a un poster del Mundial 2026")
+            Text(LocalizedString("ar.poster.pointAtPoster"))
                 .font(.subheadline)
                 .foregroundColor(.white)
 
-            Text("Mantén el poster en el centro de la pantalla")
+            Text(LocalizedString("ar.poster.keepCentered"))
                 .font(.caption2)
                 .foregroundColor(.white.opacity(0.7))
         }
@@ -561,7 +561,7 @@ struct VenueNavigationView: View {
                         }) {
                             HStack {
                                 Image(systemName: "map.fill")
-                                Text("Abrir en Apple Maps")
+                                Text(LocalizedString("ar.poster.openAppleMaps"))
                                     .fontWeight(.semibold)
                             }
                             .foregroundColor(.white)
@@ -583,7 +583,7 @@ struct VenueNavigationView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cerrar") {
+                    Button(LocalizedString("ar.poster.close")) {
                         dismiss()
                     }
                 }

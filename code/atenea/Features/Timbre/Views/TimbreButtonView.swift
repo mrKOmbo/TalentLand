@@ -26,7 +26,7 @@ struct TimbreButtonView: View {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 36))
                         .foregroundColor(.green)
-                    Text("Timbre enviado")
+                    Text(LocalizedString("timbre.sent"))
                         .font(.system(size: 14, weight: .semibold))
                 }
                 .transition(.scale.combined(with: .opacity))
@@ -71,7 +71,7 @@ struct TimbreButtonView: View {
                     }
                 }
 
-                Text("Timbrar")
+                Text(LocalizedString("timbre.ring"))
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.orange)
             }
@@ -86,7 +86,7 @@ struct TimbreButtonView: View {
         VStack(spacing: 16) {
             // Header
             VStack(spacing: 4) {
-                Text("¿Qué quieres comunicar?")
+                Text(LocalizedString("timbre.whatToCommunicate"))
                     .font(.system(size: 16, weight: .bold))
             }
 
@@ -130,7 +130,7 @@ struct TimbreButtonView: View {
             }
 
             // Mensaje opcional
-            TextField("Mensaje opcional...", text: $customMessage)
+            TextField(LocalizedString("timbre.optionalMessage"), text: $customMessage)
                 .textFieldStyle(.roundedBorder)
                 .font(.system(size: 14))
 
@@ -141,7 +141,7 @@ struct TimbreButtonView: View {
                         showOptions = false
                     }
                 } label: {
-                    Text("Cancelar")
+                    Text(LocalizedString("timbre.cancel"))
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.secondary)
                         .frame(maxWidth: .infinity)
@@ -156,7 +156,7 @@ struct TimbreButtonView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "bell.fill")
                             .font(.system(size: 14))
-                        Text("Enviar")
+                        Text(LocalizedString("timbre.send"))
                             .font(.system(size: 14, weight: .bold))
                     }
                     .foregroundColor(.white)

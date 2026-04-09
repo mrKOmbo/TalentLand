@@ -216,7 +216,7 @@ struct ProfileMapContainerView: View {
 
             Spacer()
 
-            Text("Atenea 2026")
+            Text(LocalizedString("profileMap.atenea2026"))
                 .font(.system(size: 12, weight: .medium, design: .monospaced))
                 .foregroundColor(.gray.opacity(0.5))
                 .padding(.horizontal, 16)

@@ -114,7 +114,7 @@ struct NavigationDynamicIsland: View {
                     )
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("En \(distanceText)")
+                    Text(String(format: LocalizedString("navigation.inDistance"), distanceText))
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundColor(.cyan)
                         .textCase(.uppercase)

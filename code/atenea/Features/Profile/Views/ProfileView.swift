@@ -25,11 +25,11 @@ struct UserProfileView: View {
                     // Header
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Profile")
+                            Text(LocalizedString("profile.title"))
                                 .font(.system(size: 28, weight: .bold, design: .rounded))
                                 .foregroundColor(Color.coppelDarkBlue)
 
-                            Text("Manage your account")
+                            Text(LocalizedString("profile.subtitle"))
                                 .font(.system(size: 13, weight: .medium))
                                 .foregroundColor(.gray)
                         }
@@ -63,7 +63,7 @@ struct UserProfileView: View {
 
                         if !isEditMode {
                             VStack(spacing: 4) {
-                                Text(userManager.currentUser?.name ?? "User")
+                                Text(userManager.currentUser?.name ?? LocalizedString("profile.defaultUser"))
                                     .font(.system(size: 22, weight: .bold, design: .rounded))
                                     .foregroundColor(Color.coppelDarkBlue)
 
@@ -77,9 +77,9 @@ struct UserProfileView: View {
                     // Stats Grid
                     VStack(spacing: 12) {
                         HStack(spacing: 12) {
-                            statItem(icon: "location.fill", label: "Routes", value: "24", color: Color(red: 0.11, green: 0.26, blue: 0.91))
-                            statItem(icon: "star.fill", label: "Points", value: "1.2K", color: Color(red: 0.99, green: 0.73, blue: 0.18))
-                            statItem(icon: "badge.fill", label: "Badges", value: "8", color: Color(red: 0.05, green: 0.75, blue: 0.31))
+                            statItem(icon: "location.fill", label: LocalizedString("profile.routes"), value: "24", color: Color(red: 0.11, green: 0.26, blue: 0.91))
+                            statItem(icon: "star.fill", label: LocalizedString("profile.points"), value: "1.2K", color: Color(red: 0.99, green: 0.73, blue: 0.18))
+                            statItem(icon: "badge.fill", label: LocalizedString("profile.badges"), value: "8", color: Color(red: 0.05, green: 0.75, blue: 0.31))
                         }
                     }
                     .padding(.horizontal, 20)
@@ -108,7 +108,7 @@ struct UserProfileView: View {
                             .font(.system(size: 20, weight: .semibold))
                             .foregroundColor(.white)
 
-                        Text("Changes saved")
+                        Text(LocalizedString("profile.changesSaved"))
                             .font(.system(size: 15, weight: .semibold, design: .rounded))
                             .foregroundColor(.white)
                     }
@@ -129,9 +129,9 @@ struct UserProfileView: View {
 
     private var viewModeContent: some View {
         VStack(spacing: 12) {
-            infoRow(icon: "person.fill", label: "Name", value: userManager.currentUser?.name ?? "User")
-            infoRow(icon: "envelope.fill", label: "Email", value: userManager.currentUser?.email ?? "user@atenea.com")
-            infoRow(icon: "calendar.circle.fill", label: "Member since", value: "January 2024")
+            infoRow(icon: "person.fill", label: LocalizedString("profile.name"), value: userManager.currentUser?.name ?? LocalizedString("profile.defaultUser"))
+            infoRow(icon: "envelope.fill", label: LocalizedString("profile.email"), value: userManager.currentUser?.email ?? "user@atenea.com")
+            infoRow(icon: "calendar.circle.fill", label: LocalizedString("profile.memberSince"), value: "January 2024")
 
             Button(action: {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -144,7 +144,7 @@ struct UserProfileView: View {
                     Image(systemName: "pencil.circle.fill")
                         .font(.system(size: 18, weight: .semibold))
 
-                    Text("Edit profile")
+                    Text(LocalizedString("profile.editProfile"))
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
 
                     Spacer()
@@ -163,8 +163,8 @@ struct UserProfileView: View {
 
     private var editModeContent: some View {
         VStack(spacing: 12) {
-            inputField(icon: "person.fill", placeholder: "Name", text: $editedName)
-            inputField(icon: "envelope.fill", placeholder: "Email", text: $editedEmail)
+            inputField(icon: "person.fill", placeholder: LocalizedString("profile.name"), text: $editedName)
+            inputField(icon: "envelope.fill", placeholder: LocalizedString("profile.email"), text: $editedEmail)
 
             HStack(spacing: 12) {
                 Button(action: saveChanges) {
@@ -172,7 +172,7 @@ struct UserProfileView: View {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 18, weight: .semibold))
 
-                        Text("Save")
+                        Text(LocalizedString("profile.save"))
                             .font(.system(size: 16, weight: .semibold, design: .rounded))
 
                         Spacer()

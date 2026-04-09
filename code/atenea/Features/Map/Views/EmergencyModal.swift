@@ -94,7 +94,7 @@ struct EmergencyModal: View {
                         isPresented = false
                     }
                 }) {
-                    Text("Cancel")
+                    Text(LocalizedString("action.cancel"))
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white.opacity(0.7))
                         .frame(maxWidth: .infinity)
@@ -141,7 +141,7 @@ struct EmergencyModal: View {
         guard let location = userLocation else { return }
 
         let locationText = """
-        🚨 Emergency Location Share
+        🚨 \(LocalizedString("emergency.locationShare"))
         Latitude: \(location.latitude)
         Longitude: \(location.longitude)
 

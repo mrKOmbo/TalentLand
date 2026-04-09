@@ -39,7 +39,7 @@ struct CoppelEmprenderVerificationView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 16, weight: .semibold))
-                        Text("Atrás")
+                        Text(LocalizedString("coppel.back"))
                             .font(.system(size: 17, weight: .regular))
                     }
                     .foregroundStyle(.blue)
@@ -61,7 +61,7 @@ struct CoppelEmprenderVerificationView: View {
     private var progressBar: some View {
         VStack(spacing: 12) {
             HStack(spacing: 4) {
-                Text("Paso 1 de 2")
+                Text(LocalizedString("coppel.step1of2"))
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(.secondary)
             }
@@ -98,11 +98,11 @@ struct CoppelEmprenderVerificationView: View {
 
     private var titleSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Verificar cuenta Coppel Emprende")
+            Text(LocalizedString("coppel.verifyTitle"))
                 .font(.system(size: 28, weight: .bold))
                 .foregroundStyle(.black)
 
-            Text("Ingresa tu nombre y correo para verificar tu cuenta")
+            Text(LocalizedString("coppel.verifySubtitle"))
                 .font(.system(size: 16, weight: .regular))
                 .foregroundStyle(.gray)
                 .lineSpacing(4)
@@ -113,11 +113,11 @@ struct CoppelEmprenderVerificationView: View {
         VStack(alignment: .leading, spacing: 20) {
             // Full Name
             VStack(alignment: .leading, spacing: 8) {
-                Text("Nombre completo")
+                Text(LocalizedString("coppel.fullName"))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.black)
 
-                TextField("Tu nombre registrado", text: $fullName)
+                TextField(LocalizedString("coppel.fullNamePlaceholder"), text: $fullName)
                     .font(.system(size: 16, weight: .regular))
                     .padding(12)
                     .background(
@@ -132,11 +132,11 @@ struct CoppelEmprenderVerificationView: View {
 
             // Email
             VStack(alignment: .leading, spacing: 8) {
-                Text("Correo electrónico")
+                Text(LocalizedString("coppel.email"))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.black)
 
-                TextField("Tu correo registrado", text: $email)
+                TextField(LocalizedString("coppel.emailPlaceholder"), text: $email)
                     .font(.system(size: 16, weight: .regular))
                     .keyboardType(UIKeyboardType.emailAddress)
                     .textInputAutocapitalization(.never)
@@ -155,7 +155,7 @@ struct CoppelEmprenderVerificationView: View {
 
     private var mobilitySelection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("¿Dónde operas?")
+            Text(LocalizedString("coppel.whereOperate"))
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.black)
 
@@ -168,11 +168,11 @@ struct CoppelEmprenderVerificationView: View {
                             .foregroundStyle(selectedMobility == "mobile" ? .orange : .gray)
 
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Ambulante (ruta)")
+                            Text(LocalizedString("coppel.mobileRoute"))
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundStyle(.black)
 
-                            Text("Múltiples puntos en el mapa")
+                            Text(LocalizedString("coppel.mobileRouteDesc"))
                                 .font(.system(size: 12, weight: .regular))
                                 .foregroundStyle(.gray)
                         }
@@ -203,11 +203,11 @@ struct CoppelEmprenderVerificationView: View {
                             .foregroundStyle(selectedMobility == "static" ? .orange : .gray)
 
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Punto fijo (local)")
+                            Text(LocalizedString("coppel.fixedLocal"))
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundStyle(.black)
 
-                            Text("Un solo lugar")
+                            Text(LocalizedString("coppel.fixedLocalDesc"))
                                 .font(.system(size: 12, weight: .regular))
                                 .foregroundStyle(.gray)
                         }
@@ -239,7 +239,7 @@ struct CoppelEmprenderVerificationView: View {
                 if isVerifying {
                     ProgressView()
                 } else {
-                    Text("Verificar cuenta")
+                    Text(LocalizedString("coppel.verifyAccount"))
                 }
             }
             .font(.system(size: 16, weight: .bold))
