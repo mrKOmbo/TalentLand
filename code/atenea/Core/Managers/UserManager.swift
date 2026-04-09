@@ -148,11 +148,31 @@ class UserManager: ObservableObject {
         return false
     }
 
-    /// Cerrar sesión
+    /// Cerrar sesión (mantiene biometría para re-login rápido)
     func logout() {
+        // Safety net: asegurar que BLE se detenga aunque el caller no lo haga
+        RadarService.shared.stopAll()
         MerchantManager.shared.currentMerchantProfile = nil
         currentUser = nil
-        print("👋 Usuario deslogueado")
+        print("👋 Usuario deslogueado — radar y merchant profile limpiados")
+    }
+
+    /// Cerrar sesión y borrar biometría (cambio de cuenta)
+    func logoutAndClearBiometrics() {
+        logout()
+        BiometricAuthService.shared.clearSession()
+        print("🔒 Biometría limpiada")
+    }
+
+    /// Login vía Face ID / Touch ID — usa el email guardado en Keychain
+    func loginWithBiometrics() async -> Bool {
+        guard BiometricAuthService.shared.hasSavedSession,
+              let email = KeychainService.shared.savedEmail else {
+            return false
+        }
+        let authenticated = await BiometricAuthService.shared.authenticate()
+        guard authenticated else { return false }
+        return loginUser(withEmail: email)
     }
 
     /// Verificar si el usuario actual es administrador

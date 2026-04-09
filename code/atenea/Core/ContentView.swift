@@ -19,6 +19,7 @@ struct ContentView: View {
     @State private var isLoggedIn: Bool = UserDefaults.standard.bool(forKey: "isUserLoggedIn")
     @State private var currentUserName: String = UserDefaults.standard.string(forKey: "currentUserName") ?? LocalizedString("login.defaultUser")
     @State private var selectedTab = 0
+    @State private var pendingMerchantPlace: SearchPlace? = nil
     @State private var lastCollectedVenue: WorldCupVenue?
     @State private var showCollectionAnimation = false
 
@@ -77,11 +78,11 @@ struct ContentView: View {
                             Group {
                                 switch selectedTab {
                                 case 0:
-                                    HomeView(selectedTab: $selectedTab, pendingMerchantPlace: .constant(nil))
+                                    HomeView(selectedTab: $selectedTab, pendingMerchantPlace: $pendingMerchantPlace)
                                         .environmentObject(languageManager)
                                         .background(Color(hex: "#F5F3F0").ignoresSafeArea())
                                 case 1:
-                                    MainMapView(selectedTab: $selectedTab, isLoggedIn: $isLoggedIn)
+                                    MainMapView(selectedTab: $selectedTab, isLoggedIn: $isLoggedIn, pendingMerchantPlace: $pendingMerchantPlace)
                                         .environmentObject(languageManager)
                                         .ignoresSafeArea()
                                 case 2:
@@ -101,7 +102,7 @@ struct ContentView: View {
                                     MerchantStatsView()
                                         .background(Color(hex: "#F5F3F0").ignoresSafeArea())
                                 default:
-                                    HomeView(selectedTab: $selectedTab, pendingMerchantPlace: .constant(nil))
+                                    HomeView(selectedTab: $selectedTab, pendingMerchantPlace: $pendingMerchantPlace)
                                         .environmentObject(languageManager)
                                         .background(Color(hex: "#F5F3F0").ignoresSafeArea())
                                 }
@@ -242,9 +243,11 @@ struct ContentView: View {
     // MARK: - Handle Logout
 
     private func handleLogout() {
+        print("🔓 [Logout] Iniciando — user=\(UserManager.shared.currentUser?.name ?? "nil") discoveredMerchants=\(RadarService.shared.discoveredMerchants.count)")
         // Detener todos los servicios activos
         RadarService.shared.stopAll()
         PresenceManager.shared.stopBroadcasting()
+        TimbreManager.shared.resetSession()
         NavigationStateManager.shared.showDirections = false
         NavigationStateManager.shared.isNavigationActive = false
 

@@ -22,9 +22,9 @@ struct NearbyMerchant: Identifiable {
     let coordinate: CLLocationCoordinate2D
 }
 
-// Mock location del usuario (Centro de CDMX) — se reemplazará con LocationManager real
-let mockUserLatitude = 19.4326
-let mockUserLongitude = -99.1332
+// Mock location del usuario (Expo Santa Fe, CDMX) — se reemplazará con LocationManager real
+let mockUserLatitude = 19.3580
+let mockUserLongitude = -99.2620
 
 struct HomeView: View {
     @Binding var selectedTab: Int
@@ -65,6 +65,8 @@ struct MerchantHomeView: View {
     @State private var animateCards = false
     @State private var isReady = false
     @State private var showTimbreHistory = false
+    @State private var shownTimbreId: UUID? = nil
+    @State private var merchantChatTimbre: TimbreEvent? = nil
     // @State private var showDemandInsights = false
     @State private var showStreetCredDetail = false
     // @State private var showPredictionDetail = false
@@ -145,7 +147,6 @@ struct MerchantHomeView: View {
 
             // Notificación de timbre
             if let timbre = timbreManager.newTimbreReceived {
-                let _ = print("🔔 [MerchantHome] ⚡ TIMBRE DETECTADO: \(timbre.clientName) → \(timbre.type.displayName)")
                 VStack {
                     TimbreNotificationView(
                         timbre: timbre,
@@ -154,6 +155,10 @@ struct MerchantHomeView: View {
                             timbreManager.newTimbreReceived = nil
                         },
                         onDismiss: {
+                            timbreManager.newTimbreReceived = nil
+                        },
+                        onChat: {
+                            merchantChatTimbre = timbre
                             timbreManager.newTimbreReceived = nil
                         }
                     )
@@ -165,6 +170,13 @@ struct MerchantHomeView: View {
             }
 
         } // ZStack
+        .onChange(of: timbreManager.newTimbreReceived?.id) { timbreId in
+            guard let id = timbreId, id != shownTimbreId else { return }
+            shownTimbreId = id
+            if let timbre = timbreManager.newTimbreReceived {
+                print("🔔 [MerchantHome] ⚡ TIMBRE DETECTADO: \(timbre.clientName) → \(timbre.type.displayName)")
+            }
+        }
         .onAppear {
             Task { @MainActor in
                 // Cargar datos ANTES de mostrar la UI
@@ -190,12 +202,17 @@ struct MerchantHomeView: View {
                 // Radar después de que UI esté estable
                 try? await Task.sleep(nanoseconds: 500_000_000)
 
-                if let merchant = merchantManager.currentMerchantProfile, merchant.isActive {
-                    PresenceManager.shared.startBroadcasting(merchant: merchant)
+                if let merchant = merchantManager.currentMerchantProfile {
+                    print("🏠 [MerchantHome] merchant=\(merchant.businessName) isActive=\(merchant.isActive) loc=\(merchant.currentLocation?.latitude ?? 0),\(merchant.currentLocation?.longitude ?? 0)")
+                    if merchant.isActive {
+                        PresenceManager.shared.startBroadcasting(merchant: merchant)
+                    }
                     RadarService.shared.startAdvertising(merchant: merchant)
+                } else {
+                    print("🏠 [MerchantHome] ⚠️ No hay currentMerchantProfile")
                 }
                 RadarService.shared.startScanning()
-                print("🏠 [MerchantHome] ── READY ──")
+                print("🏠 [MerchantHome] ── READY — discoveredMerchants=\(RadarService.shared.discoveredMerchants.count) ──")
             }
             print("🏠 [MerchantHome] ── ON APPEAR END ──")
         }
@@ -212,6 +229,9 @@ struct MerchantHomeView: View {
         }
         .sheet(isPresented: $showTimbreHistory) {
             TimbreHistoryView()
+        }
+        .sheet(item: $merchantChatTimbre) { timbre in
+            MerchantTimbreChatView(timbre: timbre)
         }
         .sheet(isPresented: $showStreetCredDetail) {
             if let score = streetCredScore {
@@ -456,8 +476,11 @@ struct CustomerHomeView: View {
     @StateObject private var merchantManager = MerchantManager.shared
     @StateObject private var radarService = RadarService.shared
     @StateObject private var contextEngine = ContextEngine()
+    @StateObject private var locationManager = LocationManager()
+    @ObservedObject private var timbreManager = TimbreManager.shared
     @State private var animateCards = false
     @State private var selectedMerchantForTimbre: Merchant?
+    @State private var selectedCategoryFilter: MerchantCategory? = nil
     @State private var showRadar = false
     @State private var showTapToPay = false
     @State private var showARStreetMenu = false
@@ -465,9 +488,55 @@ struct CustomerHomeView: View {
     @State private var showAIChat = false
     @State private var aiChatPrefill: String = ""
     @State private var insightTransition = false
+    @State private var showTimbreChat = false
+    @State private var chatMerchantName: String = ""
+    @State private var chatMerchantEmoji: String = ""
+    @State private var chatMerchant: Merchant?
 
-    private var nearbyMerchants: [NearbyMerchant] {
-        merchantManager.nearbyMerchantsList(fromLatitude: mockUserLatitude, longitude: mockUserLongitude)
+    private var userCoordinate: CLLocationCoordinate2D {
+        locationManager.currentLocation ?? CLLocationCoordinate2D(latitude: 19.3601, longitude: -99.2592)
+    }
+
+    private var filteredMerchants: [Merchant] {
+        let active = merchantManager.merchants.filter { $0.isActive && $0.currentLocation != nil }
+        let filtered: [Merchant]
+        if let cat = selectedCategoryFilter {
+            filtered = active.filter { $0.category == cat }
+        } else {
+            filtered = active
+        }
+        return filtered.sorted { a, b in
+            let distA = MerchantManager.haversineDistance(
+                lat1: userCoordinate.latitude, lon1: userCoordinate.longitude,
+                lat2: a.currentLocation!.latitude, lon2: a.currentLocation!.longitude
+            )
+            let distB = MerchantManager.haversineDistance(
+                lat1: userCoordinate.latitude, lon1: userCoordinate.longitude,
+                lat2: b.currentLocation!.latitude, lon2: b.currentLocation!.longitude
+            )
+            return distA < distB
+        }
+    }
+
+    private var activeCategories: [MerchantCategory] {
+        let cats = Set(merchantManager.merchants.filter { $0.isActive }.map { $0.category })
+        return MerchantCategory.allCases.filter { cats.contains($0) }
+    }
+
+    private func distanceToMerchant(_ merchant: Merchant) -> Double {
+        guard let loc = merchant.currentLocation else { return .infinity }
+        return MerchantManager.haversineDistance(
+            lat1: userCoordinate.latitude, lon1: userCoordinate.longitude,
+            lat2: loc.latitude, lon2: loc.longitude
+        )
+    }
+
+    private func formatDistance(_ meters: Double) -> String {
+        if meters < 1000 {
+            return "\(Int(meters))m"
+        } else {
+            return String(format: "%.1fkm", meters / 1000)
+        }
     }
 
     var body: some View {
@@ -484,8 +553,11 @@ struct CustomerHomeView: View {
                         // Header
                         customerHeader
 
-                    // Radar P2P — merchants detectados en vivo
+                    // Detectar comerciantes por Radar P2P
                     radarSection
+
+                    // Comerciantes en ruta ahora (Realtime)
+                    merchantsOnRouteSection
 
                     // Comerciantes activos cerca
                     nearbyMerchantsSection
@@ -509,11 +581,13 @@ struct CustomerHomeView: View {
             } // VStack
         } // ZStack
         .onAppear {
+            print("🏠 [CustomerHome] onAppear — user=\(user.name) mockLocation=(\(mockUserLatitude),\(mockUserLongitude))")
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.1)) {
                 animateCards = true
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 RadarService.shared.startScanning()
+                print("🏠 [CustomerHome] scanning started — discoveredMerchants=\(RadarService.shared.discoveredMerchants.count)")
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 contextEngine.evaluate()
@@ -546,53 +620,35 @@ struct CustomerHomeView: View {
             VoiceTranslatorView()
         }
         .sheet(item: $selectedMerchantForTimbre) { merchant in
-            VStack(spacing: 20) {
-                VStack(spacing: 8) {
-                    Text(merchant.emoji)
-                        .font(.system(size: 48))
-                    Text(merchant.businessName)
-                        .font(.system(size: 20, weight: .bold))
-                    Text(merchant.category.displayName)
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
-                    if !merchant.description.isEmpty {
-                        Text(merchant.description)
-                            .font(.system(size: 13))
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                    }
-                }
-                .padding(.top, 24)
-
-                if !merchant.products.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(LocalizedString("home.products"))
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(.secondary)
-                            .kerning(1.2)
-                        ForEach(merchant.products) { product in
-                            HStack {
-                                Text(product.emoji)
-                                Text(product.name)
-                                    .font(.system(size: 14))
-                                Spacer()
-                                Text(product.formattedPrice)
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.orange)
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 24)
-                }
-
-                Spacer()
-
-                TimbreButtonView(merchant: merchant)
-                    .padding(.bottom, 30)
+            TimbreChatView(
+                merchantName: merchant.businessName,
+                merchantEmoji: merchant.emoji,
+                merchant: merchant
+            )
+        }
+        .sheet(isPresented: $showTimbreChat) {
+            TimbreChatView(
+                merchantName: chatMerchantName,
+                merchantEmoji: chatMerchantEmoji,
+                merchant: chatMerchant
+            )
+        }
+        .onChange(of: timbreManager.lastResponse) { _, response in
+            guard let response = response else { return }
+            // Si el chat ya está abierto, no hacer nada — la UI se actualiza sola vía @Published
+            guard selectedMerchantForTimbre == nil && !showTimbreChat else {
+                timbreManager.lastResponse = nil
+                return
             }
-            .presentationDetents([.medium, .large])
-            .presentationDragIndicator(.visible)
+            // Abrir el chat solo si no estaba abierto
+            if let timbre = timbreManager.sentTimbres.first(where: { $0.id == response.timbreId }) {
+                let merchant = merchantManager.merchants.first(where: { $0.id == response.merchantId })
+                chatMerchantName = timbre.merchantName
+                chatMerchantEmoji = merchant?.emoji ?? "🏪"
+                chatMerchant = merchant
+                showTimbreChat = true
+            }
+            timbreManager.lastResponse = nil
         }
     }
 
@@ -647,16 +703,28 @@ struct CustomerHomeView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach(radarService.discoveredMerchants.filter { !$0.isStale }) { peer in
-                            InteractivePeerButton(
-                                emoji: peer.emoji,
-                                name: peer.businessName,
-                                signalColor: peer.signalStrength.color,
-                                action: {
-                                    if let merchant = MerchantManager.shared.merchants.first(where: { $0.businessName == peer.businessName }) {
-                                        selectedMerchantForTimbre = merchant
+                            ZStack(alignment: .topTrailing) {
+                                InteractivePeerButton(
+                                    emoji: peer.emoji,
+                                    name: peer.businessName,
+                                    signalColor: peer.signalStrength.color,
+                                    action: {
+                                        if let merchant = MerchantManager.shared.merchants.first(where: { $0.businessName == peer.businessName }) {
+                                            selectedMerchantForTimbre = merchant
+                                        }
                                     }
+                                )
+                                if peer.isOnRoute {
+                                    Text("En ruta")
+                                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, 5)
+                                        .padding(.vertical, 2)
+                                        .background(Color(hex: "#0ABF4F"))
+                                        .clipShape(Capsule())
+                                        .offset(x: 4, y: -4)
                                 }
-                            )
+                            }
                         }
                     }
                 }
@@ -709,6 +777,90 @@ struct CustomerHomeView: View {
         .offset(y: animateCards ? 0 : -10)
     }
 
+    // MARK: - Merchants En Ruta Ahora (Realtime)
+
+    private var merchantsOnRoute: [Merchant] {
+        merchantManager.merchants.filter { $0.isOnRoute && $0.currentLocation != nil }
+    }
+
+    private var merchantsOnRouteSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(merchantsOnRoute.isEmpty ? Color.gray : Color(hex: "#0ABF4F"))
+                        .frame(width: 8, height: 8)
+                        .opacity(merchantsOnRoute.isEmpty ? 0.4 : 1)
+
+                    Text("En ruta ahora")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundColor(Color(hex: "#081754"))
+                }
+                Spacer()
+                if !merchantsOnRoute.isEmpty {
+                    Text("\(merchantsOnRoute.count) activo\(merchantsOnRoute.count == 1 ? "" : "s")")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundColor(Color(hex: "#0ABF4F"))
+                }
+                Button(action: { selectedTab = 1 }) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Color(hex: "#1C42E8"))
+                }
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+            }
+
+            if merchantsOnRoute.isEmpty {
+                HStack(spacing: 10) {
+                    Image(systemName: "figure.walk")
+                        .font(.system(size: 16))
+                        .foregroundColor(Color(hex: "#4A4A4A").opacity(0.4))
+                    Text("Ningún comerciante en ruta en este momento")
+                        .font(.system(size: 13, design: .rounded))
+                        .foregroundColor(Color(hex: "#4A4A4A").opacity(0.6))
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(hex: "#F5F3F0"))
+                .cornerRadius(12)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(merchantsOnRoute) { merchant in
+                            Button(action: {
+                                guard let loc = merchant.currentLocation else { return }
+                                pendingMerchantPlace = SearchPlace(
+                                    name: merchant.businessName,
+                                    subtitle: "\(merchant.category.displayName) · En ruta",
+                                    category: merchant.category.displayName,
+                                    icon: "figure.walk",
+                                    coordinate: loc.coordinate
+                                )
+                                selectedTab = 1
+                            }) {
+                                OnRouteCard(merchant: merchant, distance: distanceToMerchant(merchant))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .background(Color(hex: "#FFFFFF"))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(
+                    merchantsOnRoute.isEmpty ? Color.clear : Color(hex: "#0ABF4F").opacity(0.2),
+                    lineWidth: 1
+                )
+        )
+        .opacity(animateCards ? 1 : 0)
+        .offset(y: animateCards ? 0 : 20)
+    }
+
     // MARK: - Nearby Merchants
 
     private var nearbyMerchantsSection: some View {
@@ -731,26 +883,78 @@ struct CustomerHomeView: View {
                 .contentShape(Rectangle())
             }
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(nearbyMerchants) { merchant in
-                        if merchant.isStatic {
-                            Button(action: {
-                                pendingMerchantPlace = SearchPlace(
-                                    name: merchant.name,
-                                    subtitle: "\(merchant.category) · \(merchant.distance)",
-                                    category: merchant.category,
-                                    icon: "mappin.circle.fill",
-                                    coordinate: merchant.coordinate
+            // Chips de categoría
+            if !activeCategories.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        Button {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                selectedCategoryFilter = nil
+                            }
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "square.grid.2x2.fill")
+                                    .font(.system(size: 11))
+                                Text(LocalizedString("home.filter.all"))
+                                    .font(.system(size: 12, weight: .semibold))
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(
+                                Capsule().fill(selectedCategoryFilter == nil ? Color(hex: "#1C42E8") : Color(hex: "#F5F3F0"))
+                            )
+                            .foregroundColor(selectedCategoryFilter == nil ? .white : Color(hex: "#4A4A4A"))
+                        }
+                        .buttonStyle(.plain)
+
+                        ForEach(activeCategories, id: \.self) { cat in
+                            Button {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                    selectedCategoryFilter = selectedCategoryFilter == cat ? nil : cat
+                                }
+                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Text(cat.emoji)
+                                        .font(.system(size: 13))
+                                    Text(cat.displayName)
+                                        .font(.system(size: 12, weight: .semibold))
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(
+                                    Capsule().fill(selectedCategoryFilter == cat ? Color(hex: "#FFAE43") : Color(hex: "#F5F3F0"))
                                 )
-                                selectedTab = 1
-                            }) {
-                                NearbyMerchantChip(emoji: merchant.emoji, name: merchant.name, distance: merchant.distance, isActive: merchant.isActive, isStatic: true)
+                                .foregroundColor(selectedCategoryFilter == cat ? .white : Color(hex: "#4A4A4A"))
                             }
                             .buttonStyle(.plain)
-                        } else {
-                            NearbyMerchantChip(emoji: merchant.emoji, name: merchant.name, distance: merchant.distance, isActive: merchant.isActive, isStatic: false)
                         }
+                    }
+                }
+            }
+
+            // Tarjetas de merchants
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(filteredMerchants) { merchant in
+                        Button(action: {
+                            guard let loc = merchant.currentLocation else { return }
+                            pendingMerchantPlace = SearchPlace(
+                                name: merchant.businessName,
+                                subtitle: "\(merchant.category.displayName) · \(formatDistance(distanceToMerchant(merchant)))",
+                                category: merchant.category.displayName,
+                                icon: "mappin.circle.fill",
+                                coordinate: loc.coordinate
+                            )
+                            selectedTab = 1
+                        }) {
+                            HomeMerchantCard(
+                                merchant: merchant,
+                                distance: distanceToMerchant(merchant)
+                            )
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -1098,6 +1302,173 @@ struct MerchantActionRow: View {
         .buttonStyle(.plain)
         .modifier(ScaleModifier(scale: contentScale))
         .modifier(OpacityModifier(opacity: isPressed ? 0.85 : 1.0))
+    }
+}
+
+// MARK: - On Route Card
+
+struct OnRouteCard: View {
+    let merchant: Merchant
+    let distance: Double
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Text(merchant.emoji)
+                    .font(.system(size: 26))
+                Spacer()
+                // Pulso verde: en ruta ahora
+                Circle()
+                    .fill(Color(hex: "#0ABF4F"))
+                    .frame(width: 8, height: 8)
+            }
+
+            Text(merchant.businessName)
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundColor(Color(hex: "#081754"))
+                .lineLimit(1)
+
+            HStack(spacing: 4) {
+                Text(merchant.category.displayName)
+                    .font(.system(size: 11, design: .rounded))
+                    .foregroundColor(Color(hex: "#4A4A4A"))
+                if distance < .infinity {
+                    Text("·")
+                        .foregroundColor(Color(hex: "#4A4A4A"))
+                    Text(formatDist(distance))
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundColor(Color(hex: "#0ABF4F"))
+                }
+            }
+
+            // Próxima parada
+            if let stop = merchant.route?.sortedWaypoints.first?.name {
+                HStack(spacing: 3) {
+                    Image(systemName: "mappin.circle.fill")
+                        .font(.system(size: 9))
+                    Text(stop)
+                        .font(.system(size: 10, design: .rounded))
+                        .lineLimit(1)
+                }
+                .foregroundColor(Color(hex: "#4A4A4A"))
+            }
+
+            let stops = merchant.route?.waypoints.count ?? 0
+            HStack(spacing: 4) {
+                Image(systemName: "figure.walk")
+                    .font(.system(size: 10))
+                Text(stops > 0 ? "En Ruta · \(stops) paradas" : "En Ruta")
+                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+            }
+            .foregroundColor(Color(hex: "#0ABF4F"))
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(Capsule().fill(Color(hex: "#0ABF4F").opacity(0.12)))
+        }
+        .padding(10)
+        .frame(width: 155, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(hex: "#FFFFFF"))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(Color(hex: "#0ABF4F").opacity(0.35), lineWidth: 1.5)
+                )
+        )
+        .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 2)
+    }
+
+    private func formatDist(_ meters: Double) -> String {
+        meters < 1000 ? "\(Int(meters))m" : String(format: "%.1fkm", meters / 1000)
+    }
+}
+
+// MARK: - Home Merchant Card (synced with map style)
+
+struct HomeMerchantCard: View {
+    let merchant: Merchant
+    let distance: Double
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            // Header: emoji + verificación + status
+            HStack(spacing: 6) {
+                Text(merchant.emoji)
+                    .font(.system(size: 26))
+
+                Spacer()
+
+                if merchant.trustLevel.isGreen {
+                    Image(systemName: merchant.trustLevel.icon)
+                        .font(.system(size: 14))
+                        .foregroundColor(.green)
+                }
+
+                Circle()
+                    .fill(merchant.isCurrentlyOpen ? Color(hex: "#0ABF4F") : Color(hex: "#FFAE43"))
+                    .frame(width: 8, height: 8)
+            }
+
+            // Nombre
+            Text(merchant.businessName)
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundColor(Color(hex: "#081754"))
+                .lineLimit(1)
+
+            // Categoría + distancia
+            HStack(spacing: 4) {
+                Text(merchant.category.displayName)
+                    .font(.system(size: 11, design: .rounded))
+                    .foregroundColor(Color(hex: "#4A4A4A"))
+
+                if distance < .infinity {
+                    Text("·")
+                        .foregroundColor(Color(hex: "#4A4A4A"))
+                    Text(formatDist(distance))
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundColor(Color(hex: "#1C42E8"))
+                }
+            }
+
+            // Tipo: Fijo / Ambulante
+            HStack(spacing: 4) {
+                Image(systemName: merchant.isStatic ? "mappin.circle.fill" : "figure.walk")
+                    .font(.system(size: 10))
+                Text(merchant.isStatic ? LocalizedString("home.fixed") : LocalizedString("home.nomad"))
+                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+            }
+            .foregroundColor(merchant.isStatic ? Color(hex: "#1C42E8") : Color(hex: "#FFAE43"))
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(
+                Capsule()
+                    .fill(merchant.isStatic ? Color(hex: "#1C42E8").opacity(0.12) : Color(hex: "#FFAE43").opacity(0.12))
+            )
+        }
+        .padding(10)
+        .frame(width: 140, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(hex: "#FFFFFF"))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(
+                            merchant.trustLevel.isGreen
+                                ? Color.green.opacity(0.4)
+                                : Color(hex: "#E8E4DF"),
+                            lineWidth: merchant.trustLevel.isGreen ? 1.5 : 0.5
+                        )
+                )
+        )
+        .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 2)
+    }
+
+    private func formatDist(_ meters: Double) -> String {
+        if meters < 1000 {
+            return "\(Int(meters))m"
+        } else {
+            return String(format: "%.1fkm", meters / 1000)
+        }
     }
 }
 

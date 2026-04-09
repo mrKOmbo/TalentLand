@@ -30,6 +30,10 @@ struct LoginView: View {
     @State private var searchEmail: String = ""
     @State private var selectedTab: Int = 1 // 0 = Buscador, 1 = Usuarios
 
+    // Biometric
+    @State private var showBiometricPrompt = false
+    @State private var biometricLoginFailed = false
+
     // Confetti state
     @State private var confetti: [ConfettiPiece2] = []
     @State private var showConfetti = false
@@ -69,8 +73,23 @@ struct LoginView: View {
             } message: {
                 Text(LocalizedString("login.helpMessage"))
             }
+            .alert(
+                BiometricAuthService.shared.biometricName,
+                isPresented: $showBiometricPrompt
+            ) {
+                Button("Activar") {
+                    if let user = userManager.currentUser {
+                        BiometricAuthService.shared.enable(forEmail: user.email)
+                    }
+                    completeLogin()
+                }
+                Button("Ahora no", role: .cancel) {
+                    completeLogin()
+                }
+            } message: {
+                Text("¿Deseas usar \(BiometricAuthService.shared.biometricName) para iniciar sesión más rápido?")
+            }
             .onAppear {
-                // Always start unchecked by default
                 isWorldCupToday = false
             }
             .id(languageManager.currentLanguage)
@@ -189,6 +208,12 @@ struct LoginView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
                 titleSection
+
+                // Face ID button (solo si hay sesión biométrica guardada)
+                if BiometricAuthService.shared.hasSavedSession {
+                    biometricLoginButton
+                }
+
                 userSelectionSection
                 termsCheckbox
                 continueButton
@@ -439,6 +464,62 @@ struct LoginView: View {
             .fill(canContinue ? Color.coppelBlue : Color.coppelGrey.opacity(0.3))
     }
 
+    // MARK: - Biometric Login Button
+
+    private var biometricLoginButton: some View {
+        Button {
+            Task {
+                let success = await userManager.loginWithBiometrics()
+                if success {
+                    if let user = userManager.currentUser {
+                        UserDefaults.standard.set(user.name, forKey: "currentUserName")
+                        UserDefaults.standard.set(user.email, forKey: "currentUserEmail")
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        withAnimation { isLoggedIn = true }
+                    }
+                } else {
+                    biometricLoginFailed = true
+                }
+            }
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: BiometricAuthService.shared.biometricIcon)
+                    .font(.system(size: 28, weight: .medium))
+                    .foregroundStyle(Color.coppelBlue)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Iniciar con \(BiometricAuthService.shared.biometricName)")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.primary)
+
+                    if let email = KeychainService.shared.savedEmail {
+                        Text(email)
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Spacer()
+
+                Image(systemName: "arrow.right.circle.fill")
+                    .font(.system(size: 22))
+                    .foregroundStyle(Color.coppelBlue)
+            }
+            .padding(18)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(.white)
+                    .shadow(color: Color.coppelBlue.opacity(0.15), radius: 12, x: 0, y: 4)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color.coppelBlue.opacity(0.3), lineWidth: 1.5)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
     private var divider: some View {
         HStack(spacing: 16) {
             Rectangle()
@@ -519,14 +600,26 @@ struct LoginView: View {
             UserDefaults.standard.set(isWorldCupToday, forKey: "isWorldCupToday")
             print("⚽ Hoy es el Mundial: \(isWorldCupToday ? "SÍ" : "NO")")
 
-            // Diferir cambio de estado para evitar Publishing changes durante animación
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                withAnimation {
-                    isLoggedIn = true
-                }
+            // Ofrecer Face ID si está disponible y no habilitado aún
+            // Si se muestra el prompt, NO navegar — se navega al cerrar el alert
+            let bio = BiometricAuthService.shared
+            if bio.isAvailable && !bio.isEnabled {
+                showBiometricPrompt = true
+                return
             }
+
+            // Diferir cambio de estado para evitar Publishing changes durante animación
+            completeLogin()
         } else {
             print("❌ Usuario no encontrado con email: \(emailToLogin)")
+        }
+    }
+
+    private func completeLogin() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation {
+                isLoggedIn = true
+            }
         }
     }
 

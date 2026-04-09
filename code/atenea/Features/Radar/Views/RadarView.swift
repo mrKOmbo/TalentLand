@@ -81,26 +81,26 @@ struct RadarView: View {
 
     /// Merchants con ubicación conocida, con bearing y distancia calculados
     private var radarMerchants: [RadarMerchant] {
-        let activeMerchants = merchantManager.merchants.filter { $0.isActive && $0.currentLocation != nil }
+        var result: [RadarMerchant] = []
+        var includedNames = Set<String>()
 
-        return activeMerchants.compactMap { merchant in
-            guard let loc = merchant.currentLocation else { return nil }
+        // 1. Merchants con GPS cercano
+        let activeMerchants = merchantManager.merchants.filter { $0.isActive && $0.currentLocation != nil }
+        for merchant in activeMerchants {
+            guard let loc = merchant.currentLocation else { continue }
             let coord = loc.coordinate
             let dist = MerchantManager.haversineDistance(
                 lat1: userLocation.latitude, lon1: userLocation.longitude,
                 lat2: coord.latitude, lon2: coord.longitude
             )
-            // Solo mostrar merchants dentro del rango del radar
-            guard dist <= maxDistance * 1.2 else { return nil }
+            guard dist <= maxDistance * 1.2 else { continue }
 
             let bear = bearingBetween(from: userLocation, to: coord)
-
-            // Buscar si este merchant también fue descubierto por MPC
-            let mpcPeer = radarService.discoveredMerchants.first {
+            let blePeer = radarService.discoveredMerchants.first {
                 $0.businessName == merchant.businessName
             }
 
-            return RadarMerchant(
+            result.append(RadarMerchant(
                 id: merchant.id,
                 name: merchant.businessName,
                 emoji: merchant.emoji,
@@ -109,11 +109,41 @@ struct RadarView: View {
                 coordinate: coord,
                 distance: dist,
                 bearing: bear,
-                mpcPeer: mpcPeer,
+                mpcPeer: blePeer,
                 merchant: merchant
-            )
+            ))
+            includedNames.insert(merchant.businessName)
         }
-        .sorted { $0.distance < $1.distance }
+
+        // 2. Peers BLE que NO están ya incluidos — estimar distancia por RSSI
+        //    Esto captura merchants detectados por BLE cuyo GPS está lejano o no existe.
+        for peer in radarService.discoveredMerchants where !includedNames.contains(peer.businessName) {
+            let txPower: Double = -59
+            let estimatedDist = pow(10.0, (txPower - Double(peer.rssi)) / 20.0)
+            let clampedDist = min(max(estimatedDist, 1.0), maxDistance)
+
+            // Buscar merchant en catálogo para datos completos (productos, etc.)
+            let catalogMerchant = merchantManager.merchants.first { $0.businessName == peer.businessName }
+
+            // Bearing aleatorio estable por peer (para que no salten en cada render)
+            let stableBearing = Double(abs(peer.id.hashValue) % 360)
+
+            result.append(RadarMerchant(
+                id: catalogMerchant?.id ?? UUID(),
+                name: peer.businessName,
+                emoji: peer.emoji,
+                category: catalogMerchant?.category.displayName ?? peer.category,
+                isStatic: peer.isStatic,
+                coordinate: userLocation,
+                distance: clampedDist,
+                bearing: stableBearing,
+                mpcPeer: peer,
+                merchant: catalogMerchant
+            ))
+            includedNames.insert(peer.businessName)
+        }
+
+        return result.sorted { $0.distance < $1.distance }
     }
 
     var body: some View {
@@ -437,11 +467,33 @@ struct RadarView: View {
     // MARK: - Helpers
 
     private func startRadar() {
+        print("📡 [RadarView] startRadar() — user=\(userManager.currentUser?.name ?? "nil") isMerchant=\(userManager.currentUser?.isMerchant ?? false)")
+        print("📡 [RadarView] userLocation=(\(userLocation.latitude), \(userLocation.longitude)) | maxDist=\(maxDistance)m")
         if let user = userManager.currentUser, user.isMerchant,
            let merchant = MerchantManager.shared.currentMerchantProfile {
             radarService.startAdvertising(merchant: merchant)
+            print("📡 [RadarView] Merchant advertising: \(merchant.businessName)")
         }
         radarService.startScanning()
+
+        // Log completo una sola vez
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
+            let gps = merchantManager.merchants.filter { $0.isActive && $0.currentLocation != nil }
+            let ble = radarService.discoveredMerchants
+            print("📡 [RadarView] ── SCAN REPORT ──")
+            print("📡   GPS merchants: \(gps.count) | BLE peers: \(ble.count) | radarMerchants: \(radarMerchants.count)")
+            for m in radarMerchants {
+                let source = m.mpcPeer != nil ? "BLE+GPS" : "GPS"
+                print("📡   ✅ \(m.emoji) \(m.name) dist=\(m.formattedDistance) bearing=\(Int(m.bearing))° [\(source)]")
+            }
+            for peer in ble {
+                let inRadar = radarMerchants.contains { $0.name == peer.businessName }
+                if !inRadar {
+                    print("📡   ⚠️ BLE peer \(peer.emoji) \(peer.businessName) RSSI=\(peer.rssi) — NO en radar (bug?)")
+                }
+            }
+            print("📡 [RadarView] ── END REPORT ──")
+        }
     }
 
     private func directionLabel(_ bearing: Double) -> String {

@@ -92,7 +92,7 @@ struct TimbreButtonView: View {
 
             // Opciones
             VStack(spacing: 8) {
-                ForEach(TimbreType.allCases, id: \.self) { type in
+                ForEach(TimbreType.quickActions, id: \.self) { type in
                     Button {
                         selectedType = type
                     } label: {

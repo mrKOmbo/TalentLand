@@ -1044,6 +1044,13 @@
 "timbre.cancel" = "Cancel";
 "timbre.send" = "Send";
 
+// MARK: - Timbre Chat
+"timbre.chat.messageCount" = "%d messages";
+"timbre.chat.waiting" = "Waiting for response...";
+"timbre.chat.empty" = "Send a timbre to start the conversation";
+"timbre.chat.estimatedMinutes" = "~%d min";
+"timbre.chat.placeholder" = "Write a message...";
+
 // MARK: - Timbre History
 "timbre.history.title" = "Timbres received";
 "timbre.history.unread" = "%d unread";
@@ -1124,6 +1131,9 @@
 "home.nearby" = "%d nearby";
 "home.searchingMerchants" = "Searching for merchants...";
 "home.merchantsNearby" = "Merchants nearby";
+"merchant.noTimbres" = "No timbres yet";
+"merchant.timbresCount" = "timbres";
+"home.filter.all" = "All";
 "home.askAteneaAI" = "Ask Atenea AI";
 "home.askAteneaAIDesc" = "Where are the best tacos near Azteca?";
 "home.atenea.live" = "LIVE";
@@ -1180,11 +1190,11 @@
 "navigation.startingNavigation" = "Starting navigation...";
 
 // MARK: - Categories
-"category.restaurants" = "Restaurants";
-"category.hotels" = "Hotels";
-"category.museums" = "Museums";
-"category.transport" = "Transport";
+"category.streetFood" = "Street Food";
 "category.stadiums" = "Stadiums";
+"category.metro" = "Metro";
+"category.attractions" = "Attractions";
+"category.pharmacy" = "Pharmacy";
 
 // MARK: - Search
 "search.placeholder" = "Search...";

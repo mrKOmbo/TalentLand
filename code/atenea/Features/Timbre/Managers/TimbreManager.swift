@@ -52,6 +52,8 @@ class TimbreManager: ObservableObject {
         pendingTimbres.insert(timbre, at: 0)
         newTimbreReceived = timbre
 
+        print("📨 [Timbre SEND] from=\(client.name) to=\(merchant.businessName) type=\(type.rawValue) msg=\(message ?? "nil") lat=\(clientLatitude) lon=\(clientLongitude)")
+
         /* // Registrar demanda
         DemandZoneManager.shared.recordDemand(
             latitude: clientLatitude,
@@ -100,15 +102,18 @@ class TimbreManager: ObservableObject {
         if let index = pendingTimbres.firstIndex(where: { $0.id == timbreId }) {
             pendingTimbres[index].isResponded = true
             pendingTimbres[index].response = response
+            pendingTimbres[index].responses.append(response)
         }
 
         // Actualizar en sentTimbres (para que el cliente vea la respuesta)
         if let index = sentTimbres.firstIndex(where: { $0.id == timbreId }) {
             sentTimbres[index].isResponded = true
             sentTimbres[index].response = response
+            sentTimbres[index].responses.append(response)
         }
 
         lastResponse = response
+        print("📤 [Timbre RESPOND] merchant=\(merchant.businessName) type=\(responseType.rawValue) msg=\(message ?? "nil") timbreId=\(timbreId)")
 
         // Enviar respuesta por BLE notify al cliente
         if let timbre = pendingTimbres.first(where: { $0.id == timbreId }) {
@@ -155,7 +160,7 @@ class TimbreManager: ObservableObject {
     func receiveTimbre(_ timbre: TimbreEvent) {
         pendingTimbres.insert(timbre, at: 0)
         newTimbreReceived = timbre
-        print("🔔 [Timbre P2P] ⚡ Recibido de \(timbre.clientName): \(timbre.type.displayName)")
+        print("📩 [Timbre RECV] from=\(timbre.clientName) to=\(timbre.merchantName) type=\(timbre.type.rawValue) msg=\(timbre.message ?? "nil") clientLat=\(timbre.clientLatitude) clientLon=\(timbre.clientLongitude)")
 
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.warning)
@@ -173,9 +178,10 @@ class TimbreManager: ObservableObject {
         if let index = sentTimbres.firstIndex(where: { $0.id == response.timbreId }) {
             sentTimbres[index].isResponded = true
             sentTimbres[index].response = response
+            sentTimbres[index].responses.append(response)
         }
         lastResponse = response
-        print("🔔 [Timbre P2P] ✅ Respuesta recibida: \(response.type.displayName)")
+        print("📩 [Timbre RECV RESPONSE] type=\(response.type.rawValue) msg=\(response.message ?? "nil") minutes=\(response.estimatedMinutes.map { String($0) } ?? "nil") timbreId=\(response.timbreId)")
 
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
@@ -187,5 +193,38 @@ class TimbreManager: ObservableObject {
         let cutoff = Date().addingTimeInterval(-seconds)
         pendingTimbres.removeAll { $0.timestamp < cutoff }
         sentTimbres.removeAll { $0.timestamp < cutoff }
+    }
+
+    /// Inyecta una respuesta simulada (por Claude) directamente en sentTimbres del cliente.
+    /// No toca lastResponse — el chat ya observa sentTimbres directamente.
+    /// lastResponse solo se usa para notificar respuestas BLE cuando el chat NO está abierto.
+    func applySimulatedResponse(for timbreId: UUID, type: TimbreResponseType, message: String, estimatedMinutes: Int?, merchantId: UUID) {
+        let response = TimbreResponse(
+            timbreId: timbreId,
+            merchantId: merchantId,
+            type: type,
+            estimatedMinutes: estimatedMinutes,
+            message: message
+        )
+        if let index = sentTimbres.firstIndex(where: { $0.id == timbreId }) {
+            sentTimbres[index].isResponded = true
+            sentTimbres[index].response = response
+            sentTimbres[index].responses.append(response)
+        }
+        if let index = pendingTimbres.firstIndex(where: { $0.id == timbreId }) {
+            pendingTimbres[index].isResponded = true
+            pendingTimbres[index].response = response
+            pendingTimbres[index].responses.append(response)
+        }
+        // NO tocar lastResponse — evita que el onChange de HomeView cierre/reabra el chat
+        print("🤖 [Timbre Claude] Respuesta simulada: \(type.displayName) — \(message)")
+    }
+
+    /// Limpiar todo el estado al cerrar sesión
+    func resetSession() {
+        pendingTimbres.removeAll()
+        sentTimbres.removeAll()
+        lastResponse = nil
+        newTimbreReceived = nil
     }
 }

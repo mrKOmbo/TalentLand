@@ -36,6 +36,8 @@
 		<string>fifa-26.otf</string>
 		<string>fifawelcome1.3.ttf</string>
 	</array>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Atenea usa Face ID para iniciar sesión de forma segura y rápida.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>We need access to your camera for AR navigation with real-time text detection to help you navigate better.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

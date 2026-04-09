@@ -26,6 +26,7 @@ struct MainMapView: View {
     @ObservedObject private var routeTracker = RouteTrackingManager.shared
     @Binding var selectedTab: Int
     @Binding var isLoggedIn: Bool
+    @Binding var pendingMerchantPlace: SearchPlace?
     @State private var selectedSearchPlace: SearchPlace? = nil
     @State private var searchMarkers: [SearchPlace] = []
     @State private var preparedNavigation: PreparedNavigation? = nil
@@ -55,6 +56,9 @@ struct MainMapView: View {
     @State private var showVenueMarkers = true // Mostrar sedes por defecto
     @State private var selectedVenue: WorldCupVenue? = nil
     @State private var showVenueDetailModal = false
+    @State private var selectedMerchant: Merchant? = nil
+    @State private var showMerchantDetailModal = false
+    @State private var merchantForTimbre: Merchant? = nil
     @State private var shouldFollowUser = false // No seguir al usuario inicialmente
     @State private var isFirstLocationLoad = true // Para detectar la primera carga de ubicación
     @State private var selectedChipId: String? = nil // ID del chip seleccionado
@@ -112,6 +116,19 @@ struct MainMapView: View {
                 handleAppIntentRequests()
                 loadUserRouteOnMap()
                 startMerchantRouteMonitoring()
+            }
+            .onAppear {
+                if let place = pendingMerchantPlace {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        handlePlaceSelection(place)
+                        pendingMerchantPlace = nil
+                    }
+                }
+            }
+            .onChange(of: pendingMerchantPlace) { _, place in
+                guard let place else { return }
+                handlePlaceSelection(place)
+                pendingMerchantPlace = nil
             }
             .onChange(of: selectedTab) { oldValue, newValue in
                 if newValue == 0 && modalState == SheetState.hidden {
@@ -306,6 +323,13 @@ struct MainMapView: View {
                     print("🚨 Emergencia activada por shake gesture")
                 }
             }
+            .sheet(item: $merchantForTimbre) { merchant in
+                TimbreChatView(
+                    merchantName: merchant.businessName,
+                    merchantEmoji: merchant.emoji,
+                    merchant: merchant
+                )
+            }
     }
 
     private var baseView: some View {
@@ -356,6 +380,30 @@ struct MainMapView: View {
                 .animation(.spring(response: 0.35, dampingFraction: 0.9), value: marker.id)
                 .animation(.spring(response: 0.35, dampingFraction: 0.8), value: menuState.showMenu)
                 .zIndex(100)
+            }
+
+            // Modal de detalle de comerciante (ocultar en emergencia)
+            if showMerchantDetailModal && !emergencyManager.isEmergencyActive, let merchant = selectedMerchant {
+                MerchantDetailCard(
+                    merchant: merchant,
+                    onDismiss: {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            showMerchantDetailModal = false
+                            selectedMerchant = nil
+                        }
+                    },
+                    onTimbre: {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            showMerchantDetailModal = false
+                            selectedMerchant = nil
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                            merchantForTimbre = merchant
+                        }
+                    }
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .zIndex(102)
             }
 
             // Modal de detalle de sede FIFA (ocultar en emergencia)
@@ -631,6 +679,16 @@ struct MainMapView: View {
             // Resetear después de la animación
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 cameraCenter = nil
+            }
+
+            // Mostrar card si corresponde a un comerciante
+            if let match = merchantManager.merchants.first(where: { $0.businessName == place.name }) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.3) {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        selectedMerchant = match
+                        showMerchantDetailModal = true
+                    }
+                }
             }
 
             print("📍 Volando a: \(place.name) (\(coordinate.latitude), \(coordinate.longitude))")
@@ -945,8 +1003,10 @@ struct MainMapView: View {
                     handleVenueTap(venue)
                 },
                 onMerchantTapped: { merchant in
-                    print("🏪 Merchant tocado: \(merchant.businessName)")
-                    selectedMerchant = merchant
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        selectedMerchant = merchant
+                        showMerchantDetailModal = true
+                    }
                 },
                 onMapTapped: { coordinate in
                     handleMapTap(at: coordinate)
@@ -2237,6 +2297,8 @@ struct MapboxMainMapView: UIViewRepresentable {
     }
 
     func updateUIView(_ mapView: MapView, context: Context) {
+        context.coordinator.onMerchantTapped = onMerchantTapped
+
         // Verificar si cambió shouldFollowUser
         if context.coordinator.currentShouldFollowUser != shouldFollowUser {
             context.coordinator.currentShouldFollowUser = shouldFollowUser
@@ -2262,7 +2324,7 @@ struct MapboxMainMapView: UIViewRepresentable {
         if context.coordinator.currentStyle != mapStyle {
             context.coordinator.currentStyle = mapStyle
             context.coordinator.styleLoaded = false
-            context.coordinator.heatmapAdded = false
+            // context.coordinator.heatmapAdded = false
 
             // Cambiar el estilo del mapa
             mapView.mapboxMap.loadStyleURI(mapStyle.styleURI) { error in
@@ -4779,6 +4841,133 @@ struct RainbowBorderRounded: View {
                 rotation = 360
             }
         }
+    }
+}
+
+/// MARK: - Merchant Detail Card
+
+struct MerchantDetailCard: View {
+    let merchant: Merchant
+    let onDismiss: () -> Void
+    let onTimbre: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+            VStack(spacing: 0) {
+                RoundedRectangle(cornerRadius: 2.5)
+                    .fill(Color.white.opacity(0.3))
+                    .frame(width: 36, height: 5)
+                    .padding(.top, 12)
+                    .padding(.bottom, 8)
+
+                VStack(alignment: .leading, spacing: 14) {
+                    // Header
+                    HStack(alignment: .top, spacing: 12) {
+                        Text(merchant.emoji)
+                            .font(.system(size: 42))
+
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text(merchant.businessName)
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                            HStack(spacing: 6) {
+                                Text(merchant.category.displayName)
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(Color(hex: "#FFAE43"))
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 3)
+                                    .background(Color(hex: "#FFAE43").opacity(0.18))
+                                    .cornerRadius(8)
+                                HStack(spacing: 4) {
+                                    Circle()
+                                        .fill(merchant.isCurrentlyOpen ? Color(hex: "#0ABF4F") : Color.gray)
+                                        .frame(width: 7, height: 7)
+                                    Text(merchant.isCurrentlyOpen ? "Abierto" : "Cerrado")
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundColor(merchant.isCurrentlyOpen ? Color(hex: "#0ABF4F") : .gray)
+                                }
+                            }
+                        }
+
+                        Spacer()
+
+                        Button(action: onDismiss) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 26))
+                                .foregroundColor(.white.opacity(0.45))
+                        }
+                    }
+
+                    // Descripción
+                    if !merchant.description.isEmpty {
+                        Text(merchant.description)
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.7))
+                            .lineLimit(2)
+                    }
+
+                    // Productos
+                    if !merchant.products.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("PRODUCTOS")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.45))
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    ForEach(merchant.products.prefix(5)) { product in
+                                        HStack(spacing: 6) {
+                                            Text(product.emoji)
+                                                .font(.system(size: 16))
+                                            VStack(alignment: .leading, spacing: 1) {
+                                                Text(product.name)
+                                                    .font(.system(size: 12, weight: .semibold))
+                                                    .foregroundColor(.white)
+                                                Text("$\(Int(product.price))")
+                                                    .font(.system(size: 11))
+                                                    .foregroundColor(Color(hex: "#FFAE43"))
+                                            }
+                                        }
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 7)
+                                        .background(Color.white.opacity(0.08))
+                                        .cornerRadius(10)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Botón Timbrar
+                    Button(action: onTimbre) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "bell.fill")
+                            Text("Timbrar")
+                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(
+                            LinearGradient(
+                                colors: [Color(hex: "#FFAE43"), Color(hex: "#FF8C00")],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .foregroundColor(.white)
+                        .cornerRadius(14)
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 36)
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(Color(hex: "#081754"))
+                    .ignoresSafeArea(edges: .bottom)
+            )
+        }
+        .ignoresSafeArea(edges: .bottom)
     }
 }
 

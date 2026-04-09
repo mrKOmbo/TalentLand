@@ -632,6 +632,8 @@
 "role.welcomeAccessibility" = "Bienvenido a Atenea, %@. Tu perfil de accesibilidad ha sido configurado.";
 
 // MARK: - Merchant Registration
+"merchant.noTimbres" = "Sin timbres por ahora";
+"merchant.timbresCount" = "timbres";
 "merchant.back" = "Atrás";
 "merchant.step2" = "Paso 2 de 2";
 "merchant.setupBusiness" = "Configura tu negocio";
@@ -1046,6 +1048,13 @@
 "timbre.cancel" = "Cancelar";
 "timbre.send" = "Enviar";
 
+// MARK: - Timbre Chat
+"timbre.chat.messageCount" = "%d mensajes";
+"timbre.chat.waiting" = "Esperando respuesta...";
+"timbre.chat.empty" = "Envía un timbre para iniciar la conversación";
+"timbre.chat.estimatedMinutes" = "~%d min";
+"timbre.chat.placeholder" = "Escribe un mensaje...";
+
 // MARK: - Timbre History
 "timbre.history.title" = "Timbres recibidos";
 "timbre.history.unread" = "%d sin leer";
@@ -1155,11 +1164,11 @@
 "navigation.startingNavigation" = "Iniciando navegación...";
 
 // MARK: - Categories
-"category.restaurants" = "Restaurantes";
-"category.hotels" = "Hoteles";
-"category.museums" = "Museos";
-"category.transport" = "Transporte";
+"category.streetFood" = "Antojitos";
 "category.stadiums" = "Estadios";
+"category.metro" = "Metro";
+"category.attractions" = "Atracciones";
+"category.pharmacy" = "Farmacia";
 
 // MARK: - Search
 "search.placeholder" = "Buscar...";
@@ -1170,6 +1179,7 @@
 "home.nearby" = "%d cerca";
 "home.searchingMerchants" = "Buscando comerciantes...";
 "home.merchantsNearby" = "Comerciantes cerca";
+"home.filter.all" = "Todos";
 "home.askAteneaAI" = "Pregúntale a Atenea IA";
 "home.askAteneaAIDesc" = "¿Dónde están los mejores tacos cerca del Azteca?";
 "home.atenea.live" = "EN VIVO";

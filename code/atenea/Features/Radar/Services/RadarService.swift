@@ -25,8 +25,8 @@ struct AteneaBLE {
     // Duty cycling
     static let scanOnDuration: TimeInterval = 5.0
     static let scanOffDuration: TimeInterval = 10.0
-    static let pruneInterval: TimeInterval = 10.0
-    static let staleTimeout: TimeInterval = 90.0
+    static let pruneInterval: TimeInterval = 5.0
+    static let staleTimeout: TimeInterval = 30.0
 }
 
 // MARK: - Discovered Peer (BLE)
@@ -38,6 +38,7 @@ struct RadarPeer: Identifiable, Equatable {
     let category: String
     let emoji: String
     let isStatic: Bool
+    var isOnRoute: Bool
     var lastSeen: Date
     var signalStrength: SignalStrength
     var rssi: Int                      // RSSI real del BLE scan
@@ -136,8 +137,9 @@ class RadarService: NSObject, ObservableObject {
         stopAdvertising()
 
         let name = String(merchant.businessName.prefix(20))
-        let info = "\(merchant.emoji)|\(name)|\(merchant.category.rawValue)|\(merchant.isStatic ? "1" : "0")"
+        let info = "\(merchant.emoji)|\(name)|\(merchant.category.rawValue)|\(merchant.isStatic ? "1" : "0")|\(merchant.isOnRoute ? "1" : "0")"
         currentMerchantInfo = info
+        print("📡 [BLE Periph] startAdvertising: \(name) | peripheralState=\(peripheralManager.state.rawValue)")
 
         guard peripheralManager.state == .poweredOn else {
             pendingAdvertiseInfo = info
@@ -146,7 +148,7 @@ class RadarService: NSObject, ObservableObject {
         }
 
         setupPeripheralService()
-        startPeripheralAdvertising(info: info)
+        // advertising arranca en peripheralManager(_:didAdd:error:) cuando el servicio está listo
     }
 
     func stopAdvertising() {
@@ -204,13 +206,19 @@ class RadarService: NSObject, ObservableObject {
     func startScanning() {
         stopScanning()
 
+        #if targetEnvironment(simulator)
+        print("🔍 [BLE Central] 🖥️ Simulator detectado — usando mock discovery")
+        loadMockPeers()
+        return
+        #else
         guard centralManager.state == .poweredOn else {
             pendingScanStart = true
-            print("🔍 [BLE Central] ⏳ Esperando poweredOn para escanear")
+            print("🔍 [BLE Central] ⏳ Esperando poweredOn para escanear (state=\(centralManager.state.rawValue))")
             return
         }
 
         beginScan()
+        #endif
     }
 
     private func beginScan() {
@@ -268,21 +276,7 @@ class RadarService: NSObject, ObservableObject {
         pruneTimer = nil
         pendingScanStart = false
 
-        DispatchQueue.main.async {
-            self.isScanning = false
-            if !self.isAdvertising {
-                self.radarStatus = "Inactivo"
-            }
-        }
-        print("🔍 [BLE Central] Dejó de escanear")
-    }
-
-    // MARK: - Stop All
-
-    func stopAll() {
-        stopAdvertising()
-        stopScanning()
-
+        // Desconectar peripherals activos y limpiar cache
         for (_, peripheral) in discoveredPeripherals {
             if peripheral.state == .connected || peripheral.state == .connecting {
                 centralManager.cancelPeripheralConnection(peripheral)
@@ -293,10 +287,24 @@ class RadarService: NSObject, ObservableObject {
         remoteTimbreCharacteristic = nil
 
         DispatchQueue.main.async {
+            self.isScanning = false
             self.discoveredMerchants.removeAll()
             self.peerMerchantMap.removeAll()
-            self.radarStatus = "Inactivo"
+            if !self.isAdvertising {
+                self.radarStatus = "Inactivo"
+            }
         }
+        print("🔍 [BLE Central] Dejó de escanear — cache limpiado")
+    }
+
+    // MARK: - Stop All
+
+    func stopAll() {
+        print("🛑 [BLE] stopAll() — deteniendo advertising + scanning")
+        stopAdvertising()
+        stopScanning()
+        // stopScanning() ya limpia discoveredPeripherals, discoveredMerchants y peerMerchantMap
+        print("🛑 [BLE] stopAll() — completo")
     }
 
     // MARK: - Queries
@@ -318,9 +326,13 @@ class RadarService: NSObject, ObservableObject {
             return
         }
 
+        print("📡 [BLE P2P SEND] → \(peer.businessName) | client=\(timbre.clientName) type=\(timbre.type.rawValue) lat=\(timbre.clientLatitude) lon=\(timbre.clientLongitude) msg=\(timbre.message ?? "nil")")
+
         do {
             let message = TimbreP2PMessage.timbreEvent(timbre)
             let data = try JSONEncoder().encode(message)
+
+            print("📡 [BLE P2P PAYLOAD] \(data.count) bytes | JSON: \(String(data: data, encoding: .utf8)?.prefix(300) ?? "?")")
 
             if peripheral.state == .connected, let char = remoteTimbreCharacteristic {
                 peripheral.writeValue(data, for: char, type: .withResponse)
@@ -353,18 +365,58 @@ class RadarService: NSObject, ObservableObject {
         }
     }
 
-    // MARK: - Internal
+    // MARK: - Simulator Mock
 
-    private func pruneAndUpdateSignals() {
+    /// Genera peers falsos a partir de MerchantManager para testing sin BLE
+    private func loadMockPeers() {
+        let merchants = MerchantManager.shared.merchants.filter { $0.isActive && $0.currentLocation != nil }
+        print("🔍 [Mock] Cargando \(merchants.count) merchants como peers simulados")
+
         DispatchQueue.main.async {
-            self.discoveredMerchants.removeAll { $0.isStale }
+            self.isScanning = true
+            self.discoveredMerchants.removeAll()
+
+            for merchant in merchants {
+                let mockRSSI = Int.random(in: -75 ... -45)
+                let peer = RadarPeer(
+                    id: merchant.id.uuidString,
+                    peripheral: nil,
+                    businessName: merchant.businessName,
+                    category: merchant.category.rawValue,
+                    emoji: merchant.emoji,
+                    isStatic: merchant.isStatic,
+                    isOnRoute: merchant.route?.isActive ?? false,
+                    lastSeen: Date(),
+                    signalStrength: RadarPeer.SignalStrength.from(rssi: mockRSSI),
+                    rssi: mockRSSI
+                )
+                self.discoveredMerchants.append(peer)
+                self.peerMerchantMap[peer.id] = merchant.businessName
+                print("📍 [Mock] Peer: \(merchant.emoji) \(merchant.businessName) RSSI:\(mockRSSI)")
+            }
+
+            self.radarStatus = "\(self.activeMerchantCount) comerciantes cerca"
+            print("🔍 [Mock] ✅ \(self.discoveredMerchants.count) peers mock cargados")
         }
     }
 
-    private func parseAdvertisementName(_ localName: String) -> (emoji: String, name: String, category: String, isStatic: Bool)? {
+    // MARK: - Internal
+
+    private func pruneAndUpdateSignals() {
+        let before = discoveredMerchants.count
+        DispatchQueue.main.async {
+            self.discoveredMerchants.removeAll { $0.isStale }
+            let after = self.discoveredMerchants.count
+            if before != after {
+                print("🧹 [BLE] Pruned \(before - after) stale peers → \(after) restantes")
+            }
+        }
+    }
+
+    private func parseAdvertisementName(_ localName: String) -> (emoji: String, name: String, category: String, isStatic: Bool, isOnRoute: Bool)? {
         let parts = localName.components(separatedBy: "|")
         guard parts.count >= 4 else { return nil }
-        return (emoji: parts[0], name: parts[1], category: parts[2], isStatic: parts[3] == "1")
+        return (emoji: parts[0], name: parts[1], category: parts[2], isStatic: parts[3] == "1", isOnRoute: parts.count >= 5 && parts[4] == "1")
     }
 }
 
@@ -405,6 +457,7 @@ extension RadarService: CBCentralManagerDelegate {
                     category: info.category,
                     emoji: info.emoji,
                     isStatic: info.isStatic,
+                    isOnRoute: info.isOnRoute,
                     lastSeen: Date(),
                     signalStrength: RadarPeer.SignalStrength.from(rssi: rssiValue),
                     rssi: rssiValue
@@ -412,7 +465,12 @@ extension RadarService: CBCentralManagerDelegate {
                 self.discoveredMerchants.append(peer)
                 self.peerMerchantMap[peerId] = info.name
 
-                print("📍 [BLE] Descubierto: \(info.emoji) \(info.name) (\(info.category)) RSSI: \(rssiValue)")
+                // Sincronizar isOnRoute al MerchantManager local
+                if info.isOnRoute, let idx = MerchantManager.shared.merchants.firstIndex(where: { $0.businessName == info.name }) {
+                    MerchantManager.shared.merchants[idx].isOnRoute = true
+                }
+
+                print("📍 [BLE] Descubierto: \(info.emoji) \(info.name) (\(info.category)) isOnRoute=\(info.isOnRoute) RSSI: \(rssiValue)")
 
                 let generator = UIImpactFeedbackGenerator(style: .light)
                 generator.impactOccurred()
@@ -490,8 +548,8 @@ extension RadarService: CBPeripheralDelegate {
             let message = try JSONDecoder().decode(TimbreP2PMessage.self, from: data)
             DispatchQueue.main.async {
                 if case .timbreResponse(let response) = message {
+                    print("📩 [BLE RECV RESPONSE] type=\(response.type.rawValue) msg=\(response.message ?? "nil") minutes=\(response.estimatedMinutes.map { String($0) } ?? "nil")")
                     TimbreManager.shared.receiveResponse(response)
-                    print("📡 [BLE] 📨 Respuesta recibida del merchant")
                 }
             }
         } catch {
@@ -508,14 +566,20 @@ extension RadarService: CBPeripheralManagerDelegate {
         print("📡 [BLE Periph] Estado: \(peripheral.state.rawValue)")
         if peripheral.state == .poweredOn, let info = pendingAdvertiseInfo {
             pendingAdvertiseInfo = nil
+            currentMerchantInfo = info
             setupPeripheralService()
-            startPeripheralAdvertising(info: info)
+            // advertising arranca en didAdd callback
         }
     }
 
     func peripheralManager(_ peripheral: CBPeripheralManager, didAdd service: CBService, error: Error?) {
         if let error = error {
             print("📡 [BLE Periph] ❌ Error service: \(error.localizedDescription)")
+            return
+        }
+        // Servicio GATT listo — ahora sí anunciarse
+        if let info = currentMerchantInfo {
+            startPeripheralAdvertising(info: info)
         }
     }
 
@@ -535,14 +599,15 @@ extension RadarService: CBPeripheralManagerDelegate {
             }
 
             peripheral.respond(to: request, withResult: .success)
+            print("📩 [BLE RECV] \(data.count) bytes de central=\(request.central.identifier.uuidString.prefix(8))")
 
             do {
                 let message = try JSONDecoder().decode(TimbreP2PMessage.self, from: data)
                 DispatchQueue.main.async {
                     if case .timbreEvent(let timbre) = message {
+                        print("📩 [BLE RECV TIMBRE] client=\(timbre.clientName) type=\(timbre.type.rawValue) lat=\(timbre.clientLatitude) lon=\(timbre.clientLongitude) msg=\(timbre.message ?? "nil")")
                         TimbreManager.shared.receiveTimbre(timbre)
                         self.peerMerchantMap[request.central.identifier.uuidString] = timbre.clientName
-                        print("🔔 [BLE] ⚡ TIMBRE de \(timbre.clientName): \(timbre.type.displayName)")
                     }
                 }
             } catch {
