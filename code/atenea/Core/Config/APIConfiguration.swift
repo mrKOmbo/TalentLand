@@ -15,9 +15,6 @@ class APIConfiguration {
 
     // MARK: - Claude API Key
 
-    // Key bundled para demo hackathon
-    private let bundledClaudeKey = "REMOVED_KEY"
-
     var claudeAPIKey: String {
         get {
             if let savedKey = UserDefaults.standard.string(forKey: "claudeAPIKey"), !savedKey.isEmpty {
@@ -27,7 +24,7 @@ class APIConfiguration {
                !apiKey.isEmpty, !apiKey.hasPrefix("$(") {
                 return apiKey
             }
-            return bundledClaudeKey
+            return ""
         }
         set {
             UserDefaults.standard.set(newValue, forKey: "claudeAPIKey")
