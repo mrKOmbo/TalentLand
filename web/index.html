@@ -778,6 +778,9 @@
         if (merchantId) {
             var biz = await fetchMerchantById(merchantId);
             if (biz) { showBizPage(biz); return; }
+            // Fallback: si tiene datos embebidos (?d=), usarlos
+            var fallback = getBusinessData();
+            if (fallback && fallback.name) { showBizPage(fallback); return; }
             // Show error if not found
             document.getElementById('landing-page').style.display = 'none';
             var bizPage = document.getElementById('biz-page');
