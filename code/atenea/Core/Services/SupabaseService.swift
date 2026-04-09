@@ -2,7 +2,7 @@
 //  SupabaseService.swift
 //  atenea
 //
-//  Servicio para sincronizar merchants con Supabase (komiia.com)
+//  Servicio para sincronizar datos con Supabase (komiia.com)
 //
 
 import Foundation
@@ -24,22 +24,29 @@ class SupabaseService {
         ]
     }
 
-    // MARK: - Save Merchant
+    // MARK: - Save User
 
-    /// Guarda un merchant en Supabase. Si ya existe (por business_name), lo actualiza.
-    func saveMerchant(_ merchant: Merchant) async throws -> String {
-        let payload = merchantToPayload(merchant)
+    func saveUser(_ user: User) async throws {
+        let payload: [String: Any] = [
+            "id": user.id.uuidString,
+            "email": user.email,
+            "name": user.name,
+            "role": user.role.rawValue,
+            "age": user.age ?? "",
+            "country": user.country ?? "",
+            "phone_number": user.phoneNumber ?? "",
+            "accessibility_option": user.accessibilityOption.rawValue
+        ]
+
         let jsonData = try JSONSerialization.data(withJSONObject: payload)
 
-        // Upsert: si ya existe un merchant con el mismo id, actualiza
-        var request = URLRequest(url: URL(string: "\(baseURL)/merchants")!)
+        var request = URLRequest(url: URL(string: "\(baseURL)/users")!)
         request.httpMethod = "POST"
         request.httpBody = jsonData
         for (key, value) in headers {
             request.setValue(value, forHTTPHeaderField: key)
         }
-        // Enable upsert on id conflict
-        request.setValue("resolution=merge-duplicates", forHTTPHeaderField: "Prefer")
+        request.setValue("return=representation,resolution=merge-duplicates", forHTTPHeaderField: "Prefer")
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
@@ -49,7 +56,33 @@ class SupabaseService {
             throw SupabaseError.saveFailed(errorBody)
         }
 
-        // Parse response to get the ID
+        print("☁️ User saved to Supabase: \(user.name) (\(user.email))")
+    }
+
+    // MARK: - Save Merchant
+
+    func saveMerchant(_ merchant: Merchant) async throws -> String {
+        var payload = merchantToPayload(merchant)
+        payload["id"] = merchant.id.uuidString
+
+        let jsonData = try JSONSerialization.data(withJSONObject: payload)
+
+        var request = URLRequest(url: URL(string: "\(baseURL)/merchants")!)
+        request.httpMethod = "POST"
+        request.httpBody = jsonData
+        for (key, value) in headers {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        request.setValue("return=representation,resolution=merge-duplicates", forHTTPHeaderField: "Prefer")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw SupabaseError.saveFailed(errorBody)
+        }
+
         if let results = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]],
            let first = results.first,
            let id = first["id"] as? String {
@@ -58,6 +91,58 @@ class SupabaseService {
         }
 
         return merchant.id.uuidString
+    }
+
+    // MARK: - Update Merchant Location
+
+    func updateMerchantLocation(merchantId: UUID, latitude: Double, longitude: Double) async throws {
+        let payload: [String: Any] = [
+            "latitude": latitude,
+            "longitude": longitude,
+            "is_active": true
+        ]
+
+        let jsonData = try JSONSerialization.data(withJSONObject: payload)
+
+        var request = URLRequest(url: URL(string: "\(baseURL)/merchants?id=eq.\(merchantId.uuidString)")!)
+        request.httpMethod = "PATCH"
+        request.httpBody = jsonData
+        for (key, value) in headers {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw SupabaseError.saveFailed(errorBody)
+        }
+
+        print("☁️ Location updated in Supabase for merchant: \(merchantId)")
+    }
+
+    // MARK: - Update Merchant Active Status
+
+    func updateMerchantStatus(merchantId: UUID, isActive: Bool) async throws {
+        let payload: [String: Any] = ["is_active": isActive]
+        let jsonData = try JSONSerialization.data(withJSONObject: payload)
+
+        var request = URLRequest(url: URL(string: "\(baseURL)/merchants?id=eq.\(merchantId.uuidString)")!)
+        request.httpMethod = "PATCH"
+        request.httpBody = jsonData
+        for (key, value) in headers {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            throw SupabaseError.saveFailed("Status update failed")
+        }
+
+        print("☁️ Status updated in Supabase: \(merchantId) → \(isActive ? "active" : "inactive")")
     }
 
     // MARK: - Fetch All Merchants
@@ -82,10 +167,17 @@ class SupabaseService {
         return merchants
     }
 
-    // MARK: - Get Web URL for merchant
+    // MARK: - Sync All Mock Merchants (run once on first launch)
 
-    func webURL(for merchant: Merchant) -> String {
-        return "https://komiia.com/biz/\(merchant.id.uuidString)"
+    func syncAllMerchants(_ merchants: [Merchant]) async {
+        for merchant in merchants {
+            do {
+                _ = try await saveMerchant(merchant)
+            } catch {
+                print("⚠️ Failed to sync merchant \(merchant.businessName): \(error.localizedDescription)")
+            }
+        }
+        print("☁️ Synced \(merchants.count) merchants to Supabase")
     }
 
     // MARK: - Payload Conversion

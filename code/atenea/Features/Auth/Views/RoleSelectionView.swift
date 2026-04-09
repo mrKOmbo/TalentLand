@@ -185,6 +185,11 @@ struct RoleSelectionView: View {
         // Save user
         userManager.currentUser = newUser
 
+        // Sync to Supabase
+        Task {
+            try? await SupabaseService.shared.saveUser(newUser)
+        }
+
         // Announce if needed
         if newUser.hasVisualDisability {
             let accessibilityManager = AccessibilitySettingsManager.shared

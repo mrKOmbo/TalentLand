@@ -763,6 +763,11 @@ struct MerchantRegistrationView: View {
         // Save user
         userManager.currentUser = user
 
+        // Sync user to Supabase
+        Task {
+            try? await SupabaseService.shared.saveUser(user)
+        }
+
         // Register merchant in MerchantManager so it appears on the main map
         MerchantManager.shared.registerMerchant(
             userId: user.id,
