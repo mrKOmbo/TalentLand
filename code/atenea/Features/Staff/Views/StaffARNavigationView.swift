@@ -44,7 +44,7 @@ struct StaffARNavigationView: View {
                 // Información de distancia
                 if let distance = niManager.nearbyObject?.distance {
                     VStack(spacing: 12) {
-                        Text("CLIENTE EN EMERGENCIA")
+                        Text(LocalizedString("staff.ar.clientEmergency"))
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(.white)
 
@@ -58,7 +58,7 @@ struct StaffARNavigationView: View {
                                 .foregroundColor(.white)
                         }
 
-                        Text("Sigue la flecha para llegar al cliente")
+                        Text(LocalizedString("staff.ar.followArrow"))
                             .font(.system(size: 13))
                             .foregroundColor(.white.opacity(0.8))
                     }
@@ -74,7 +74,7 @@ struct StaffARNavigationView: View {
                         ProgressView()
                             .tint(.white)
 
-                        Text("Calculando ubicación...")
+                        Text(LocalizedString("staff.ar.calculatingLocation"))
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.white)
                     }

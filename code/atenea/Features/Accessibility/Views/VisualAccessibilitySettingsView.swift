@@ -27,17 +27,17 @@ struct VisualAccessibilitySettingsView: View {
                         if userManager.currentUser?.hasVisualDisability == true {
                             InfoCard(
                                 icon: "eye.slash.fill",
-                                title: "Modo de Accesibilidad Visual",
-                                description: "Configuraciones optimizadas para usuarios con discapacidad visual"
+                                title: LocalizedString("accessibility.visualMode"),
+                                description: LocalizedString("accessibility.visualModeDesc")
                             )
                         }
 
                         // Modo de Alto Contraste
-                        SettingsSection(title: "Visualización") {
+                        SettingsSection(title: LocalizedString("accessibility.display")) {
                             ToggleSetting(
                                 icon: "circle.lefthalf.filled",
-                                title: "Modo de Alto Contraste",
-                                description: "Aumenta el contraste para mejor visibilidad",
+                                title: LocalizedString("accessibility.highContrast"),
+                                description: LocalizedString("accessibility.highContrastDesc"),
                                 isOn: $accessibilityManager.visualSettings.highContrastMode,
                                 action: {
                                     accessibilityManager.toggleHighContrast()
@@ -46,7 +46,7 @@ struct VisualAccessibilitySettingsView: View {
                         }
 
                         // Tamaño de Texto
-                        SettingsSection(title: "Tamaño de Texto") {
+                        SettingsSection(title: LocalizedString("accessibility.textSize")) {
                             VStack(alignment: .leading, spacing: 16) {
                                 HStack {
                                     Image(systemName: "textformat.size")
@@ -54,7 +54,7 @@ struct VisualAccessibilitySettingsView: View {
                                         .foregroundColor(.blue)
                                         .frame(width: 30)
 
-                                    Text("Tamaño de Texto")
+                                    Text(LocalizedString("accessibility.textSize"))
                                         .dynamicFont(size: 16, weight: .medium)
                                 }
 
@@ -71,11 +71,11 @@ struct VisualAccessibilitySettingsView: View {
                                             if !editing {
                                                 accessibilityManager.saveSettings()
                                                 accessibilityManager.announce(
-                                                    "Tamaño de texto ajustado"
+                                                    LocalizedString("accessibility.textSizeAdjusted")
                                                 )
                                             }
                                         }
-                                        .accessibilityLabel("Control de tamaño de texto")
+                                        .accessibilityLabel(LocalizedString("accessibility.textSizeControl"))
                                         .accessibilityValue("\(Int(accessibilityManager.visualSettings.textSizeMultiplier * 100))%")
 
                                         Text("A")
@@ -83,7 +83,7 @@ struct VisualAccessibilitySettingsView: View {
                                     }
 
                                     // Preview
-                                    Text("Vista previa del tamaño de texto")
+                                    Text(LocalizedString("accessibility.textSizePreview"))
                                         .dynamicFont(size: 16)
                                         .frame(maxWidth: .infinity, alignment: .center)
                                         .padding()
@@ -97,26 +97,26 @@ struct VisualAccessibilitySettingsView: View {
                         }
 
                         // Audio y Voz
-                        SettingsSection(title: "Audio y Voz") {
+                        SettingsSection(title: LocalizedString("accessibility.audioAndVoice")) {
                             VStack(spacing: 12) {
                                 ToggleSetting(
                                     icon: "speaker.wave.3",
-                                    title: "VoiceOver",
-                                    description: "Lectura de pantalla con voz",
+                                    title: LocalizedString("accessibility.voiceOver"),
+                                    description: LocalizedString("accessibility.voiceOverDesc"),
                                     isOn: $accessibilityManager.visualSettings.voiceOverEnabled,
                                     action: {
                                         accessibilityManager.visualSettings.voiceOverEnabled.toggle()
                                         accessibilityManager.saveSettings()
                                         accessibilityManager.announce(
-                                            "VoiceOver \(accessibilityManager.visualSettings.voiceOverEnabled ? "activado" : "desactivado")"
+                                            accessibilityManager.visualSettings.voiceOverEnabled ? LocalizedString("accessibility.voiceOverEnabled") : LocalizedString("accessibility.voiceOverDisabled")
                                         )
                                     }
                                 )
 
                                 ToggleSetting(
                                     icon: "location.north.fill",
-                                    title: "Navegación por Audio",
-                                    description: "Instrucciones de navegación habladas",
+                                    title: LocalizedString("accessibility.audioNavigation"),
+                                    description: LocalizedString("accessibility.audioNavigationDesc"),
                                     isOn: $accessibilityManager.visualSettings.audioNavigationEnabled,
                                     action: {
                                         accessibilityManager.toggleAudioNavigation()
@@ -132,11 +132,11 @@ struct VisualAccessibilitySettingsView: View {
                                                 .foregroundColor(.blue)
                                                 .frame(width: 30)
 
-                                            Text("Nivel de Detalle")
+                                            Text(LocalizedString("accessibility.detailLevel"))
                                                 .dynamicFont(size: 16, weight: .medium)
                                         }
 
-                                        Picker("Verbosidad", selection: $accessibilityManager.visualSettings.screenReaderVerbosity) {
+                                        Picker(LocalizedString("accessibility.verbosity"), selection: $accessibilityManager.visualSettings.screenReaderVerbosity) {
                                             ForEach(VisualAccessibilitySettings.ScreenReaderVerbosity.allCases, id: \.self) { verbosity in
                                                 Text(verbosity.displayName).tag(verbosity)
                                             }
@@ -144,7 +144,7 @@ struct VisualAccessibilitySettingsView: View {
                                         .pickerStyle(.segmented)
                                         .onChange(of: accessibilityManager.visualSettings.screenReaderVerbosity) { _, newValue in
                                             accessibilityManager.saveSettings()
-                                            accessibilityManager.announce("Nivel de detalle: \(newValue.displayName)")
+                                            accessibilityManager.announce(String(format: LocalizedString("accessibility.detailLevelChanged"), newValue.displayName))
                                         }
                                     }
                                 }
@@ -152,11 +152,11 @@ struct VisualAccessibilitySettingsView: View {
                         }
 
                         // Feedback Háptico
-                        SettingsSection(title: "Feedback Táctil") {
+                        SettingsSection(title: LocalizedString("accessibility.tactileFeedback")) {
                             ToggleSetting(
                                 icon: "hand.tap",
-                                title: "Feedback Háptico",
-                                description: "Vibraciones al interactuar",
+                                title: LocalizedString("accessibility.hapticFeedback"),
+                                description: LocalizedString("accessibility.hapticFeedbackDesc"),
                                 isOn: $accessibilityManager.visualSettings.hapticFeedbackEnabled,
                                 action: {
                                     accessibilityManager.toggleHapticFeedback()
@@ -165,7 +165,7 @@ struct VisualAccessibilitySettingsView: View {
                         }
 
                         // Daltonismo
-                        SettingsSection(title: "Daltonismo") {
+                        SettingsSection(title: LocalizedString("accessibility.colorBlindness")) {
                             VStack(alignment: .leading, spacing: 12) {
                                 HStack {
                                     Image(systemName: "paintpalette")
@@ -173,11 +173,11 @@ struct VisualAccessibilitySettingsView: View {
                                         .foregroundColor(.blue)
                                         .frame(width: 30)
 
-                                    Text("Modo de Color")
+                                    Text(LocalizedString("accessibility.colorMode"))
                                         .dynamicFont(size: 16, weight: .medium)
                                 }
 
-                                Picker("Modo de color", selection: $accessibilityManager.visualSettings.colorBlindMode) {
+                                Picker(LocalizedString("accessibility.colorMode"), selection: $accessibilityManager.visualSettings.colorBlindMode) {
                                     ForEach(VisualAccessibilitySettings.ColorBlindMode.allCases, id: \.self) { mode in
                                         Text(mode.displayName).tag(mode)
                                     }
@@ -185,17 +185,17 @@ struct VisualAccessibilitySettingsView: View {
                                 .pickerStyle(.menu)
                                 .onChange(of: accessibilityManager.visualSettings.colorBlindMode) { _, newValue in
                                     accessibilityManager.saveSettings()
-                                    accessibilityManager.announce("Modo de color: \(newValue.displayName)")
+                                    accessibilityManager.announce(String(format: LocalizedString("accessibility.colorModeChanged"), newValue.displayName))
                                 }
                             }
                             .padding(.vertical, 8)
                         }
 
                         // Test de Audio
-                        SettingsSection(title: "Pruebas") {
+                        SettingsSection(title: LocalizedString("accessibility.tests")) {
                             Button(action: {
                                 accessibilityManager.announce(
-                                    "Esta es una prueba de texto a voz. Las funciones de accesibilidad están funcionando correctamente.",
+                                    LocalizedString("accessibility.testMessage"),
                                     priority: .required
                                 )
                                 accessibilityManager.provideHapticFeedback(.success)
@@ -205,7 +205,7 @@ struct VisualAccessibilitySettingsView: View {
                                         .font(.system(size: 20))
                                         .foregroundColor(.blue)
 
-                                    Text("Probar Audio y Vibración")
+                                    Text(LocalizedString("accessibility.testAudioVibration"))
                                         .dynamicFont(size: 16, weight: .medium)
                                         .foregroundColor(.primary)
 
@@ -218,8 +218,8 @@ struct VisualAccessibilitySettingsView: View {
                                 )
                             }
                             .accessibleButton(
-                                label: "Probar audio y vibración",
-                                hint: "Reproduce un mensaje de prueba y activa feedback háptico"
+                                label: LocalizedString("accessibility.testLabel"),
+                                hint: LocalizedString("accessibility.testHint")
                             )
                         }
 
@@ -228,22 +228,22 @@ struct VisualAccessibilitySettingsView: View {
                     .padding()
                 }
             }
-            .navigationTitle("Accesibilidad Visual")
+            .navigationTitle(LocalizedString("accessibility.visualTitle"))
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Listo") {
+                    Button(LocalizedString("accessibility.done")) {
                         dismiss()
                     }
                     .accessibleButton(
-                        label: "Cerrar configuración",
-                        announcement: "Configuración guardada"
+                        label: LocalizedString("accessibility.closeConfig"),
+                        announcement: LocalizedString("accessibility.configSaved")
                     )
                 }
             }
             .onAppear {
                 if userManager.currentUser?.hasVisualDisability == true {
-                    accessibilityManager.announce("Configuración de accesibilidad visual")
+                    accessibilityManager.announce(LocalizedString("accessibility.visualConfig"))
                 }
             }
         }
@@ -347,7 +347,7 @@ struct ToggleSetting: View {
                 }
             }
             .accessibilityLabel(title)
-            .accessibilityValue(isOn ? "Activado" : "Desactivado")
+            .accessibilityValue(isOn ? LocalizedString("accessibility.enabled") : LocalizedString("accessibility.disabled"))
             .accessibilityHint(description)
         }
     }

@@ -138,3 +138,51 @@ struct StripeErrorDetail: Codable {
     let type: String
     let message: String
 }
+
+// MARK: - BLE Payment Voucher (Offline P2P)
+
+struct PaymentVoucher: Codable, Identifiable {
+    let id: UUID
+    let clientID: UUID
+    let clientName: String
+    let merchantID: UUID
+    let amount: Int          // centavos MXN
+    let currency: String     // "MXN"
+    let description: String
+    let timestamp: Date
+    let nonce: String        // UUID anti-replay
+
+    init(clientID: UUID, clientName: String, merchantID: UUID, amount: Int, description: String = "") {
+        self.id = UUID()
+        self.clientID = clientID
+        self.clientName = clientName
+        self.merchantID = merchantID
+        self.amount = amount
+        self.currency = "MXN"
+        self.description = description
+        self.timestamp = Date()
+        self.nonce = UUID().uuidString
+    }
+
+    var formattedAmount: String {
+        String(format: "$%.2f MXN", Double(amount) / 100.0)
+    }
+}
+
+struct PaymentReceipt: Codable, Identifiable {
+    let id: UUID
+    let voucherID: UUID
+    let merchantID: UUID
+    let merchantName: String
+    let approved: Bool
+    let timestamp: Date
+
+    init(voucherID: UUID, merchantID: UUID, merchantName: String, approved: Bool) {
+        self.id = UUID()
+        self.voucherID = voucherID
+        self.merchantID = merchantID
+        self.merchantName = merchantName
+        self.approved = approved
+        self.timestamp = Date()
+    }
+}

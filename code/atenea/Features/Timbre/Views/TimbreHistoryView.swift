@@ -23,10 +23,10 @@ struct TimbreHistoryView: View {
                 // Header
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Timbres recibidos")
+                        Text(LocalizedString("timbre.history.title"))
                             .font(.system(size: 22, weight: .bold))
                             .foregroundColor(.white)
-                        Text("\(timbreManager.unreadCount) sin leer")
+                        Text(String(format: LocalizedString("timbre.history.unread"), timbreManager.unreadCount))
                             .font(.system(size: 13))
                             .foregroundColor(.orange)
                     }
@@ -34,7 +34,7 @@ struct TimbreHistoryView: View {
                     Spacer()
 
                     if timbreManager.unreadCount > 0 {
-                        Button("Marcar todo") {
+                        Button(LocalizedString("timbre.history.markAll")) {
                             timbreManager.markAllAsRead()
                         }
                         .font(.system(size: 13, weight: .medium))
@@ -55,7 +55,7 @@ struct TimbreHistoryView: View {
                         Image(systemName: "bell.slash")
                             .font(.system(size: 40))
                             .foregroundColor(.white.opacity(0.3))
-                        Text("Sin timbres aún")
+                        Text(LocalizedString("timbre.history.noTimbres"))
                             .font(.system(size: 16))
                             .foregroundColor(.white.opacity(0.5))
                     }
@@ -136,7 +136,7 @@ struct TimbreHistoryRow: View {
             if let response = timbre.response {
                 HStack(spacing: 4) {
                     Text(response.type.emoji)
-                    Text("Respondiste: \(response.type.displayName)")
+                    Text(String(format: LocalizedString("timbre.history.respondedWith"), response.type.displayName))
                         .font(.system(size: 12))
                         .foregroundColor(.green.opacity(0.8))
                 }

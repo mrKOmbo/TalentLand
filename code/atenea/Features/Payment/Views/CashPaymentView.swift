@@ -11,13 +11,13 @@ struct CashPaymentView: View {
                 Button(action: onCancel) {
                     HStack(spacing: 6) {
                         Image(systemName: "chevron.left")
-                        Text("Atrás")
+                        Text(LocalizedString("payment.back"))
                     }
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white.opacity(0.7))
                 }
                 Spacer()
-                Text("Cobro en efectivo")
+                Text(LocalizedString("payment.cashPayment"))
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white)
                 Spacer()
@@ -31,13 +31,13 @@ struct CashPaymentView: View {
 
             // Total a cobrar
             VStack(spacing: 4) {
-                Text("Total a cobrar")
+                Text(LocalizedString("payment.totalToCharge"))
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.5))
                 Text(viewModel.formattedAmount)
                     .font(.system(size: 36, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
-                Text("MXN")
+                Text(LocalizedString("payment.currency"))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.4))
             }
@@ -45,7 +45,7 @@ struct CashPaymentView: View {
 
             // Monto recibido
             VStack(spacing: 8) {
-                Text("Efectivo recibido")
+                Text(LocalizedString("payment.cashReceived"))
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.5))
 
@@ -60,7 +60,7 @@ struct CashPaymentView: View {
 
             // Cambio
             VStack(spacing: 8) {
-                Text("Cambio")
+                Text(LocalizedString("payment.change"))
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.5))
 
@@ -74,7 +74,7 @@ struct CashPaymentView: View {
 
             // Billetes rápidos
             VStack(spacing: 8) {
-                Text("Monto rápido")
+                Text(LocalizedString("payment.quickAmount"))
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(.white.opacity(0.4))
 
@@ -110,7 +110,7 @@ struct CashPaymentView: View {
                 HStack(spacing: 10) {
                     Image(systemName: "banknote.fill")
                         .font(.system(size: 20, weight: .semibold))
-                    Text("Confirmar cobro")
+                    Text(LocalizedString("payment.confirmCharge"))
                         .font(.system(size: 18, weight: .bold))
                 }
                 .foregroundColor(.white)

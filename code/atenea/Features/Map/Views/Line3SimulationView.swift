@@ -75,7 +75,7 @@ struct Line3SimulationView: View {
                     Spacer()
 
                     VStack(alignment: .trailing, spacing: 4) {
-                        Text("Simulación \(metroLine.name)")
+                        Text(String(format: LocalizedString("simulation.title"), metroLine.name))
                             .font(.headline)
                             .foregroundColor(.white)
                         Text("\(metroLine.startStation) → \(metroLine.endStation)")
@@ -114,7 +114,7 @@ struct Line3SimulationView: View {
                         Image(systemName: "clock.fill")
                             .foregroundColor(Color(uiColor: metroLine.color))
                             .font(.subheadline)
-                        Text("Pronóstico de Llegada")
+                        Text(LocalizedString("simulation.arrivalForecast"))
                             .font(.subheadline)
                             .bold()
                             .foregroundColor(.white)
@@ -132,7 +132,7 @@ struct Line3SimulationView: View {
                     HStack(spacing: 10) {
                         // Tiempo al destino
                         VStack(spacing: 4) {
-                            Text("Destino")
+                            Text(LocalizedString("simulation.destination"))
                                 .font(.caption2)
                                 .foregroundColor(.white.opacity(0.7))
                             Text("\(estimatedTimeToEnd) min")
@@ -147,7 +147,7 @@ struct Line3SimulationView: View {
 
                         // Próxima estación
                         VStack(spacing: 4) {
-                            Text("Próxima")
+                            Text(LocalizedString("simulation.next"))
                                 .font(.caption2)
                                 .foregroundColor(.white.opacity(0.7))
                             Text("\(nextStationTime) seg")
@@ -162,7 +162,7 @@ struct Line3SimulationView: View {
 
                         // Velocidad
                         VStack(spacing: 4) {
-                            Text("Velocidad")
+                            Text(LocalizedString("simulation.speed"))
                                 .font(.caption2)
                                 .foregroundColor(.white.opacity(0.7))
                             Text("\(Int(averageSpeed)) km/h")
@@ -181,11 +181,11 @@ struct Line3SimulationView: View {
                         Circle()
                             .fill(isSimulationRunning ? Color.green : Color.red)
                             .frame(width: 8, height: 8)
-                        Text(isSimulationRunning ? "En ruta" : "Detenido")
+                        Text(isSimulationRunning ? LocalizedString("simulation.onRoute") : LocalizedString("simulation.stopped"))
                             .font(.caption)
                             .foregroundColor(.white.opacity(0.8))
                         Spacer()
-                        Text("\(Int(currentProgress * 100))% completado")
+                        Text(String(format: LocalizedString("simulation.completed"), Int(currentProgress * 100)))
                             .font(.caption)
                             .foregroundColor(.white.opacity(0.8))
                     }

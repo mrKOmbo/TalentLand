@@ -30,6 +30,10 @@ struct LoginView: View {
     @State private var searchEmail: String = ""
     @State private var selectedTab: Int = 1 // 0 = Buscador, 1 = Usuarios
 
+    // Biometric
+    @State private var showBiometricPrompt = false
+    @State private var biometricLoginFailed = false
+
     // Confetti state
     @State private var confetti: [ConfettiPiece2] = []
     @State private var showConfetti = false
@@ -64,13 +68,28 @@ struct LoginView: View {
                     .allowsHitTesting(false)
                 }
             }
-            .alert("Help", isPresented: $showingHelp) {
+            .alert(LocalizedString("login.helpTitle"), isPresented: $showingHelp) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text("Need help logging in? Contact support@atenea.com")
+                Text(LocalizedString("login.helpMessage"))
+            }
+            .alert(
+                BiometricAuthService.shared.biometricName,
+                isPresented: $showBiometricPrompt
+            ) {
+                Button("Activar") {
+                    if let user = userManager.currentUser {
+                        BiometricAuthService.shared.enable(forEmail: user.email)
+                    }
+                    completeLogin()
+                }
+                Button("Ahora no", role: .cancel) {
+                    completeLogin()
+                }
+            } message: {
+                Text("¿Deseas usar \(BiometricAuthService.shared.biometricName) para iniciar sesión más rápido?")
             }
             .onAppear {
-                // Always start unchecked by default
                 isWorldCupToday = false
             }
             .id(languageManager.currentLanguage)
@@ -181,7 +200,7 @@ struct LoginView: View {
                 .symbolRenderingMode(.hierarchical)
         }
         .accessibilityLabel(LocalizedString("login.help"))
-        .accessibilityHint("Muestra información de ayuda")
+        .accessibilityHint(LocalizedString("login.helpAccessibilityHint"))
         .accessibilityAddTraits(.isButton)
     }
 
@@ -189,6 +208,12 @@ struct LoginView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
                 titleSection
+
+                // Face ID button (solo si hay sesión biométrica guardada)
+                if BiometricAuthService.shared.hasSavedSession {
+                    biometricLoginButton
+                }
+
                 userSelectionSection
                 termsCheckbox
                 continueButton
@@ -228,7 +253,7 @@ struct LoginView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 14, weight: .medium))
-                        Text("Buscador")
+                        Text(LocalizedString("login.tabSearch"))
                             .font(.system(size: 14, weight: .medium))
                     }
                     .foregroundStyle(selectedTab == 0 ? .primary : .secondary)
@@ -251,7 +276,7 @@ struct LoginView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "person.2.fill")
                             .font(.system(size: 14, weight: .medium))
-                        Text("Usuarios")
+                        Text(LocalizedString("login.tabUsers"))
                             .font(.system(size: 14, weight: .medium))
                     }
                     .foregroundStyle(selectedTab == 1 ? .primary : .secondary)
@@ -312,7 +337,7 @@ struct LoginView: View {
 
     private var searchSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Buscar usuario")
+            Text(LocalizedString("login.searchUser"))
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
@@ -439,6 +464,62 @@ struct LoginView: View {
             .fill(canContinue ? Color.coppelBlue : Color.coppelGrey.opacity(0.3))
     }
 
+    // MARK: - Biometric Login Button
+
+    private var biometricLoginButton: some View {
+        Button {
+            Task {
+                let success = await userManager.loginWithBiometrics()
+                if success {
+                    if let user = userManager.currentUser {
+                        UserDefaults.standard.set(user.name, forKey: "currentUserName")
+                        UserDefaults.standard.set(user.email, forKey: "currentUserEmail")
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        withAnimation { isLoggedIn = true }
+                    }
+                } else {
+                    biometricLoginFailed = true
+                }
+            }
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: BiometricAuthService.shared.biometricIcon)
+                    .font(.system(size: 28, weight: .medium))
+                    .foregroundStyle(Color.coppelBlue)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Iniciar con \(BiometricAuthService.shared.biometricName)")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.primary)
+
+                    if let email = KeychainService.shared.savedEmail {
+                        Text(email)
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Spacer()
+
+                Image(systemName: "arrow.right.circle.fill")
+                    .font(.system(size: 22))
+                    .foregroundStyle(Color.coppelBlue)
+            }
+            .padding(18)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(.white)
+                    .shadow(color: Color.coppelBlue.opacity(0.15), radius: 12, x: 0, y: 4)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color.coppelBlue.opacity(0.3), lineWidth: 1.5)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
     private var divider: some View {
         HStack(spacing: 16) {
             Rectangle()
@@ -512,22 +593,33 @@ struct LoginView: View {
         if userManager.loginUser(withEmail: emailToLogin) {
             if let loggedUser = userManager.currentUser {
                 print("✅ Usuario logueado: \(loggedUser.name) (\(loggedUser.role.displayName))")
-
-                // Guardar nombre del usuario para OnboardingWelcomeView
                 UserDefaults.standard.set(loggedUser.name, forKey: "currentUserName")
+                UserDefaults.standard.set(loggedUser.email, forKey: "currentUserEmail")
             }
 
-            // Guardar estado del Mundial
             UserDefaults.standard.set(isWorldCupToday, forKey: "isWorldCupToday")
             print("⚽ Hoy es el Mundial: \(isWorldCupToday ? "SÍ" : "NO")")
 
-            // Marcar como logueado
+            // Ofrecer Face ID si está disponible y no habilitado aún
+            // Si se muestra el prompt, NO navegar — se navega al cerrar el alert
+            let bio = BiometricAuthService.shared
+            if bio.isAvailable && !bio.isEnabled {
+                showBiometricPrompt = true
+                return
+            }
+
+            // Diferir cambio de estado para evitar Publishing changes durante animación
+            completeLogin()
+        } else {
+            print("❌ Usuario no encontrado con email: \(emailToLogin)")
+        }
+    }
+
+    private func completeLogin() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             withAnimation {
                 isLoggedIn = true
             }
-        } else {
-            // Show error - user not found
-            print("❌ Usuario no encontrado con email: \(emailToLogin)")
         }
     }
 
@@ -546,13 +638,13 @@ struct LoginView: View {
                 }
 
                 // Guardar nombre del usuario para OnboardingWelcomeView
-                var userName = "Usuario"
+                var userName = LocalizedString("login.defaultUser")
                 if let fullName = fullName {
                     let firstName = fullName.givenName ?? ""
                     let lastName = fullName.familyName ?? ""
                     userName = "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)
                     if userName.isEmpty {
-                        userName = "Usuario"
+                        userName = LocalizedString("login.defaultUser")
                     }
                     print("   Name: \(userName)")
                 }
@@ -667,8 +759,8 @@ struct UserSelectionCard: View {
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(user.name), \(user.email), \(user.role.displayName)")
-        .accessibilityValue(isSelected ? "Seleccionado" : "No seleccionado")
-        .accessibilityHint("Toca dos veces para seleccionar este usuario")
+        .accessibilityValue(isSelected ? LocalizedString("login.selected") : LocalizedString("login.notSelected"))
+        .accessibilityHint(LocalizedString("login.selectUserHint"))
         .accessibilityAddTraits(.isButton)
     }
 

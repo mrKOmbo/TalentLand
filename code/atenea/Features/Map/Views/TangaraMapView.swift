@@ -39,10 +39,10 @@ struct TangaraMapView: View {
                     Spacer()
 
                     VStack(alignment: .trailing, spacing: 4) {
-                        Text("Tren Tangara 3D")
+                        Text(LocalizedString("tangara.title"))
                             .font(.headline)
                             .foregroundColor(.white)
-                        Text("Modelo en Mapa")
+                        Text(LocalizedString("tangara.subtitle"))
                             .font(.caption2)
                             .foregroundColor(.white.opacity(0.8))
                     }
@@ -57,12 +57,12 @@ struct TangaraMapView: View {
 
                 // Botones de ubicaciones
                 VStack(spacing: 12) {
-                    Text("Mover modelo a:")
+                    Text(LocalizedString("tangara.moveModelTo"))
                         .font(.caption)
                         .foregroundColor(.white)
 
                     VStack(spacing: 10) {
-                        Text("Ciudad de México")
+                        Text(LocalizedString("tangara.cdmx"))
                             .font(.caption2)
                             .foregroundColor(.white.opacity(0.9))
                             .bold()
@@ -116,7 +116,7 @@ struct TangaraMapView: View {
                         }
                     }
 
-                    Text("💡 El modelo 3D está integrado en el mapa")
+                    Text("💡 " + LocalizedString("tangara.modelIntegrated"))
                         .font(.caption2)
                         .foregroundColor(.white.opacity(0.8))
                         .multilineTextAlignment(.center)

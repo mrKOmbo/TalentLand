@@ -150,7 +150,7 @@ struct ARStickerScannerView: View {
                     .foregroundColor(.white)
             }
 
-            Text("Escaneando...")
+            Text(LocalizedString("ar.sticker.scanning"))
                 .font(.system(size: CGFloat(18), weight: .semibold))
                 .foregroundColor(.white)
 
@@ -206,7 +206,7 @@ struct ARStickerScannerView: View {
                                     .font(.system(size: CGFloat(20)))
                             }
 
-                            Text(isScanning ? "Escaneando..." : "Coleccionar Stickers")
+                            Text(isScanning ? LocalizedString("ar.sticker.scanning") : LocalizedString("ar.sticker.collectStickers"))
                                 .font(.system(size: CGFloat(18), weight: .bold))
                         }
                         .foregroundColor(.white)
@@ -232,11 +232,11 @@ struct ARStickerScannerView: View {
                             .font(.system(size: CGFloat(24)))
                             .foregroundColor(.orange)
 
-                        Text("Acércate más a la sede")
+                        Text(LocalizedString("ar.sticker.getCloser"))
                             .font(.system(size: CGFloat(16), weight: .semibold))
                             .foregroundColor(.white)
 
-                        Text("Debes estar a menos de 100m")
+                        Text(LocalizedString("ar.sticker.mustBeWithin"))
                             .font(.system(size: CGFloat(14)))
                             .foregroundColor(.white.opacity(0.7))
                     }
@@ -255,11 +255,11 @@ struct ARStickerScannerView: View {
                         .font(.system(size: CGFloat(40)))
                         .foregroundColor(.white.opacity(0.6))
 
-                    Text("No hay sedes cerca")
+                    Text(LocalizedString("ar.sticker.noVenuesNearby"))
                         .font(.system(size: CGFloat(18), weight: .semibold))
                         .foregroundColor(.white)
 
-                    Text("Visita una sede del Mundial 2026")
+                    Text(LocalizedString("ar.sticker.visitVenue"))
                         .font(.system(size: CGFloat(14)))
                         .foregroundColor(.white.opacity(0.7))
                 }
@@ -286,7 +286,7 @@ struct ARStickerScannerView: View {
                     .font(.system(size: CGFloat(80)))
                     .foregroundColor(Color(hex: "#00D084"))
 
-                Text("Colecciona Stickers con AR")
+                Text(LocalizedString("ar.sticker.collectWithAR"))
                     .font(.system(size: CGFloat(28), weight: .bold))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
@@ -294,17 +294,17 @@ struct ARStickerScannerView: View {
                 VStack(spacing: 20) {
                     ARInstructionRow(
                         icon: "location.fill",
-                        text: "Visita una sede del Mundial 2026"
+                        text: LocalizedString("ar.sticker.visitVenue")
                     )
 
                     ARInstructionRow(
                         icon: "camera.fill",
-                        text: "Abre el escáner AR cuando estés cerca"
+                        text: LocalizedString("ar.sticker.openScanner")
                     )
 
                     ARInstructionRow(
                         icon: "photo.on.rectangle.angled",
-                        text: "Colecciona 1 sticker por cada sede"
+                        text: LocalizedString("ar.sticker.collectOnePerVenue")
                     )
                 }
                 .padding(.horizontal, 30)
@@ -314,7 +314,7 @@ struct ARStickerScannerView: View {
                         showInstructions = false
                     }
                 }) {
-                    Text("Comenzar")
+                    Text(LocalizedString("action.start"))
                         .font(.system(size: CGFloat(18), weight: .bold))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -371,7 +371,7 @@ struct ARStickerScannerView: View {
                 }
 
                 VStack(spacing: 12) {
-                    Text("¡Stickers Coleccionados!")
+                    Text(LocalizedString("ar.sticker.stickersCollected"))
                         .font(.system(size: CGFloat(28), weight: .bold))
                         .foregroundColor(.white)
 
@@ -381,7 +381,7 @@ struct ARStickerScannerView: View {
                             .foregroundColor(.white.opacity(0.8))
                     }
 
-                    Text("+1 Sticker")
+                    Text(LocalizedString("ar.sticker.stickerAdded"))
                         .font(.system(size: CGFloat(18), weight: .semibold))
                         .foregroundColor(Color(hex: "#C8FF00"))
                 }
@@ -401,7 +401,7 @@ struct ARStickerScannerView: View {
                         .font(.system(size: CGFloat(24)))
                         .foregroundColor(Color(hex: "#00D084"))
 
-                    Text("Sticker COPA Detectado")
+                    Text(LocalizedString("ar.sticker.copaDetected"))
                         .font(.system(size: CGFloat(18), weight: .semibold))
                         .foregroundColor(.white)
                 }
@@ -423,7 +423,7 @@ struct ARStickerScannerView: View {
                         Image(systemName: "plus.circle.fill")
                             .font(.system(size: CGFloat(20)))
 
-                        Text("Agregar al Album")
+                        Text(LocalizedString("ar.sticker.addToAlbum"))
                             .font(.system(size: CGFloat(18), weight: .bold))
                     }
                     .foregroundColor(.white)
@@ -460,11 +460,11 @@ struct ARStickerScannerView: View {
                         .foregroundColor(Color(hex: "#C8FF00"))
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("¡Sticker Registrado!")
+                        Text(LocalizedString("ar.sticker.stickerRegistered"))
                             .font(.system(size: CGFloat(18), weight: .bold))
                             .foregroundColor(.white)
 
-                        Text("Reverso detectado correctamente")
+                        Text(LocalizedString("ar.sticker.backDetected"))
                             .font(.system(size: CGFloat(14)))
                             .foregroundColor(.white.opacity(0.8))
                     }
@@ -491,7 +491,7 @@ struct ARStickerScannerView: View {
                         Image(systemName: "photo.on.rectangle.angled")
                             .font(.system(size: CGFloat(20)))
 
-                        Text("Ir al Álbum")
+                        Text(LocalizedString("ar.sticker.goToAlbum"))
                             .font(.system(size: CGFloat(18), weight: .bold))
                     }
                     .foregroundColor(.white)
@@ -561,11 +561,11 @@ struct FlipStickerAnimationView: View {
                         .rotationEffect(.degrees(360))
                         .animation(.linear(duration: 2).repeatForever(autoreverses: false), value: arrowOpacity)
 
-                    Text("Voltea el Sticker")
+                    Text(LocalizedString("ar.sticker.flipSticker"))
                         .font(.system(size: CGFloat(28), weight: .bold))
                         .foregroundColor(.white)
 
-                    Text("Escanea el reverso para ir al álbum")
+                    Text(LocalizedString("ar.sticker.scanBackForAlbum"))
                         .font(.system(size: CGFloat(16)))
                         .foregroundColor(.white.opacity(0.8))
                         .multilineTextAlignment(.center)

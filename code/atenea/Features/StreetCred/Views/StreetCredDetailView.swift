@@ -7,39 +7,49 @@
 
 import SwiftUI
 
+private enum CoppelColors {
+    static let blue = Color(red: 0.110, green: 0.259, blue: 0.910)
+    static let yellow = Color(red: 0.941, green: 0.824, blue: 0.141)
+    static let darkBlue = Color(red: 0.031, green: 0.090, blue: 0.329)
+    static let lightBlue = Color(red: 0.110, green: 0.659, blue: 0.969)
+    static let green = Color(red: 0.039, green: 0.749, blue: 0.310)
+    static let orange = Color(red: 1.0, green: 0.682, blue: 0.263)
+    static let red = Color(red: 1.0, green: 0.349, blue: 0.302)
+    static let beige = Color(red: 0.933, green: 0.910, blue: 0.890)
+    static let darkGrey = Color(red: 0.290, green: 0.290, blue: 0.290)
+}
+
 struct StreetCredDetailView: View {
     let score: StreetCredScore
     @Environment(\.dismiss) private var dismiss
     @State private var animateChart = false
     @State private var selectedDimension: ScoreDimension?
 
+    private func levelColor(_ level: StreetCredLevel) -> Color {
+        switch level {
+        case .nuevo: return CoppelColors.darkGrey
+        case .bronce: return CoppelColors.orange
+        case .plata: return Color(red: 0.660, green: 0.710, blue: 0.773)
+        case .oro: return CoppelColors.yellow
+        case .platino: return CoppelColors.blue
+        case .diamante: return Color(red: 0.094, green: 0.353, blue: 0.859)
+        }
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
-                LinearGradient(
-                    colors: [Color(hex: "#0A0A1A"), Color(hex: "#0D1B2A")],
-                    startPoint: .top, endPoint: .bottom
-                )
-                .ignoresSafeArea()
+                CoppelColors.beige
+                    .ignoresSafeArea()
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 24) {
-                        // Score principal
                         mainScoreSection
-
-                        // Radar Chart
                         radarChartSection
-
-                        // Desglose por dimensión
                         dimensionBreakdown
-
-                        // Crédito Coppel
                         creditSection
-
-                        // Badges
                         badgesSection
 
-                        // Historial
                         if !StreetCredManager.shared.scoreHistory.isEmpty {
                             historySection
                         }
@@ -54,11 +64,13 @@ struct StreetCredDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Listo") { dismiss() }
-                        .foregroundColor(score.level.color)
+                    Button(LocalizedString("streetcred.done")) { dismiss() }
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundColor(CoppelColors.blue)
                 }
             }
-            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+            .toolbarBackground(Color.white, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
         }
         .onAppear {
             withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.3)) {
@@ -73,21 +85,14 @@ struct StreetCredDetailView: View {
         VStack(spacing: 16) {
             // Gran gauge
             ZStack {
-                // Track exterior
                 Circle()
-                    .stroke(Color.white.opacity(0.06), lineWidth: 10)
+                    .stroke(CoppelColors.beige, lineWidth: 10)
                     .frame(width: 140, height: 140)
 
-                // Progress ring
                 Circle()
                     .trim(from: 0, to: animateChart ? CGFloat(score.totalScore) / 1000.0 : 0)
                     .stroke(
-                        AngularGradient(
-                            colors: score.level.gradient + [score.level.gradient.first ?? .white],
-                            center: .center,
-                            startAngle: .degrees(-90),
-                            endAngle: .degrees(270)
-                        ),
+                        levelColor(score.level),
                         style: StrokeStyle(lineWidth: 10, lineCap: .round)
                     )
                     .frame(width: 140, height: 140)
@@ -96,15 +101,15 @@ struct StreetCredDetailView: View {
                 VStack(spacing: 4) {
                     Text("\(score.totalScore)")
                         .font(.system(size: 42, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
+                        .foregroundColor(CoppelColors.darkBlue)
 
                     HStack(spacing: 4) {
                         Image(systemName: score.level.icon)
                             .font(.system(size: 12, weight: .bold))
                         Text(score.level.displayName)
-                            .font(.system(size: 14, weight: .bold))
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
                     }
-                    .foregroundColor(score.level.color)
+                    .foregroundColor(levelColor(score.level))
                 }
             }
 
@@ -112,14 +117,14 @@ struct StreetCredDetailView: View {
             if score.streak > 0 {
                 HStack(spacing: 6) {
                     Image(systemName: "flame.fill")
-                        .foregroundColor(.orange)
-                    Text("\(score.streak) dias consecutivos")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.orange)
+                        .foregroundColor(CoppelColors.orange)
+                    Text(String(format: LocalizedString("streetcred.consecutiveDays"), score.streak))
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .foregroundColor(CoppelColors.orange)
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
-                .background(Capsule().fill(Color.orange.opacity(0.12)))
+                .background(Capsule().fill(CoppelColors.orange.opacity(0.10)))
             }
 
             // Progreso
@@ -127,50 +132,39 @@ struct StreetCredDetailView: View {
                 VStack(spacing: 6) {
                     HStack {
                         Text(score.level.displayName)
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(score.level.color)
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundColor(levelColor(score.level))
                         Spacer()
                         Text(next.displayName)
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(next.color)
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundColor(levelColor(next))
                     }
 
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.white.opacity(0.08))
+                                .fill(CoppelColors.beige)
                                 .frame(height: 8)
 
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(
-                                    LinearGradient(
-                                        colors: score.level.gradient,
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
+                                .fill(levelColor(score.level))
                                 .frame(width: geo.size.width * score.progressToNextLevel, height: 8)
                         }
                     }
                     .frame(height: 8)
 
-                    Text("\(score.pointsToNextLevel) puntos para \(next.displayName)")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.5))
+                    Text(String(format: LocalizedString("streetcred.pointsFor"), score.pointsToNextLevel, next.displayName))
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundColor(CoppelColors.darkGrey)
                 }
                 .padding(.horizontal, 8)
             }
         }
         .padding(20)
         .background(
-            ZStack {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(.ultraThinMaterial)
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(score.level.color.opacity(0.05))
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .strokeBorder(score.level.color.opacity(0.15), lineWidth: 0.5)
-            }
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color.white)
+                .shadow(color: CoppelColors.darkBlue.opacity(0.08), radius: 12, x: 0, y: 4)
         )
     }
 
@@ -178,14 +172,20 @@ struct StreetCredDetailView: View {
 
     private var radarChartSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("PERFIL DE COMPETENCIAS")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.white.opacity(0.5))
-                .kerning(1.5)
+            Text(LocalizedString("streetcred.competenceProfile"))
+                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                .foregroundColor(CoppelColors.darkGrey)
+                .kerning(1.0)
 
             RadarChartView(dimensions: score.dimensions, animated: animateChart)
                 .frame(height: 220)
                 .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color.white)
+                        .shadow(color: CoppelColors.darkBlue.opacity(0.06), radius: 8, x: 0, y: 2)
+                )
         }
     }
 
@@ -193,10 +193,10 @@ struct StreetCredDetailView: View {
 
     private var dimensionBreakdown: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("DESGLOSE")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.white.opacity(0.5))
-                .kerning(1.5)
+            Text(LocalizedString("streetcred.breakdown"))
+                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                .foregroundColor(CoppelColors.darkGrey)
+                .kerning(1.0)
 
             ForEach(score.dimensions) { dim in
                 DimensionRow(dimension: dim)
@@ -208,51 +208,50 @@ struct StreetCredDetailView: View {
 
     private var creditSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("CRÉDITO COPPEL EMPRENDE")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.white.opacity(0.5))
-                .kerning(1.5)
+            Text(LocalizedString("streetcred.coppelCredit"))
+                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                .foregroundColor(CoppelColors.darkGrey)
+                .kerning(1.0)
 
             VStack(spacing: 14) {
                 HStack(spacing: 14) {
                     Image(systemName: score.isCreditEligible ? "checkmark.seal.fill" : "lock.fill")
                         .font(.system(size: 28))
-                        .foregroundColor(score.isCreditEligible ? .green : .gray)
+                        .foregroundColor(score.isCreditEligible ? CoppelColors.green : CoppelColors.darkGrey)
                         .frame(width: 48, height: 48)
                         .background(
-                            (score.isCreditEligible ? Color.green : Color.gray).opacity(0.12)
+                            (score.isCreditEligible ? CoppelColors.green : CoppelColors.darkGrey).opacity(0.10)
                         )
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(score.isCreditEligible ? "Elegible para financiamiento" : "Sigue construyendo tu historial")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.white)
+                        Text(score.isCreditEligible ? LocalizedString("streetcred.eligibleForFinancing") : LocalizedString("streetcred.keepBuilding"))
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                            .foregroundColor(CoppelColors.darkBlue)
                         Text(score.isCreditEligible
                              ? "\(score.creditTier) · \(score.estimatedCreditAmount)"
-                             : "Necesitas nivel Plata (400+ pts) para acceder")
-                            .font(.system(size: 13))
-                            .foregroundColor(.white.opacity(0.6))
+                             : LocalizedString("streetcred.needSilver"))
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundColor(CoppelColors.darkGrey)
                     }
                 }
 
                 if score.isCreditEligible {
-                    Text("Tu historial de ventas en Atenea respalda tu solicitud de microcrédito con Coppel Emprende")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.4))
+                    Text(LocalizedString("streetcred.creditHistory"))
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundColor(CoppelColors.darkGrey)
                         .padding(.top, 2)
                 }
             }
             .padding(16)
             .background(
-                ZStack {
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(.ultraThinMaterial)
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(score.isCreditEligible ? Color.green.opacity(0.05) : Color.gray.opacity(0.03))
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.08), lineWidth: 0.5)
-                }
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.white)
+                    .shadow(color: CoppelColors.darkBlue.opacity(0.06), radius: 8, x: 0, y: 2)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(score.isCreditEligible ? CoppelColors.green.opacity(0.20) : Color.clear, lineWidth: 1)
             )
         }
     }
@@ -261,40 +260,63 @@ struct StreetCredDetailView: View {
 
     private var badgesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("LOGROS")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.white.opacity(0.5))
-                .kerning(1.5)
+            Text(LocalizedString("streetcred.achievements"))
+                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                .foregroundColor(CoppelColors.darkGrey)
+                .kerning(1.0)
 
             let columns = [GridItem(.adaptive(minimum: 80), spacing: 12)]
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(score.badges) { badge in
                     VStack(spacing: 6) {
-                        Text(badge.emoji)
-                            .font(.system(size: 28))
+                        Image(systemName: badgeSFSymbol(badge.id))
+                            .font(.system(size: 22))
+                            .foregroundColor(badge.isEarned ? CoppelColors.blue : CoppelColors.darkGrey.opacity(0.3))
                             .frame(width: 52, height: 52)
                             .background(
                                 Circle()
-                                    .fill(badge.isEarned ? Color.white.opacity(0.08) : Color.white.opacity(0.02))
+                                    .fill(badge.isEarned ? CoppelColors.blue.opacity(0.08) : CoppelColors.beige)
                             )
                             .overlay(
                                 Circle()
                                     .strokeBorder(
-                                        badge.isEarned ? score.level.color.opacity(0.3) : Color.white.opacity(0.05),
+                                        badge.isEarned ? CoppelColors.blue.opacity(0.20) : CoppelColors.darkGrey.opacity(0.08),
                                         lineWidth: 1
                                     )
                             )
-                            .opacity(badge.isEarned ? 1 : 0.3)
+                            .opacity(badge.isEarned ? 1 : 0.5)
 
                         Text(badge.name)
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(badge.isEarned ? .white : .white.opacity(0.3))
+                            .font(.system(size: 10, weight: .medium, design: .rounded))
+                            .foregroundColor(badge.isEarned ? CoppelColors.darkBlue : CoppelColors.darkGrey.opacity(0.5))
                             .multilineTextAlignment(.center)
                             .lineLimit(2)
                     }
                     .frame(width: 80)
                 }
             }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.white)
+                    .shadow(color: CoppelColors.darkBlue.opacity(0.06), radius: 8, x: 0, y: 2)
+            )
+        }
+    }
+
+    private func badgeSFSymbol(_ id: String) -> String {
+        switch id {
+        case "primera_venta": return "bag.fill"
+        case "primera_semana": return "calendar"
+        case "racha_7": return "flame.fill"
+        case "racha_30": return "flame.circle.fill"
+        case "zona_nueva": return "map.fill"
+        case "top_ventas": return "star.fill"
+        case "madrugador": return "sunrise.fill"
+        case "nocturno": return "moon.stars.fill"
+        case "diversificado": return "square.grid.3x3.fill"
+        case "mundial": return "sportscourt.fill"
+        default: return "star.circle.fill"
         }
     }
 
@@ -302,10 +324,10 @@ struct StreetCredDetailView: View {
 
     private var historySection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("EVOLUCIÓN")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.white.opacity(0.5))
-                .kerning(1.5)
+            Text(LocalizedString("streetcred.evolution"))
+                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                .foregroundColor(CoppelColors.darkGrey)
+                .kerning(1.0)
 
             let history = StreetCredManager.shared.scoreHistory.suffix(30)
             if !history.isEmpty {
@@ -313,13 +335,7 @@ struct StreetCredDetailView: View {
                     ForEach(Array(history.enumerated()), id: \.element.id) { index, snapshot in
                         VStack(spacing: 2) {
                             RoundedRectangle(cornerRadius: 2)
-                                .fill(
-                                    LinearGradient(
-                                        colors: levelForScore(snapshot.score).gradient,
-                                        startPoint: .bottom,
-                                        endPoint: .top
-                                    )
-                                )
+                                .fill(levelColor(levelForScore(snapshot.score)))
                                 .frame(height: max(CGFloat(snapshot.score) / 1000.0 * 60, 4))
                         }
                     }
@@ -327,12 +343,9 @@ struct StreetCredDetailView: View {
                 .frame(height: 60)
                 .padding(16)
                 .background(
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(.ultraThinMaterial)
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color.white.opacity(0.02))
-                    }
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.white)
+                        .shadow(color: CoppelColors.darkBlue.opacity(0.06), radius: 8, x: 0, y: 2)
                 )
             }
         }
@@ -356,6 +369,18 @@ struct RadarChartView: View {
     let dimensions: [ScoreDimension]
     let animated: Bool
 
+    private func dimColor(_ id: String) -> Color {
+        switch id {
+        case "actividad": return Color(red: 1.0, green: 0.349, blue: 0.302)  // red
+        case "volumen": return Color(red: 0.039, green: 0.749, blue: 0.310)  // green
+        case "consistencia": return Color(red: 0.110, green: 0.659, blue: 0.969) // lightBlue
+        case "reputacion": return Color(red: 0.941, green: 0.824, blue: 0.141)  // yellow
+        case "diversificacion": return Color(red: 1.0, green: 0.682, blue: 0.263) // orange
+        case "cobertura": return Color(red: 0.110, green: 0.259, blue: 0.910)   // blue
+        default: return Color(red: 0.290, green: 0.290, blue: 0.290)
+        }
+    }
+
     var body: some View {
         GeometryReader { geo in
             let center = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
@@ -366,7 +391,7 @@ struct RadarChartView: View {
                 // Grid lines
                 ForEach(1...4, id: \.self) { ring in
                     RadarPolygon(sides: count, radius: radius * CGFloat(ring) / 4.0)
-                        .stroke(Color.white.opacity(0.06), lineWidth: 0.5)
+                        .stroke(Color(red: 0.031, green: 0.090, blue: 0.329).opacity(0.08), lineWidth: 0.5)
                         .offset(x: center.x - radius, y: center.y - radius)
                 }
 
@@ -377,10 +402,10 @@ struct RadarChartView: View {
                         path.move(to: center)
                         path.addLine(to: pointOnCircle(center: center, radius: radius, angle: angle))
                     }
-                    .stroke(Color.white.opacity(0.06), lineWidth: 0.5)
+                    .stroke(Color(red: 0.031, green: 0.090, blue: 0.329).opacity(0.08), lineWidth: 0.5)
                 }
 
-                // Data shape
+                // Data shape fill
                 Path { path in
                     for (i, dim) in dimensions.enumerated() {
                         let angle = angleForIndex(i, total: count)
@@ -395,11 +420,7 @@ struct RadarChartView: View {
                     path.closeSubpath()
                 }
                 .fill(
-                    LinearGradient(
-                        colors: [Color.cyan.opacity(0.2), Color.blue.opacity(0.1)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
+                    Color(red: 0.110, green: 0.259, blue: 0.910).opacity(0.10)
                 )
 
                 // Data border
@@ -416,7 +437,7 @@ struct RadarChartView: View {
                     }
                     path.closeSubpath()
                 }
-                .stroke(Color.cyan.opacity(0.6), lineWidth: 1.5)
+                .stroke(Color(red: 0.110, green: 0.259, blue: 0.910).opacity(0.50), lineWidth: 1.5)
 
                 // Dots + Labels
                 ForEach(0..<count, id: \.self) { i in
@@ -427,7 +448,7 @@ struct RadarChartView: View {
                     let labelPoint = pointOnCircle(center: center, radius: radius + 20, angle: angle)
 
                     Circle()
-                        .fill(dim.color)
+                        .fill(dimColor(dim.id))
                         .frame(width: 8, height: 8)
                         .position(point)
 
@@ -437,7 +458,7 @@ struct RadarChartView: View {
                         Text("\(dim.points)")
                             .font(.system(size: 9, weight: .bold, design: .rounded))
                     }
-                    .foregroundColor(dim.color)
+                    .foregroundColor(dimColor(dim.id))
                     .position(labelPoint)
                 }
             }
@@ -483,50 +504,59 @@ struct RadarPolygon: Shape {
 struct DimensionRow: View {
     let dimension: ScoreDimension
 
+    private func dimColor(_ id: String) -> Color {
+        switch id {
+        case "actividad": return Color(red: 1.0, green: 0.349, blue: 0.302)
+        case "volumen": return Color(red: 0.039, green: 0.749, blue: 0.310)
+        case "consistencia": return Color(red: 0.110, green: 0.659, blue: 0.969)
+        case "reputacion": return Color(red: 0.941, green: 0.824, blue: 0.141)
+        case "diversificacion": return Color(red: 1.0, green: 0.682, blue: 0.263)
+        case "cobertura": return Color(red: 0.110, green: 0.259, blue: 0.910)
+        default: return Color(red: 0.290, green: 0.290, blue: 0.290)
+        }
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: dimension.icon)
                 .font(.system(size: 16))
-                .foregroundColor(dimension.color)
+                .foregroundColor(dimColor(dimension.id))
                 .frame(width: 36, height: 36)
-                .background(dimension.color.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .background(dimColor(dimension.id).opacity(0.10))
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
 
             VStack(alignment: .leading, spacing: 3) {
                 HStack {
                     Text(dimension.name)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white)
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .foregroundColor(Color(red: 0.031, green: 0.090, blue: 0.329))
                     Spacer()
                     Text("\(dimension.points)/\(dimension.maxPoints)")
                         .font(.system(size: 13, weight: .bold, design: .rounded))
-                        .foregroundColor(dimension.color)
+                        .foregroundColor(dimColor(dimension.id))
                 }
 
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         RoundedRectangle(cornerRadius: 3)
-                            .fill(Color.white.opacity(0.06))
+                            .fill(Color(red: 0.933, green: 0.910, blue: 0.890))
                         RoundedRectangle(cornerRadius: 3)
-                            .fill(dimension.color.opacity(0.7))
+                            .fill(dimColor(dimension.id))
                             .frame(width: geo.size.width * dimension.value)
                     }
                 }
                 .frame(height: 5)
 
                 Text(dimension.details)
-                    .font(.system(size: 11))
-                    .foregroundColor(.white.opacity(0.4))
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .foregroundColor(Color(red: 0.290, green: 0.290, blue: 0.290))
             }
         }
         .padding(12)
         .background(
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(.ultraThinMaterial)
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color.white.opacity(0.02))
-            }
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.white)
+                .shadow(color: Color(red: 0.031, green: 0.090, blue: 0.329).opacity(0.05), radius: 6, x: 0, y: 2)
         )
     }
 }

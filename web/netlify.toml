@@ -1,0 +1,17 @@
+[build]
+  publish = "."
+
+[[redirects]]
+  from = "/historias"
+  to = "/historias.html"
+  status = 200
+
+[[redirects]]
+  from = "/biz"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/biz/*"
+  to = "/index.html"
+  status = 200

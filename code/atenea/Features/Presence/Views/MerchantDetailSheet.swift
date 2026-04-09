@@ -11,6 +11,7 @@ struct MerchantDetailSheet: View {
     let merchant: Merchant
     let presence: MerchantPresence?
     let onViewOnMap: () -> Void
+    @State private var showQR = false
 
     var body: some View {
         ScrollView {
@@ -49,13 +50,48 @@ struct MerchantDetailSheet: View {
 
     private var headerSection: some View {
         VStack(spacing: 8) {
-            Text(merchant.emoji)
-                .font(.system(size: 56))
+            ZStack(alignment: .bottomTrailing) {
+                Text(merchant.emoji)
+                    .font(.system(size: 56))
 
-            Text(merchant.businessName)
-                .font(.system(size: 22, weight: .bold))
+                if merchant.trustLevel.isGreen {
+                    ZStack {
+                        Circle().fill(Color.white).frame(width: 22, height: 22)
+                        Circle().fill(Color.green).frame(width: 18, height: 18)
+                        Image(systemName: merchant.trustLevel.icon)
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    .offset(x: 4, y: 4)
+                }
+            }
+
+            HStack(spacing: 6) {
+                Text(merchant.businessName)
+                    .font(.system(size: 22, weight: .bold))
+
+                if merchant.trustLevel.isGreen {
+                    Image(systemName: merchant.trustLevel.icon)
+                        .font(.system(size: 16))
+                        .foregroundColor(.green)
+                }
+            }
 
             HStack(spacing: 8) {
+                if merchant.trustLevel.isGreen {
+                    HStack(spacing: 3) {
+                        Circle().fill(Color.green).frame(width: 5, height: 5)
+                        Text(merchant.trustLevel.displayName)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.green)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Capsule().fill(Color.green.opacity(0.1)))
+
+                    Text("·").foregroundColor(.secondary)
+                }
+
                 Text(merchant.category.displayName)
                     .font(.system(size: 14))
                     .foregroundColor(.secondary)
@@ -86,7 +122,7 @@ struct MerchantDetailSheet: View {
                 Circle()
                     .fill(merchant.isActive ? Color.green : Color.gray)
                     .frame(width: 8, height: 8)
-                Text(merchant.isActive ? "Activo" : "Inactivo")
+                Text(merchant.isActive ? LocalizedString("merchant.detail.active") : LocalizedString("merchant.detail.inactive"))
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(merchant.isActive ? .green : .gray)
             }
@@ -98,7 +134,7 @@ struct MerchantDetailSheet: View {
             HStack(spacing: 4) {
                 Image(systemName: merchant.isStatic ? "mappin.circle.fill" : "figure.walk")
                     .font(.system(size: 10))
-                Text(merchant.isStatic ? "Puesto fijo" : "Ambulante")
+                Text(merchant.isStatic ? LocalizedString("merchant.detail.fixedStall") : LocalizedString("merchant.detail.ambulant"))
                     .font(.system(size: 12, weight: .medium))
             }
             .foregroundColor(merchant.isStatic ? .blue : .orange)
@@ -125,7 +161,7 @@ struct MerchantDetailSheet: View {
 
     private var productsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("PRODUCTOS")
+            Text(LocalizedString("merchant.detail.products"))
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundColor(.secondary)
                 .kerning(1.2)
@@ -149,7 +185,7 @@ struct MerchantDetailSheet: View {
                         .foregroundColor(.orange)
 
                     if !product.isAvailable {
-                        Text("Agotado")
+                        Text(LocalizedString("merchant.detail.soldOut"))
                             .font(.system(size: 10, weight: .medium))
                             .foregroundColor(.red)
                     }
@@ -167,7 +203,7 @@ struct MerchantDetailSheet: View {
             Text("\(schedule.openTime) - \(schedule.closeTime)")
                 .font(.system(size: 14))
             Spacer()
-            Text(schedule.isOpenNow ? "Abierto" : "Cerrado")
+            Text(schedule.isOpenNow ? LocalizedString("merchant.detail.open") : LocalizedString("merchant.detail.closed"))
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(schedule.isOpenNow ? .green : .red)
         }
@@ -179,24 +215,49 @@ struct MerchantDetailSheet: View {
             // Timbre
             TimbreButtonView(merchant: merchant)
 
-            // Ver en mapa
-            Button {
-                onViewOnMap()
-            } label: {
-                HStack {
-                    Image(systemName: "map.fill")
-                    Text("Ver en mapa")
-                        .font(.system(size: 15, weight: .semibold))
+            HStack(spacing: 10) {
+                // Ver en mapa
+                Button {
+                    onViewOnMap()
+                } label: {
+                    HStack {
+                        Image(systemName: "map.fill")
+                        Text(LocalizedString("merchant.detail.viewOnMap"))
+                            .font(.system(size: 15, weight: .semibold))
+                    }
+                    .foregroundColor(Color(hex: "#1C42E8"))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .stroke(Color(hex: "#1C42E8").opacity(0.3), lineWidth: 1)
+                    )
                 }
-                .foregroundColor(.blue)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
-                )
+
+                // QR
+                Button {
+                    print("📋 [MerchantDetailSheet] QR button tapped — merchant: \(merchant.businessName), id=\(merchant.id.uuidString.prefix(8))")
+                    print("📋 [MerchantDetailSheet] currentLocation: \(merchant.currentLocation != nil ? "lat=\(merchant.currentLocation!.latitude), lng=\(merchant.currentLocation!.longitude)" : "nil")")
+                    showQR = true
+                } label: {
+                    HStack {
+                        Image(systemName: "qrcode")
+                        Text("QR")
+                            .font(.system(size: 15, weight: .semibold))
+                    }
+                    .foregroundColor(Color(hex: "#FFAE43"))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .stroke(Color(hex: "#FFAE43").opacity(0.3), lineWidth: 1)
+                    )
+                }
             }
             .padding(.horizontal, 24)
+        }
+        .sheet(isPresented: $showQR) {
+            BusinessQRView(merchant: merchant)
         }
     }
 
@@ -213,9 +274,9 @@ struct MerchantDetailSheet: View {
 
     private func presenceText(_ status: MerchantPresence.ActivityStatus) -> String {
         switch status {
-        case .active: return "Ahora"
-        case .recent: return "Reciente"
-        case .stale: return "Inactivo"
+        case .active: return LocalizedString("merchant.detail.now")
+        case .recent: return LocalizedString("merchant.detail.recent")
+        case .stale: return LocalizedString("merchant.detail.stale")
         }
     }
 }

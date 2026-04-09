@@ -8,7 +8,7 @@ struct AmountEntryView: View {
         VStack(spacing: 0) {
             // Header
             HStack {
-                Text("Cobrar")
+                Text(LocalizedString("payment.charge"))
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.white)
                 Spacer()
@@ -31,14 +31,14 @@ struct AmountEntryView: View {
                     .contentTransition(.numericText())
                     .animation(.spring(response: 0.3), value: viewModel.amountString)
 
-                Text("MXN")
+                Text(LocalizedString("payment.currency"))
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.white.opacity(0.5))
             }
             .padding(.bottom, 16)
 
             // Description Field
-            TextField("Concepto (opcional)", text: $viewModel.saleDescription)
+            TextField(LocalizedString("payment.conceptOptional"), text: $viewModel.saleDescription)
                 .font(.system(size: 16))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
@@ -80,7 +80,7 @@ struct AmountEntryView: View {
                             Image(systemName: "qrcode")
                                 .font(.system(size: 20, weight: .semibold))
                         }
-                        Text(viewModel.isGenerating ? "Generando..." : "Cobrar con tarjeta")
+                        Text(viewModel.isGenerating ? LocalizedString("payment.generating") : LocalizedString("payment.chargeWithCard"))
                             .font(.system(size: 18, weight: .bold))
                     }
                     .foregroundColor(.white)
@@ -104,7 +104,7 @@ struct AmountEntryView: View {
                     HStack(spacing: 10) {
                         Image(systemName: "wave.3.right")
                             .font(.system(size: 20, weight: .semibold))
-                        Text("Tap to Pay")
+                        Text(LocalizedString("payment.tapToPay"))
                             .font(.system(size: 18, weight: .bold))
                     }
                     .foregroundColor(.white)
@@ -128,7 +128,7 @@ struct AmountEntryView: View {
                     HStack(spacing: 10) {
                         Image(systemName: "banknote.fill")
                             .font(.system(size: 20, weight: .semibold))
-                        Text("Cobrar en efectivo")
+                        Text(LocalizedString("payment.chargeCash"))
                             .font(.system(size: 18, weight: .bold))
                     }
                     .foregroundColor(.white)

@@ -58,7 +58,7 @@ struct PresenceMerchantChip: View {
                 .foregroundColor(.white.opacity(0.5))
 
             // Badge fijo/nómada
-            Text(presence.merchant.isStatic ? "Fijo" : "Nómada")
+            Text(presence.merchant.isStatic ? LocalizedString("nearby.fixed") : LocalizedString("nearby.nomad"))
                 .font(.system(size: 9, weight: .semibold))
                 .foregroundColor(presence.merchant.isStatic ? .blue : .orange)
                 .padding(.horizontal, 6)

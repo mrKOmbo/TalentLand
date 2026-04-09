@@ -38,7 +38,7 @@ struct DebugARHelperView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 60)
 
-                Text("Simular estar cerca de una sede")
+                Text(LocalizedString("debug.ar.simulateNearVenue"))
                     .font(.system(size: 16))
                     .foregroundColor(.white.opacity(0.7))
 

@@ -1,23 +1,33 @@
 //
 //  VenuesListView.swift
-//  Atenea
+//  atenea
 //
-//  Created by Claude on 10/29/25.
+//  Coppel Brand Toolkit 2024 — FIFA World Cup 2026 venues
 //
 
 import SwiftUI
 import MapKit
 
 struct VenuesListView: View {
-    @State private var selectedCountry: String = "Todos"
+    @State private var selectedCountry: String = "All"
     @State private var selectedVenue: WorldCupVenue?
     @State private var showVenueDetail = false
     @Environment(\.dismiss) private var dismiss
 
-    let countries = ["Todos", "México", "USA", "Canadá"]
+    let countries = ["All", "Mexico", "USA", "Canada"]
+
+    private func countryDisplayName(_ country: String) -> String {
+        switch country {
+        case "All": return LocalizedString("venue.allCountries")
+        case "Mexico": return LocalizedString("venue.mexico")
+        case "USA": return LocalizedString("venue.usa")
+        case "Canada": return LocalizedString("venue.canada")
+        default: return country
+        }
+    }
 
     var filteredVenues: [WorldCupVenue] {
-        if selectedCountry == "Todos" {
+        if selectedCountry == "All" {
             return WorldCupVenue.allVenues
         } else {
             return WorldCupVenue.allVenues.filter { $0.country == selectedCountry }
@@ -26,93 +36,80 @@ struct VenuesListView: View {
 
     var body: some View {
         ZStack {
-            // Fondo degradado
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(hex: "#1a1a2e"),
-                    Color(hex: "#16213e")
-                ]),
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+            Color.white
+                .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Header
-                ZStack {
+                // Header — coppelDarkBlue background, coppelYellow headline
+                VStack(spacing: 0) {
                     HStack {
-                        Button(action: {
-                            dismiss()
-                        }) {
+                        Button(action: { dismiss() }) {
                             Image(systemName: "chevron.left")
                                 .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(.white)
-                                .frame(width: 40, height: 40)
-                                .background(
-                                    Circle()
-                                        .fill(Color.white.opacity(0.1))
-                                )
+                                .foregroundColor(Color.coppelYellow)
+                                .frame(width: 44, height: 44)
                         }
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(LocalizedString("venue.fifa2026"))
+                                .font(.system(size: 22, weight: .bold, design: .rounded))
+                                .foregroundColor(Color.coppelYellow)
+
+                            Text(String(format: LocalizedString("venue.venueCount"), filteredVenues.count))
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.white.opacity(0.8))
+                        }
+
                         Spacer()
-                    }
 
-                    VStack(spacing: 4) {
-                        Text("Sedes FIFA 2026")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundColor(.white)
-                        Text("\(filteredVenues.count) estadios")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(.white.opacity(0.6))
+                        Image(systemName: "soccerball")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(Color.coppelYellow)
+                            .frame(width: 44, height: 44)
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 10)
-                .padding(.bottom, 15)
+                .background(Color.coppelDarkBlue)
 
-                // Filtros de país
+                // Country filter
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
+                    HStack(spacing: 10) {
                         ForEach(countries, id: \.self) { country in
-                            CountryFilterChip(
-                                country: country,
-                                isSelected: selectedCountry == country,
-                                action: {
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                        selectedCountry = country
-                                    }
+                            filterChip(country: countryDisplayName(country), isSelected: selectedCountry == country) {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    selectedCountry = country
                                 }
-                            )
+                            }
                         }
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, 16)
                 }
-                .padding(.bottom, 20)
+                .padding(.vertical, 12)
+                .background(Color.coppelBeige)
 
-                // Lista de sedes
-                ScrollView(showsIndicators: false) {
-                    LazyVStack(spacing: 16) {
+                // Venues list
+                ScrollView(.vertical, showsIndicators: false) {
+                    LazyVStack(spacing: 12) {
                         ForEach(filteredVenues, id: \.id) { venue in
-                            VenueCard(venue: venue) {
+                            venueCard(venue) {
                                 selectedVenue = venue
                                 showVenueDetail = true
                             }
                         }
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 30)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
                 }
             }
 
-            // Modal de detalle
+            // Detail modal
             if showVenueDetail, let venue = selectedVenue {
                 VenueDetailView(
                     venue: venue,
                     isPresented: $showVenueDetail,
-                    onDismiss: {
-                        selectedVenue = nil
-                    },
+                    onDismiss: { selectedVenue = nil },
                     onGetDirections: {
-                        // Abrir Apple Maps como fallback
                         let coordinate = venue.coordinate
                         let placemark = MKPlacemark(coordinate: coordinate)
                         let mapItem = MKMapItem(placemark: placemark)
@@ -125,224 +122,141 @@ struct VenuesListView: View {
                 .transition(.opacity)
             }
         }
-        .navigationBarHidden(true)
     }
-}
 
-// Chip de filtro de país
-struct CountryFilterChip: View {
-    let country: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    var flagEmoji: String {
-        switch country {
-        case "México": return "🇲🇽"
-        case "USA": return "🇺🇸"
-        case "Canadá": return "🇨🇦"
-        default: return "🌎"
+    private func filterChip(country: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(country)
+                .font(.system(size: 14, weight: isSelected ? .bold : .medium, design: .rounded))
+                .foregroundColor(isSelected ? .white : Color.coppelDarkBlue)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(isSelected ? Color.coppelBlue : Color.white)
+                )
         }
     }
 
-    var body: some View {
+    private func venueCard(_ venue: WorldCupVenue, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 6) {
-                Text(flagEmoji)
-                    .font(.system(size: 16))
-                Text(country)
-                    .font(.system(size: 14, weight: isSelected ? .bold : .medium))
-            }
-            .foregroundColor(isSelected ? .white : .white.opacity(0.7))
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(isSelected ?
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                Color(hex: "#00a8ff"),
-                                Color(hex: "#0097e6")
-                            ]),
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ) :
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                Color.white.opacity(0.1),
-                                Color.white.opacity(0.05)
-                            ]),
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(
-                        isSelected ? Color.clear : Color.white.opacity(0.2),
-                        lineWidth: 1
-                    )
-            )
-            .shadow(
-                color: isSelected ? Color(hex: "#00a8ff").opacity(0.3) : .clear,
-                radius: 8,
-                x: 0,
-                y: 4
-            )
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
-
-// Tarjeta de sede
-struct VenueCard: View {
-    let venue: WorldCupVenue
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 0) {
-                // Header con gradiente de colores de la sede
+            VStack(alignment: .leading, spacing: 0) {
+                // Top color bar with venue name
                 ZStack(alignment: .topTrailing) {
-                    venue.gradient
-                        .frame(height: 120)
-                        .overlay(
-                            LinearGradient(
-                                gradient: Gradient(colors: [
-                                    Color.black.opacity(0.3),
-                                    Color.clear
-                                ]),
-                                startPoint: .top,
-                                endPoint: .bottom
+                    // Solid color bar (no diagonal gradients)
+                    venue.primaryColor
+                        .frame(height: 100)
+                        .clipShape(
+                            UnevenRoundedRectangle(
+                                topLeadingRadius: 16,
+                                bottomLeadingRadius: 0,
+                                bottomTrailingRadius: 0,
+                                topTrailingRadius: 16
                             )
                         )
 
-                    // Badge de país
+                    // Country badge
                     HStack(spacing: 4) {
                         Image(systemName: "flag.fill")
-                            .font(.system(size: 10))
+                            .font(.system(size: 10, weight: .bold))
+
                         Text(venue.country)
-                            .font(.system(size: 11, weight: .bold))
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
                     }
                     .foregroundColor(.white)
                     .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
+                    .padding(.vertical, 6)
                     .background(
                         Capsule()
-                            .fill(Color.black.opacity(0.3))
-                            .background(
-                                Capsule()
-                                    .fill(.ultraThinMaterial)
-                            )
+                            .fill(Color.coppelDarkBlue.opacity(0.6))
                     )
-                    .padding(12)
+                    .padding(10)
 
-                    // Nombre del estadio (centrado)
+                    // Venue name centered
                     VStack(spacing: 4) {
                         Text(venue.name)
-                            .font(.system(size: 20, weight: .bold))
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
-                            .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+                            .lineLimit(2)
 
                         HStack(spacing: 4) {
                             Image(systemName: "mappin.circle.fill")
-                                .font(.system(size: 11))
+                                .font(.system(size: 10))
+
                             Text(venue.city)
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
                         }
                         .foregroundColor(.white.opacity(0.9))
-                        .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.top, 40)
+                    .padding(.top, 30)
                 }
 
-                // Información del estadio
-                VStack(spacing: 12) {
-                    HStack(spacing: 20) {
-                        // Capacidad
-                        VStack(spacing: 4) {
-                            Image(systemName: "person.3.fill")
-                                .font(.system(size: 16))
-                                .foregroundColor(venue.primaryColor)
+                // Details section
+                VStack(spacing: 10) {
+                    HStack(spacing: 12) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "person.2.fill")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(Color.coppelBlue)
+
                             Text(venue.capacity)
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.9))
-                                .multilineTextAlignment(.center)
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .foregroundColor(Color.coppelDarkBlue)
+                                .lineLimit(1)
                         }
 
-                        Divider()
-                            .frame(height: 30)
-                            .background(Color.white.opacity(0.2))
+                        Spacer(minLength: 0)
 
-                        // Inauguración
-                        VStack(spacing: 4) {
-                            Image(systemName: "calendar.badge.clock")
-                                .font(.system(size: 16))
-                                .foregroundColor(venue.primaryColor)
+                        HStack(spacing: 6) {
+                            Image(systemName: "calendar.circle.fill")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(Color.coppelYellow)
+
                             Text(venue.inauguration)
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.9))
-                                .multilineTextAlignment(.center)
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .foregroundColor(Color.coppelDarkBlue)
+                                .lineLimit(1)
                         }
 
-                        Divider()
-                            .frame(height: 30)
-                            .background(Color.white.opacity(0.2))
+                        Spacer(minLength: 0)
 
-                        // Partidos
-                        VStack(spacing: 4) {
+                        HStack(spacing: 6) {
                             Image(systemName: "soccerball.circle.fill")
-                                .font(.system(size: 16))
-                                .foregroundColor(venue.primaryColor)
-                            Text("\(venue.matches.count) partidos")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.9))
-                                .multilineTextAlignment(.center)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(Color.coppelGreen)
+
+                            Text("\(venue.matches.count)")
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .foregroundColor(Color.coppelDarkBlue)
                         }
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, 14)
 
-                    // Botón de ver más
-                    HStack {
-                        Text("Ver detalles")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(venue.primaryColor)
+                    HStack(spacing: 8) {
+                        Text(LocalizedString("venue.viewDetails"))
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
+
                         Image(systemName: "arrow.right.circle.fill")
-                            .font(.system(size: 14))
-                            .foregroundColor(venue.primaryColor)
+                            .font(.system(size: 13, weight: .semibold))
                     }
-                    .padding(.bottom, 4)
+                    .foregroundColor(Color.coppelBlue)
+                    .padding(.horizontal, 14)
                 }
-                .padding(.vertical, 16)
-                .frame(maxWidth: .infinity)
-                .background(
-                    RoundedRectangle(cornerRadius: 0)
-                        .fill(Color.white.opacity(0.05))
-                )
+                .padding(.vertical, 12)
+                .background(Color.white)
             }
             .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(.ultraThinMaterial)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.white)
             )
-            .clipShape(RoundedRectangle(cornerRadius: 20))
             .overlay(
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                Color.white.opacity(0.3),
-                                Color.white.opacity(0.1)
-                            ]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1.5
-                    )
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color.coppelBeige, lineWidth: 1)
             )
-            .shadow(color: venue.primaryColor.opacity(0.2), radius: 10, x: 0, y: 5)
-            .shadow(color: .black.opacity(0.2), radius: 15, x: 0, y: 8)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .shadow(color: Color.coppelDarkBlue.opacity(0.08), radius: 8, x: 0, y: 4)
         }
         .buttonStyle(PlainButtonStyle())
     }

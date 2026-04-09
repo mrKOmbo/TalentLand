@@ -7,6 +7,7 @@
 
 import Foundation
 import CoreLocation
+import SwiftUI
 internal import Combine
 
 /// ViewModel que maneja toda la lógica de búsqueda de lugares
@@ -840,17 +841,374 @@ class SearchViewModel: ObservableObject {
                 icon: "figure.run",
                 coordinate: CLLocationCoordinate2D(latitude: 19.4078, longitude: -99.1734),
                 isRecommended: false
+            ),
+
+            // MARK: - Antojitos / Street Food (category: "Tacos")
+            SearchPlace(
+                id: "tacos-1",
+                name: "Tacos Don Beto",
+                subtitle: "Tacos al pastor y suadero • $25-$45",
+                fullAddress: "Av. Álvaro Obregón 180, Roma Norte, CDMX",
+                category: "Tacos",
+                icon: "flame.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4192, longitude: -99.1648),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "tacos-2",
+                name: "Esquites Doña Lupita",
+                subtitle: "Elotes y esquites preparados • $20-$35",
+                fullAddress: "Calle Orizaba esq. Puebla, Roma Norte, CDMX",
+                category: "Tacos",
+                icon: "flame.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4165, longitude: -99.1625),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "tacos-3",
+                name: "Tamales Oaxaqueños Mary",
+                subtitle: "Tamales de mole, rajas y dulce • $18-$30",
+                fullAddress: "Calle Durango 230, Roma Norte, CDMX",
+                category: "Tacos",
+                icon: "flame.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4210, longitude: -99.1690),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "tacos-4",
+                name: "Tortas El Güero",
+                subtitle: "Tortas de milanesa y cubana • $35-$60",
+                fullAddress: "Av. Insurgentes Sur 300, Roma Norte, CDMX",
+                category: "Tacos",
+                icon: "flame.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4145, longitude: -99.1670),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "tacos-5",
+                name: "Quesadillas La Abuela",
+                subtitle: "Quesadillas de guisado y tlacoyos • $15-$30",
+                fullAddress: "Calle Colima 150, Roma Norte, CDMX",
+                category: "Tacos",
+                icon: "flame.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4178, longitude: -99.1710),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "tacos-6",
+                name: "Tacos de Canasta Juanito",
+                subtitle: "Tacos de canasta $5 c/u • frijol, chicharrón, papa",
+                fullAddress: "Calle Jalapa 80, Roma Sur, CDMX",
+                category: "Tacos",
+                icon: "flame.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4130, longitude: -99.1605),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "tacos-7",
+                name: "Helados Don Pelo",
+                subtitle: "Paletas y nieves artesanales • $15-$35",
+                fullAddress: "Parque México, Hipódromo Condesa, CDMX",
+                category: "Tacos",
+                icon: "flame.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4112, longitude: -99.1740),
+                isRecommended: true
+            ),
+
+            // MARK: - Estadios (category: "Estadio")
+            SearchPlace(
+                id: "estadio-1",
+                name: "Estadio Azteca",
+                subtitle: "Sede FIFA 2026 • Cap. 87,523",
+                fullAddress: "Calz. de Tlalpan 3465, Coyoacán, CDMX",
+                category: "Estadio",
+                icon: "trophy.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.3029, longitude: -99.1506),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "estadio-2",
+                name: "Estadio Olímpico Universitario",
+                subtitle: "UNAM • Cap. 63,186",
+                fullAddress: "Av. de los Insurgentes Sur, Ciudad Universitaria, CDMX",
+                category: "Estadio",
+                icon: "trophy.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.3344, longitude: -99.1899),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "estadio-3",
+                name: "Estadio Ciudad de los Deportes",
+                subtitle: "Cruz Azul • Cap. 35,161",
+                fullAddress: "Av. Viaducto Miguel Alemán, Noche Buena, CDMX",
+                category: "Estadio",
+                icon: "trophy.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.3756, longitude: -99.1762),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "estadio-4",
+                name: "Foro Sol",
+                subtitle: "Eventos y conciertos • Cap. 65,000",
+                fullAddress: "Viaducto Piedad, Granjas México, CDMX",
+                category: "Estadio",
+                icon: "trophy.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4028, longitude: -99.0964),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "estadio-5",
+                name: "Arena CDMX",
+                subtitle: "Eventos deportivos y culturales",
+                fullAddress: "Av. Río Churubusco, Granjas México, CDMX",
+                category: "Estadio",
+                icon: "trophy.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4004, longitude: -99.1002),
+                isRecommended: true
+            ),
+
+            // MARK: - Metro (category: "Metro")
+            SearchPlace(
+                id: "metro-1",
+                name: "Metro Insurgentes",
+                subtitle: "Línea 1 (Rosa) • Av. Chapultepec",
+                fullAddress: "Av. Chapultepec esq. Insurgentes, Roma Norte, CDMX",
+                category: "Metro",
+                icon: "tram.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4214, longitude: -99.1635),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "metro-2",
+                name: "Metro Sevilla",
+                subtitle: "Línea 1 (Rosa) • Paseo de la Reforma",
+                fullAddress: "Paseo de la Reforma, Juárez, CDMX",
+                category: "Metro",
+                icon: "tram.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4268, longitude: -99.1604),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "metro-3",
+                name: "Metro Chapultepec",
+                subtitle: "Línea 1 (Rosa) • Bosque de Chapultepec",
+                fullAddress: "Av. Chapultepec, Juárez, CDMX",
+                category: "Metro",
+                icon: "tram.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4221, longitude: -99.1761),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "metro-4",
+                name: "Metro Chilpancingo",
+                subtitle: "Línea 9 (Café) • Hipódromo Condesa",
+                fullAddress: "Av. Baja California, Hipódromo Condesa, CDMX",
+                category: "Metro",
+                icon: "tram.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4052, longitude: -99.1693),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "metro-5",
+                name: "Metro Centro Médico",
+                subtitle: "Línea 3 y 9 • Transbordo",
+                fullAddress: "Av. Cuauhtémoc, Doctores, CDMX",
+                category: "Metro",
+                icon: "tram.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4146, longitude: -99.1524),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "metro-6",
+                name: "Metro Cuauhtémoc",
+                subtitle: "Línea 1 (Rosa) • Roma Norte",
+                fullAddress: "Av. Cuauhtémoc, Roma Sur, CDMX",
+                category: "Metro",
+                icon: "tram.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4181, longitude: -99.1544),
+                isRecommended: true
+            ),
+
+            // MARK: - Atracciones (category: "Monumento")
+            SearchPlace(
+                id: "atrac-1",
+                name: "Fuente de Cibeles",
+                subtitle: "Réplica de la fuente de Madrid",
+                fullAddress: "Plaza de la Cibeles, Roma Norte, CDMX",
+                category: "Monumento",
+                icon: "star.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4193, longitude: -99.1616),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "atrac-2",
+                name: "Parque México",
+                subtitle: "Parque art déco con foro al aire libre",
+                fullAddress: "Av. México, Hipódromo Condesa, CDMX",
+                category: "Monumento",
+                icon: "star.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4106, longitude: -99.1725),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "atrac-3",
+                name: "Parque España",
+                subtitle: "Parque con fuentes y andadores",
+                fullAddress: "Av. Sonora, Hipódromo Condesa, CDMX",
+                category: "Monumento",
+                icon: "star.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4144, longitude: -99.1743),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "atrac-4",
+                name: "Casa Lamm",
+                subtitle: "Centro cultural y galería de arte",
+                fullAddress: "Álvaro Obregón 99, Roma Norte, CDMX",
+                category: "Monumento",
+                icon: "star.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4197, longitude: -99.1661),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "atrac-5",
+                name: "Glorieta de los Insurgentes",
+                subtitle: "Plaza subterránea y punto de encuentro",
+                fullAddress: "Insurgentes Sur esq. Chapultepec, CDMX",
+                category: "Monumento",
+                icon: "star.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4226, longitude: -99.1636),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "atrac-6",
+                name: "Monumento a la Revolución",
+                subtitle: "Mirador y museo de la Revolución Mexicana",
+                fullAddress: "Plaza de la República, Tabacalera, CDMX",
+                category: "Monumento",
+                icon: "star.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4363, longitude: -99.1549),
+                isRecommended: true
+            ),
+
+            // MARK: - Farmacias (category: "Farmacia")
+            SearchPlace(
+                id: "farm-1",
+                name: "Farmacia Guadalajara Roma",
+                subtitle: "Abierta 24h • Medicamentos y snacks",
+                fullAddress: "Av. Álvaro Obregón 130, Roma Norte, CDMX",
+                category: "Farmacia",
+                icon: "cross.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4188, longitude: -99.1660),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "farm-2",
+                name: "Farmacia del Ahorro Condesa",
+                subtitle: "Abierta 24h • Descuentos permanentes",
+                fullAddress: "Av. Tamaulipas 60, Hipódromo Condesa, CDMX",
+                category: "Farmacia",
+                icon: "cross.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4103, longitude: -99.1699),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "farm-3",
+                name: "Farmacia San Pablo Insurgentes",
+                subtitle: "Farmacia y consultorio • $35 consulta",
+                fullAddress: "Av. Insurgentes Sur 190, Roma Norte, CDMX",
+                category: "Farmacia",
+                icon: "cross.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4205, longitude: -99.1619),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "farm-4",
+                name: "Farmacia Benavides Durango",
+                subtitle: "Lun-Sáb 8:00-22:00 • Genéricos",
+                fullAddress: "Calle Durango 180, Roma Norte, CDMX",
+                category: "Farmacia",
+                icon: "cross.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4201, longitude: -99.1700),
+                isRecommended: true
+            ),
+            SearchPlace(
+                id: "farm-5",
+                name: "Farmacias Similares Cuauhtémoc",
+                subtitle: "Consultorio $35 • Genéricos económicos",
+                fullAddress: "Av. Cuauhtémoc 400, Roma Sur, CDMX",
+                category: "Farmacia",
+                icon: "cross.fill",
+                coordinate: CLLocationCoordinate2D(latitude: 19.4125, longitude: -99.1550),
+                isRecommended: true
             )
         ]
 
         print("✅ \(allPlaces.count) lugares cargados en la base de datos local")
     }
 
+    // MARK: - Dynamic Sources (merchants + venues)
+
+    /// Convierte merchants activos a SearchPlace para incluirlos en la búsqueda
+    private var merchantPlaces: [SearchPlace] {
+        MerchantManager.shared.merchants
+            .filter { $0.isActive && $0.currentLocation != nil }
+            .map { merchant in
+                SearchPlace(
+                    id: "merchant-\(merchant.id.uuidString)",
+                    name: merchant.businessName,
+                    subtitle: merchant.description,
+                    fullAddress: nil,
+                    category: merchant.category.displayName,
+                    icon: merchantCategoryIcon(merchant.category),
+                    coordinate: merchant.currentLocation.map {
+                        CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
+                    },
+                    isRecommended: false
+                )
+            }
+    }
+
+    /// Convierte sedes FIFA a SearchPlace para incluirlas en la búsqueda
+    private var venuePlaces: [SearchPlace] {
+        WorldCupVenue.allVenues.map { venue in
+            SearchPlace(
+                id: "venue-\(venue.id.uuidString)",
+                name: venue.name,
+                subtitle: "\(venue.city), \(venue.country)",
+                fullAddress: "\(venue.name), \(venue.city), \(venue.country) — \(venue.capacity)",
+                category: "Estadio",
+                icon: "sportscourt.fill",
+                coordinate: venue.coordinate,
+                isRecommended: true
+            )
+        }
+    }
+
+    /// Todos los elementos buscables (lugares + merchants + venues)
+    private var allSearchable: [SearchPlace] {
+        allPlaces + merchantPlaces + venuePlaces
+    }
+
+    private func merchantCategoryIcon(_ category: MerchantCategory) -> String {
+        switch category {
+        case .tacos: return "flame.fill"
+        case .tamales: return "takeoutbag.and.cup.and.straw.fill"
+        case .helados: return "snowflake"
+        case .jugos: return "cup.and.saucer.fill"
+        case .elotes: return "leaf.fill"
+        case .frutas: return "carrot.fill"
+        case .antojitos: return "fork.knife"
+        case .bebidas: return "mug.fill"
+        case .postres: return "birthday.cake.fill"
+        case .otro: return "bag.fill"
+        }
+    }
+
     // MARK: - Search Methods
 
-    /// Realiza búsqueda local en la base de datos de lugares
+    /// Realiza búsqueda local en la base de datos de lugares, merchants y sedes FIFA
     func performSearch(query: String) {
-        // Limpiar resultados si la búsqueda está vacía
         guard !query.isEmpty else {
             suggestions = []
             isSearching = false
@@ -860,48 +1218,43 @@ class SearchViewModel: ObservableObject {
         isSearching = true
         errorMessage = nil
 
-        // Simular delay de red (opcional, puede removerse)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-            guard let self = self else { return }
+        let lowercasedQuery = query.lowercased()
+        let searchable = allSearchable
 
-            let lowercasedQuery = query.lowercased()
-
-            // Buscar en nombre, subtítulo, dirección y categoría
-            let results = self.allPlaces.filter { place in
-                place.name.lowercased().contains(lowercasedQuery) ||
-                place.subtitle.lowercased().contains(lowercasedQuery) ||
-                (place.fullAddress?.lowercased().contains(lowercasedQuery) ?? false) ||
-                place.category.lowercased().contains(lowercasedQuery)
-            }
-
-            // Ordenar por relevancia (primero coincidencias exactas en el nombre)
-            let sortedResults = results.sorted { place1, place2 in
-                let name1StartsWithQuery = place1.name.lowercased().hasPrefix(lowercasedQuery)
-                let name2StartsWithQuery = place2.name.lowercased().hasPrefix(lowercasedQuery)
-
-                if name1StartsWithQuery && !name2StartsWithQuery {
-                    return true
-                } else if !name1StartsWithQuery && name2StartsWithQuery {
-                    return false
-                }
-
-                // Si ambos tienen la misma relevancia, ordenar por distancia
-                if let userLoc = self.userLocation,
-                   let coord1 = place1.coordinate,
-                   let coord2 = place2.coordinate {
-                    let dist1 = self.calculateDistance(from: userLoc, to: coord1)
-                    let dist2 = self.calculateDistance(from: userLoc, to: coord2)
-                    return dist1 < dist2
-                }
-
-                return place1.name < place2.name
-            }
-
-            self.suggestions = Array(sortedResults.prefix(10)) // Limitar a 10 resultados
-            self.isSearching = false
-
-            print("✅ Búsqueda local exitosa: \(self.suggestions.count) resultados para '\(query)'")
+        // Buscar en nombre, subtítulo, dirección y categoría
+        let results = searchable.filter { place in
+            place.name.lowercased().contains(lowercasedQuery) ||
+            place.subtitle.lowercased().contains(lowercasedQuery) ||
+            (place.fullAddress?.lowercased().contains(lowercasedQuery) ?? false) ||
+            place.category.lowercased().contains(lowercasedQuery)
         }
+
+        // Ordenar por relevancia (primero coincidencias exactas en el nombre)
+        let sortedResults = results.sorted { place1, place2 in
+            let name1StartsWithQuery = place1.name.lowercased().hasPrefix(lowercasedQuery)
+            let name2StartsWithQuery = place2.name.lowercased().hasPrefix(lowercasedQuery)
+
+            if name1StartsWithQuery && !name2StartsWithQuery {
+                return true
+            } else if !name1StartsWithQuery && name2StartsWithQuery {
+                return false
+            }
+
+            if let userLoc = self.userLocation,
+               let coord1 = place1.coordinate,
+               let coord2 = place2.coordinate {
+                let dist1 = self.calculateDistance(from: userLoc, to: coord1)
+                let dist2 = self.calculateDistance(from: userLoc, to: coord2)
+                return dist1 < dist2
+            }
+
+            return place1.name < place2.name
+        }
+
+        self.suggestions = Array(sortedResults.prefix(10))
+        self.isSearching = false
+
+        print("✅ Búsqueda: \(self.suggestions.count) resultados para '\(query)' (de \(searchable.count) elementos)")
     }
 
     /// Selecciona un lugar

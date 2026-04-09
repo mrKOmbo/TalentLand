@@ -312,7 +312,7 @@ struct ScheduleMatchModal: View {
                             Button(action: {
                                 let match = ScheduledMatch(
                                     venue: selectedVenue,
-                                    seats: selectedSeats.isEmpty ? "Por asignar" : selectedSeats,
+                                    seats: selectedSeats.isEmpty ? LocalizedString("schedule.toBeAssigned") : selectedSeats,
                                     date: selectedDate,
                                     status: selectedStatus
                                 )

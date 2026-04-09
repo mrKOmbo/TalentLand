@@ -10,6 +10,7 @@
 import Foundation
 import Speech
 import AVFoundation
+import NaturalLanguage
 internal import Combine
 
 // MARK: - Translation Message
@@ -33,9 +34,20 @@ class VoiceTranslationService: NSObject, ObservableObject {
     @Published var isListening = false
     @Published var currentTranscription = ""
     @Published var lastTranslation = ""
+    @Published var streamingTranslation = ""
+    @Published var isTranslating = false
     @Published var isSpeaking = false
     @Published var messages: [TranslationMessage] = []
     @Published var errorMessage: String?
+
+    // Feature 3: Sugerencias inteligentes
+    @Published var currentSuggestions: [String] = []
+    @Published var suggestionsForMerchant = false
+
+    // Feature 7: Auto-detección de idioma
+    @Published var isAutoDetectEnabled = true
+    @Published var detectedLanguageLabel: String?
+    @Published private(set) var isMerchantSpeakingPublic = true
 
     // Config
     var merchantLanguage = "es-MX"
@@ -54,6 +66,41 @@ class VoiceTranslationService: NSObject, ObservableObject {
     private var silenceTimer: Timer?
     private var lastTranscriptionUpdate: Date?
     private var isMerchantSpeaking = true
+
+    // Cache de traducciones (respuesta instantánea para frases repetidas)
+    private var translationCache: [String: String] = [:]
+    private let languageRecognizer = NLLanguageRecognizer()
+    private let maxContextMessages = 5
+
+    // MARK: - Quick Phrases (Feature 2)
+
+    struct QuickPhrase: Identifiable {
+        let id = UUID()
+        let text: String
+        let emoji: String
+    }
+
+    static let merchantPhrases: [QuickPhrase] = [
+        QuickPhrase(text: "¿Qué le damos?", emoji: "🤔"),
+        QuickPhrase(text: "¿Picoso o no?", emoji: "🌶️"),
+        QuickPhrase(text: "Son 20 pesos", emoji: "💰"),
+        QuickPhrase(text: "¡Provecho!", emoji: "😊"),
+        QuickPhrase(text: "Se acabó", emoji: "❌"),
+        QuickPhrase(text: "Ahorita le preparo", emoji: "👨‍🍳"),
+        QuickPhrase(text: "Con todo", emoji: "✅"),
+        QuickPhrase(text: "¿Algo más?", emoji: "➕"),
+    ]
+
+    static let touristPhrases: [QuickPhrase] = [
+        QuickPhrase(text: "How much?", emoji: "💵"),
+        QuickPhrase(text: "Not spicy", emoji: "🚫"),
+        QuickPhrase(text: "Delicious!", emoji: "😋"),
+        QuickPhrase(text: "Card?", emoji: "💳"),
+        QuickPhrase(text: "To go", emoji: "🥡"),
+        QuickPhrase(text: "What do you recommend?", emoji: "⭐"),
+        QuickPhrase(text: "One more please", emoji: "☝️"),
+        QuickPhrase(text: "Thank you!", emoji: "🙏"),
+    ]
 
     private override init() {
         super.init()
@@ -168,7 +215,7 @@ class VoiceTranslationService: NSObject, ObservableObject {
 
     private func resetSilenceTimer() {
         silenceTimer?.invalidate()
-        silenceTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { [weak self] _ in
+        silenceTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { [weak self] _ in
             guard let self = self else { return }
             let text = self.currentTranscription
             if !text.isEmpty {
@@ -180,42 +227,304 @@ class VoiceTranslationService: NSObject, ObservableObject {
 
     // MARK: - Traducción
 
+    // MARK: - Quick Phrase (Feature 2) — entrada pública
+
+    func sendQuickPhrase(_ text: String, asMerchant: Bool) {
+        if isListening { stopListening() }
+        isMerchantSpeaking = asMerchant
+        isMerchantSpeakingPublic = asMerchant
+        processTranscription(text)
+    }
+
+    // MARK: - Suggestion tap (Feature 3)
+
+    func sendSuggestion(_ text: String) {
+        let forMerchant = suggestionsForMerchant
+        currentSuggestions = []
+        sendQuickPhrase(text, asMerchant: forMerchant)
+    }
+
+    // MARK: - Traducción (Feature 4: contexto, Feature 7: auto-detect)
+
     private func processTranscription(_ text: String) {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
 
+        // Feature 7: Auto-detectar idioma antes de traducir
+        if isAutoDetectEnabled {
+            autoDetectLanguage(text)
+        }
+
         let sourceCode = isMerchantSpeaking ? merchantLanguage : touristLanguage
         let targetCode = isMerchantSpeaking ? touristLanguage : merchantLanguage
+        let fromMerchant = isMerchantSpeaking
 
-        // Usar traducción local simplificada para demo
-        translateText(text, from: sourceCode, to: targetCode) { [weak self] translated in
-            guard let self = self else { return }
+        // Feature 4: Cache key incluye hash de contexto
+        let contextHash = messages.suffix(2).map { String($0.id.uuidString.prefix(4)) }.joined()
+        let cacheKey = "\(sourceCode)|\(targetCode)|\(text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines))|\(contextHash)"
+        if let cached = translationCache[cacheKey] {
+            addMessage(original: text, translated: cached, source: sourceCode, target: targetCode, fromMerchant: fromMerchant)
+            speak(cached, language: targetCode)
+            generateSuggestionsLocal(after: text, fromMerchant: fromMerchant)
+            return
+        }
 
-            let message = TranslationMessage(
-                originalText: text,
-                translatedText: translated,
-                sourceLanguage: sourceCode,
-                targetLanguage: targetCode,
-                isFromMerchant: self.isMerchantSpeaking,
-                timestamp: Date()
-            )
-
-            DispatchQueue.main.async {
-                self.messages.append(message)
-                self.lastTranslation = translated
-                self.currentTranscription = ""
+        Task {
+            await MainActor.run {
+                self.isTranslating = true
+                self.streamingTranslation = ""
+                self.currentSuggestions = []
             }
 
-            // Sintetizar voz traducida
-            self.speak(translated, language: targetCode)
+            let translated: String
+            if APIConfiguration.shared.hasClaudeAPIKey {
+                translated = await translateWithClaude(text, from: sourceCode, to: targetCode)
+            } else {
+                translated = LocalTranslationDictionary.translate(text, from: sourceCode, to: targetCode)
+            }
+
+            translationCache[cacheKey] = translated
+
+            await MainActor.run {
+                self.isTranslating = false
+                self.streamingTranslation = ""
+            }
+
+            addMessage(original: text, translated: translated, source: sourceCode, target: targetCode, fromMerchant: fromMerchant)
+            speak(translated, language: targetCode)
+
+            // Feature 3: Sugerencias — local instantáneo + Claude async
+            generateSuggestionsLocal(after: text, fromMerchant: fromMerchant)
+            Task { await generateSuggestionsClaude(after: text, fromMerchant: fromMerchant) }
         }
     }
 
-    // MARK: - Traducción con diccionario local (demo-ready, offline)
+    private func addMessage(original: String, translated: String, source: String, target: String, fromMerchant: Bool) {
+        let message = TranslationMessage(
+            originalText: original, translatedText: translated,
+            sourceLanguage: source, targetLanguage: target,
+            isFromMerchant: fromMerchant, timestamp: Date()
+        )
+        DispatchQueue.main.async {
+            self.messages.append(message)
+            self.lastTranslation = translated
+            self.currentTranscription = ""
+        }
+    }
 
-    private func translateText(_ text: String, from source: String, to target: String, completion: @escaping (String) -> Void) {
-        // Para demo: traducción con diccionario de frases comunes del comercio ambulante
-        let translated = LocalTranslationDictionary.translate(text, from: source, to: target)
-        completion(translated)
+    // MARK: - Feature 7: Auto-detect idioma
+
+    private func autoDetectLanguage(_ text: String) {
+        guard text.split(separator: " ").count >= 2 else { return }
+
+        languageRecognizer.reset()
+        languageRecognizer.processString(text)
+
+        guard let dominant = languageRecognizer.dominantLanguage else { return }
+        let hypotheses = languageRecognizer.languageHypotheses(withMaximum: 3)
+        let confidence = hypotheses[dominant] ?? 0
+        guard confidence > 0.6 else { return }
+
+        let detected = dominant.rawValue
+        let merchantBase = merchantLanguage.components(separatedBy: "-").first ?? "es"
+        let touristBase = touristLanguage.components(separatedBy: "-").first ?? "en"
+
+        if detected == merchantBase {
+            isMerchantSpeaking = true
+            isMerchantSpeakingPublic = true
+            DispatchQueue.main.async { self.detectedLanguageLabel = "Español 🇲🇽" }
+        } else if detected == touristBase {
+            isMerchantSpeaking = false
+            isMerchantSpeakingPublic = false
+            let name = Self.langName(touristLanguage)
+            DispatchQueue.main.async { self.detectedLanguageLabel = name }
+        }
+    }
+
+    // MARK: - Feature 3: Sugerencias locales (instantáneas)
+
+    private func generateSuggestionsLocal(after text: String, fromMerchant: Bool) {
+        let lowered = text.lowercased()
+        var sugs: [String] = []
+
+        if fromMerchant {
+            // Sugerencias para el turista
+            if lowered.contains("picoso") || lowered.contains("picante") {
+                sugs = ["Yes please", "Not spicy", "A little"]
+            } else if lowered.contains("qué le damos") || lowered.contains("qué va a llevar") || lowered.contains("qué le sirvo") {
+                sugs = ["What do you recommend?", "Tacos please", "What's popular?"]
+            } else if lowered.contains("pesos") || lowered.contains("cuesta") || lowered.contains("son ") {
+                sugs = ["OK, I'll take it", "Too expensive", "Can I pay with card?"]
+            } else if lowered.contains("algo más") || lowered.contains("algo mas") {
+                sugs = ["No, that's all", "One more", "Water please"]
+            } else if lowered.contains("provecho") {
+                sugs = ["Thank you!", "Delicious!", "Very good!"]
+            }
+        } else {
+            // Sugerencias para el vendedor
+            if lowered.contains("how much") || lowered.contains("cuánto") || lowered.contains("cuanto") {
+                sugs = ["Son 20 pesos", "Son 15 pesos", "Son 30 pesos"]
+            } else if lowered.contains("recommend") || lowered.contains("popular") {
+                sugs = ["Los de pastor", "Pruebe los esquites", "Quesadilla de queso"]
+            } else if lowered.contains("card") || lowered.contains("tarjeta") {
+                sugs = ["Sí, aceptamos", "Solo efectivo", "También con teléfono"]
+            } else if lowered.contains("thank") || lowered.contains("delicious") || lowered.contains("good") {
+                sugs = ["¡Provecho!", "¡Gracias a usted!", "¡Que le vaya bien!"]
+            }
+        }
+
+        if !sugs.isEmpty {
+            DispatchQueue.main.async {
+                self.suggestionsForMerchant = !fromMerchant
+                self.currentSuggestions = sugs
+            }
+        }
+    }
+
+    // MARK: - Feature 3: Sugerencias Claude (async, reemplaza locales)
+
+    private func generateSuggestionsClaude(after text: String, fromMerchant: Bool) async {
+        guard APIConfiguration.shared.hasClaudeAPIKey else { return }
+
+        let targetRole = fromMerchant ? "tourist" : "vendor"
+        let targetLang = fromMerchant ? touristLanguage : merchantLanguage
+        let langName = Self.langName(targetLang)
+
+        let contextLines = messages.suffix(4).map {
+            "\($0.isFromMerchant ? "Vendor" : "Tourist"): \($0.originalText)"
+        }.joined(separator: "\n")
+
+        let prompt = """
+        Street food conversation in Mexico City:
+        \(contextLines)
+
+        Suggest 3 short replies the \(targetRole) might say next, in \(langName).
+        Return ONLY a JSON array: ["reply1","reply2","reply3"]
+        """
+
+        guard let url = URL(string: "https://api.anthropic.com/v1/messages") else { return }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(APIConfiguration.shared.claudeAPIKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.setValue("application/json", forHTTPHeaderField: "content-type")
+        request.timeoutInterval = 5
+
+        let body: [String: Any] = [
+            "model": "claude-haiku-4-5-20251001",
+            "max_tokens": 100,
+            "messages": [["role": "user", "content": prompt]],
+            "system": "Return ONLY a JSON array of 3 short strings. No explanation."
+        ]
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200,
+                  let apiResponse = try? JSONDecoder().decode(ClaudeAPIResponse.self, from: data),
+                  let textContent = apiResponse.content.first(where: { $0.type == "text" }) else { return }
+
+            let jsonText = textContent.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let jsonData = jsonText.data(using: .utf8),
+               let arr = try? JSONDecoder().decode([String].self, from: jsonData), arr.count >= 2 {
+                await MainActor.run {
+                    self.suggestionsForMerchant = !fromMerchant
+                    self.currentSuggestions = Array(arr.prefix(3))
+                }
+            }
+        } catch { }
+    }
+
+    // MARK: - Traducción con Claude API (streaming + contexto)
+
+    private func translateWithClaude(_ text: String, from source: String, to target: String) async -> String {
+        let apiKey = APIConfiguration.shared.claudeAPIKey
+        let srcName = Self.langName(source)
+        let tgtName = Self.langName(target)
+
+        // Feature 4: Construir contexto de conversación
+        let recentMessages = messages.suffix(maxContextMessages)
+        var contextBlock = ""
+        if !recentMessages.isEmpty {
+            let lines = recentMessages.map {
+                let role = $0.isFromMerchant ? "Vendor" : "Tourist"
+                let original = String($0.originalText.prefix(80))
+                let translated = String($0.translatedText.prefix(80))
+                return "\(role): \"\(original)\" → \"\(translated)\""
+            }
+            contextBlock = "\nRecent conversation:\n" + lines.joined(separator: "\n") + "\n"
+        }
+
+        guard let url = URL(string: "https://api.anthropic.com/v1/messages") else {
+            return LocalTranslationDictionary.translate(text, from: source, to: target)
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.setValue("application/json", forHTTPHeaderField: "content-type")
+        request.timeoutInterval = 8
+
+        let systemPrompt = """
+        You are a real-time translator for street food vendors and tourists in Mexico City (World Cup 2026).
+        Rules:
+        - Return ONLY the translated text. No quotes, no explanations.
+        - For Mexican food with no direct translation, keep the original name and add a brief description in parentheses. Example: "tacos de canasta (soft steamed basket tacos)".
+        - Common foods like tacos, quesadillas, tamales can stay as-is.
+        - Be casual, friendly, natural. Translate the FULL sentence idiomatically.
+        - Use conversation context to resolve pronouns and references (e.g. "two more" = "dos más de esos").
+        \(contextBlock)
+        """
+
+        let body: [String: Any] = [
+            "model": "claude-haiku-4-5-20251001",
+            "max_tokens": 200,
+            "stream": true,
+            "messages": [["role": "user", "content": "\(srcName) → \(tgtName): \(text)"]],
+            "system": systemPrompt
+        ]
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+            let (bytes, response) = try await URLSession.shared.bytes(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                return LocalTranslationDictionary.translate(text, from: source, to: target)
+            }
+
+            var fullText = ""
+            for try await line in bytes.lines {
+                guard line.hasPrefix("data: ") else { continue }
+                let jsonStr = String(line.dropFirst(6))
+                if jsonStr == "[DONE]" { break }
+
+                guard let data = jsonStr.data(using: .utf8),
+                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let type = json["type"] as? String else { continue }
+
+                if type == "content_block_delta",
+                   let delta = json["delta"] as? [String: Any],
+                   let chunk = delta["text"] as? String {
+                    fullText += chunk
+                    let current = fullText
+                    await MainActor.run { self.streamingTranslation = current }
+                }
+            }
+
+            let result = fullText.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !result.isEmpty { return result }
+        } catch { }
+
+        return LocalTranslationDictionary.translate(text, from: source, to: target)
+    }
+
+    private static func langName(_ code: String) -> String {
+        let p = code.components(separatedBy: "-").first ?? code
+        return ["es": "Spanish", "en": "English", "ja": "Japanese", "ko": "Korean",
+                "de": "German", "fr": "French", "pt": "Portuguese", "zh": "Chinese",
+                "ar": "Arabic", "it": "Italian", "ru": "Russian", "tr": "Turkish"][p] ?? "English"
     }
 
     // MARK: - Text-to-Speech

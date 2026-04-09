@@ -45,13 +45,13 @@ enum AlbumSection: String, CaseIterable, Identifiable {
 
     var color: Color {
         switch self {
-        case .intro: return Color(hex: "#FFD700")
-        case .venues: return Color(hex: "#00D084")
-        case .groups: return Color(hex: "#FF6B6B")
-        case .teams: return Color(hex: "#4ECDC4")
-        case .legends: return Color(hex: "#9D4EDD")
-        case .special: return Color(hex: "#F72585")
-        case .panini: return Color(hex: "#FF4500")
+        case .intro: return Color(hex: "#F0D224")
+        case .venues: return Color(hex: "#1C42E8")
+        case .groups: return Color(hex: "#FF594D")
+        case .teams: return Color(hex: "#1C42E8")
+        case .legends: return Color(hex: "#1C42E8")
+        case .special: return Color(hex: "#1C42E8")
+        case .panini: return Color(hex: "#F0D224")
         }
     }
 }
@@ -72,7 +72,7 @@ struct Sticker: Identifiable {
     var imageSystemName: String
     var gradient: [String]  // Hex colors para gradiente
 
-    init(id: UUID = UUID(), number: Int, name: String, subtitle: String, type: StickerType, section: AlbumSection, isSpecial: Bool = false, rarity: StickerRarity = .common, venueId: UUID? = nil, imageSystemName: String = "photo", gradient: [String] = ["#667eea", "#764ba2"]) {
+    init(id: UUID = UUID(), number: Int, name: String, subtitle: String, type: StickerType, section: AlbumSection, isSpecial: Bool = false, rarity: StickerRarity = .common, venueId: UUID? = nil, imageSystemName: String = "photo", gradient: [String] = ["#1C42E8", "#1C42E8"]) {
         self.id = id
         self.number = number
         self.name = name
@@ -99,7 +99,7 @@ enum StickerRarity: String, Codable {
         case .common: return .gray
         case .rare: return .blue
         case .epic: return .purple
-        case .legendary: return Color(hex: "#FFD700")
+        case .legendary: return Color(hex: "#F0D224")
         }
     }
 }

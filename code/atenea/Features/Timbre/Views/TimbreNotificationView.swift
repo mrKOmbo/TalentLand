@@ -11,6 +11,7 @@ struct TimbreNotificationView: View {
     let timbre: TimbreEvent
     let onRespond: (TimbreResponseType) -> Void
     let onDismiss: () -> Void
+    var onChat: (() -> Void)? = nil
 
     @State private var pulseOpacity: Double = 0.6
 
@@ -85,6 +86,26 @@ struct TimbreNotificationView: View {
                     }
                     .buttonStyle(.plain)
                 }
+
+                if let onChat {
+                    Button {
+                        let generator = UIImpactFeedbackGenerator(style: .light)
+                        generator.impactOccurred()
+                        onChat()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text("💬")
+                                .font(.system(size: 14))
+                            Text("Chat")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(Color.blue.opacity(0.35)))
+                    }
+                    .buttonStyle(.plain)
+                }
             }
             .padding(.horizontal, 14)
             .padding(.bottom, 14)
@@ -114,6 +135,7 @@ struct TimbreNotificationView: View {
         case .waitHere: return .blue.opacity(0.3)
         case .busy: return .gray.opacity(0.3)
         case .closed: return .red.opacity(0.3)
+        case .message: return .blue.opacity(0.2)
         }
     }
 }

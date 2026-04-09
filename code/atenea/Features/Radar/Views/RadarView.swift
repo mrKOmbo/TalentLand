@@ -81,26 +81,35 @@ struct RadarView: View {
 
     /// Merchants con ubicación conocida, con bearing y distancia calculados
     private var radarMerchants: [RadarMerchant] {
+        var result: [RadarMerchant] = []
+        var includedNames = Set<String>()
+
+        // 1. Merchants con GPS cercano
         let activeMerchants = merchantManager.merchants.filter { $0.isActive && $0.currentLocation != nil }
-
-        return activeMerchants.compactMap { merchant in
-            guard let loc = merchant.currentLocation else { return nil }
+        for merchant in activeMerchants {
+            guard let loc = merchant.currentLocation else { continue }
             let coord = loc.coordinate
-            let dist = MerchantManager.haversineDistance(
-                lat1: userLocation.latitude, lon1: userLocation.longitude,
-                lat2: coord.latitude, lon2: coord.longitude
-            )
-            // Solo mostrar merchants dentro del rango del radar
-            guard dist <= maxDistance * 1.2 else { return nil }
 
-            let bear = bearingBetween(from: userLocation, to: coord)
-
-            // Buscar si este merchant también fue descubierto por MPC
-            let mpcPeer = radarService.discoveredMerchants.first {
+            let blePeer = radarService.discoveredMerchants.first {
                 $0.businessName == merchant.businessName
             }
 
-            return RadarMerchant(
+            // Prioridad: UWB > GPS haversine
+            let dist: Double
+            if let uwb = blePeer?.uwbDistance {
+                dist = Double(uwb)
+            } else {
+                dist = MerchantManager.haversineDistance(
+                    lat1: userLocation.latitude, lon1: userLocation.longitude,
+                    lat2: coord.latitude, lon2: coord.longitude
+                )
+            }
+
+            guard dist <= maxDistance * 1.2 else { continue }
+
+            let bear = bearingBetween(from: userLocation, to: coord)
+
+            result.append(RadarMerchant(
                 id: merchant.id,
                 name: merchant.businessName,
                 emoji: merchant.emoji,
@@ -109,11 +118,45 @@ struct RadarView: View {
                 coordinate: coord,
                 distance: dist,
                 bearing: bear,
-                mpcPeer: mpcPeer,
+                mpcPeer: blePeer,
                 merchant: merchant
-            )
+            ))
+            includedNames.insert(merchant.businessName)
         }
-        .sorted { $0.distance < $1.distance }
+
+        // 2. Peers BLE que NO están ya incluidos — UWB si disponible, sino RSSI
+        for peer in radarService.discoveredMerchants where !includedNames.contains(peer.businessName) {
+            let clampedDist: Double
+            if let uwb = peer.uwbDistance {
+                clampedDist = Double(uwb)
+            } else {
+                let txPower: Double = -59
+                let estimatedDist = pow(10.0, (txPower - Double(peer.rssi)) / 20.0)
+                clampedDist = min(max(estimatedDist, 1.0), maxDistance)
+            }
+
+            // Buscar merchant en catálogo para datos completos (productos, etc.)
+            let catalogMerchant = merchantManager.merchants.first { $0.businessName == peer.businessName }
+
+            // Bearing aleatorio estable por peer (para que no salten en cada render)
+            let stableBearing = Double(abs(peer.id.hashValue) % 360)
+
+            result.append(RadarMerchant(
+                id: catalogMerchant?.id ?? UUID(),
+                name: peer.businessName,
+                emoji: peer.emoji,
+                category: catalogMerchant?.category.displayName ?? peer.category,
+                isStatic: peer.isStatic,
+                coordinate: userLocation,
+                distance: clampedDist,
+                bearing: stableBearing,
+                mpcPeer: peer,
+                merchant: catalogMerchant
+            ))
+            includedNames.insert(peer.businessName)
+        }
+
+        return result.sorted { $0.distance < $1.distance }
     }
 
     var body: some View {
@@ -161,14 +204,14 @@ struct RadarView: View {
     private var radarHeader: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Radar")
+                Text(LocalizedString("radar.title"))
                     .font(.system(size: 28, weight: .bold))
                     .foregroundColor(.white)
                 HStack(spacing: 6) {
                     Circle()
                         .fill(radarService.isScanning ? Color.green : Color.gray)
                         .frame(width: 6, height: 6)
-                    Text("\(radarMerchants.count) comerciantes en rango")
+                    Text(String(format: LocalizedString("radar.merchantsInRange"), radarMerchants.count))
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.6))
                 }
@@ -375,7 +418,7 @@ struct RadarView: View {
     private var merchantList: some View {
         VStack(alignment: .leading, spacing: 8) {
             if !radarMerchants.isEmpty {
-                Text("COMERCIANTES EN RANGO")
+                Text(LocalizedString("radar.merchantsInRangeLabel"))
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(.white.opacity(0.4))
                     .kerning(1.5)
@@ -397,15 +440,10 @@ struct RadarView: View {
                                     .foregroundColor(.white)
                                 HStack(spacing: 4) {
                                     Text(merchant.formattedDistance)
-                                        .font(.system(size: 12, weight: .medium))
+                                        .font(.system(size: 12, weight: .bold))
                                         .foregroundColor(.cyan)
-                                    Text("·")
-                                        .foregroundColor(.white.opacity(0.3))
-                                    Text(directionLabel(merchant.bearing))
-                                        .font(.system(size: 12))
-                                        .foregroundColor(.white.opacity(0.5))
                                     if merchant.mpcPeer != nil {
-                                        Text("· EN VIVO")
+                                        Text("· \(LocalizedString("radar.live"))")
                                             .font(.system(size: 9, weight: .bold))
                                             .foregroundColor(.green)
                                     }
@@ -414,11 +452,9 @@ struct RadarView: View {
 
                             Spacer()
 
-                            // Mini flecha de dirección
-                            Image(systemName: "location.north.fill")
-                                .font(.system(size: 14))
-                                .foregroundColor(.green.opacity(0.6))
-                                .rotationEffect(.degrees(merchant.bearing - heading))
+                            Text(merchant.formattedDistance)
+                                .font(.system(size: 15, weight: .bold, design: .monospaced))
+                                .foregroundColor(.cyan.opacity(0.8))
                         }
                         .padding(12)
                         .background(
@@ -437,11 +473,33 @@ struct RadarView: View {
     // MARK: - Helpers
 
     private func startRadar() {
+        print("📡 [RadarView] startRadar() — user=\(userManager.currentUser?.name ?? "nil") isMerchant=\(userManager.currentUser?.isMerchant ?? false)")
+        print("📡 [RadarView] userLocation=(\(userLocation.latitude), \(userLocation.longitude)) | maxDist=\(maxDistance)m")
         if let user = userManager.currentUser, user.isMerchant,
            let merchant = MerchantManager.shared.currentMerchantProfile {
             radarService.startAdvertising(merchant: merchant)
+            print("📡 [RadarView] Merchant advertising: \(merchant.businessName)")
         }
         radarService.startScanning()
+
+        // Log completo una sola vez
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
+            let gps = merchantManager.merchants.filter { $0.isActive && $0.currentLocation != nil }
+            let ble = radarService.discoveredMerchants
+            print("📡 [RadarView] ── SCAN REPORT ──")
+            print("📡   GPS merchants: \(gps.count) | BLE peers: \(ble.count) | radarMerchants: \(radarMerchants.count)")
+            for m in radarMerchants {
+                let source = m.mpcPeer != nil ? "BLE+GPS" : "GPS"
+                print("📡   ✅ \(m.emoji) \(m.name) dist=\(m.formattedDistance) bearing=\(Int(m.bearing))° [\(source)]")
+            }
+            for peer in ble {
+                let inRadar = radarMerchants.contains { $0.name == peer.businessName }
+                if !inRadar {
+                    print("📡   ⚠️ BLE peer \(peer.emoji) \(peer.businessName) RSSI=\(peer.rssi) — NO en radar (bug?)")
+                }
+            }
+            print("📡 [RadarView] ── END REPORT ──")
+        }
     }
 
     private func directionLabel(_ bearing: Double) -> String {
@@ -555,7 +613,7 @@ struct DirectionArrowView: View {
                 Button(action: onBack) {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.left")
-                        Text("Radar")
+                        Text(LocalizedString("radar.title"))
                     }
                     .font(.system(size: 15, weight: .medium))
                     .foregroundColor(.cyan)
@@ -652,8 +710,13 @@ struct DirectionArrowView: View {
     }
 
     private func directionLabel(_ bearing: Double) -> String {
-        let dirs = ["Norte", "Noreste", "Este", "Sureste", "Sur", "Suroeste", "Oeste", "Noroeste"]
+        let dirs = [
+            LocalizedString("radar.north"), LocalizedString("radar.northeast"),
+            LocalizedString("radar.east"), LocalizedString("radar.southeast"),
+            LocalizedString("radar.south"), LocalizedString("radar.southwest"),
+            LocalizedString("radar.west"), LocalizedString("radar.northwest")
+        ]
         let index = Int((bearing + 22.5) / 45) % 8
-        return "Hacia el \(dirs[index])"
+        return String(format: LocalizedString("radar.towardsThe"), dirs[index])
     }
 }

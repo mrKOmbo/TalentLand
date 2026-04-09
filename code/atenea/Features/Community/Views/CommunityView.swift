@@ -11,6 +11,11 @@ import SwiftUI
 struct CommunityView: View {
     @State private var selectedFilter = LocalizedString("community.filter.all")
     @Binding var selectedTab: Int
+    @ObservedObject private var mastodonService = MastodonService.shared
+
+    private var posts: [CommunityPost] {
+        mastodonService.posts + CommunityPost.samplePosts
+    }
 
     var filters: [String] {
         [
@@ -27,9 +32,9 @@ struct CommunityView: View {
                 // Modern light gradient background
                 LinearGradient(
                     colors: [
-                        Color(red: 0.97, green: 0.98, blue: 1.0),
+                        Color(hex: "#F5F3F0"),
                         Color.white,
-                        Color(red: 0.98, green: 0.97, blue: 1.0)
+                        Color(hex: "#F5F3F0")
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
@@ -63,9 +68,9 @@ struct CommunityView: View {
 
                     HStack(spacing: 8) {
                         Circle()
-                            .fill(Color.secondary)
+                            .fill(Color(hex: "#1C42E8"))
                             .frame(width: 8, height: 8)
-                        Text(LocalizedString("status.noPostsAvailable"))
+                        Text("\(posts.count) publicaciones")
                             .font(.system(size: 13, weight: .medium))
                             .foregroundStyle(.secondary)
                     }
@@ -82,7 +87,7 @@ struct CommunityView: View {
                                 .frame(width: 40, height: 40)
                             Image(systemName: "arrow.triangle.2.circlepath")
                                 .font(.system(size: 18, weight: .medium))
-                                .foregroundStyle(.blue)
+                                .foregroundStyle(Color(hex: "#1C42E8"))
                                 .symbolRenderingMode(.hierarchical)
                         }
                     }
@@ -113,7 +118,7 @@ struct CommunityView: View {
                         }
                         .overlay(
                             Circle()
-                                .fill(.red)
+                                .fill(Color(hex: "#FF594D"))
                                 .frame(width: 12, height: 12)
                                 .offset(x: 12, y: -12),
                             alignment: .topTrailing
@@ -130,8 +135,8 @@ struct CommunityView: View {
                 CommunityStatCard(
                     icon: "flame.fill",
                     title: LocalizedString("community.filter.trending"),
-                    value: "0",
-                    color: .orange
+                    value: "\(posts.filter { $0.likes >= 200 }.count)",
+                    color: Color(hex: "#F0D224")
                 )
 
                 Divider()
@@ -140,8 +145,8 @@ struct CommunityView: View {
                 CommunityStatCard(
                     icon: "soccerball",
                     title: LocalizedString("community.filter.worldCup"),
-                    value: "0",
-                    color: .green
+                    value: "\(posts.filter { $0.keywords.contains("mundial") || $0.keywords.contains("fifa") }.count)",
+                    color: Color(hex: "#1C42E8")
                 )
 
                 Divider()
@@ -150,8 +155,8 @@ struct CommunityView: View {
                 CommunityStatCard(
                     icon: "newspaper.fill",
                     title: LocalizedString("community.filter.creator"),
-                    value: "0",
-                    color: .blue
+                    value: "\(posts.filter { $0.source == "Instagram" || $0.source == "X" || $0.source == "Mastodon" }.count)",
+                    color: Color(hex: "#1C42E8")
                 )
             }
             .padding(.horizontal, 20)
@@ -192,7 +197,11 @@ struct CommunityView: View {
     // MARK: - Community Feed
     private var communityFeed: some View {
         Group {
-            emptyState
+            if filteredPosts.isEmpty {
+                emptyState
+            } else {
+                postsScrollView
+            }
         }
     }
 
@@ -201,7 +210,7 @@ struct CommunityView: View {
             Spacer()
             ProgressView()
                 .scaleEffect(CGFloat(1.3))
-                .tint(.blue)
+                .tint(Color(hex: "#1C42E8"))
             Text(LocalizedString("status.loadingPosts"))
                 .font(.system(size: 16, weight: .medium))
                 .foregroundStyle(.secondary)
@@ -215,12 +224,12 @@ struct CommunityView: View {
 
             ZStack {
                 Circle()
-                    .fill(Color.red.opacity(0.1))
+                    .fill(Color(hex: "#FF594D").opacity(0.1))
                     .frame(width: 80, height: 80)
 
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.system(size: 36))
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Color(hex: "#FF594D"))
                     .symbolRenderingMode(.hierarchical)
             }
 
@@ -245,7 +254,7 @@ struct CommunityView: View {
                     .padding(.vertical, 14)
                     .background(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(.blue)
+                            .fill(Color(hex: "#1C42E8"))
                     )
             }
 
@@ -259,12 +268,12 @@ struct CommunityView: View {
 
             ZStack {
                 Circle()
-                    .fill(Color.blue.opacity(0.1))
+                    .fill(Color(hex: "#1C42E8").opacity(0.1))
                     .frame(width: 80, height: 80)
 
                 Image(systemName: "newspaper.fill")
                     .font(.system(size: 36))
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(Color(hex: "#1C42E8"))
                     .symbolRenderingMode(.hierarchical)
             }
 
@@ -286,7 +295,9 @@ struct CommunityView: View {
             .padding(.vertical, 20)
             .padding(.bottom, 100)
         }
-        .refreshable {}
+        .refreshable {
+                await mastodonService.refresh()
+            }
     }
 
     // MARK: - Helper Functions
@@ -302,7 +313,23 @@ struct CommunityView: View {
     }
 
     // MARK: - Filtered Posts
-    private var filteredPosts: [CommunityPost] { [] }
+    private var filteredPosts: [CommunityPost] {
+        let allFilter = LocalizedString("community.filter.all")
+        let worldCupFilter = LocalizedString("community.filter.worldCup")
+        let trendingFilter = LocalizedString("community.filter.trending")
+        let creatorFilter = LocalizedString("community.filter.creator")
+
+        if selectedFilter == allFilter {
+            return posts
+        } else if selectedFilter == worldCupFilter {
+            return posts.filter { $0.keywords.contains("mundial") || $0.keywords.contains("fifa") }
+        } else if selectedFilter == trendingFilter {
+            return posts.filter { $0.likes >= 200 }
+        } else if selectedFilter == creatorFilter {
+            return posts.filter { $0.source == "Instagram" || $0.source == "X" || $0.source == "Mastodon" }
+        }
+        return posts
+    }
 }
 
 // MARK: - Filter Chip Component
@@ -330,7 +357,7 @@ struct FilterChip: View {
                 Capsule()
                     .fill(isSelected ?
                         LinearGradient(
-                            colors: [.blue, .blue.opacity(0.8)],
+                            colors: [Color(hex: "#1C42E8"), Color(hex: "#081754")],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ) :
@@ -341,7 +368,7 @@ struct FilterChip: View {
                         )
                     )
                     .shadow(
-                        color: isSelected ? Color.blue.opacity(0.3) : Color.clear,
+                        color: isSelected ? Color(hex: "#1C42E8").opacity(0.3) : Color.clear,
                         radius: 8,
                         x: 0,
                         y: 4
@@ -395,8 +422,8 @@ struct CommunityPostCard: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color.blue.opacity(0.2),
-                                Color.blue.opacity(0.1)
+                                Color(hex: "#1C42E8").opacity(0.2),
+                                Color(hex: "#1C42E8").opacity(0.1)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -405,7 +432,7 @@ struct CommunityPostCard: View {
                     .frame(width: 44, height: 44)
 
                 Image(systemName: sourceIcon)
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(Color(hex: "#1C42E8"))
                     .font(.system(size: 20, weight: .semibold))
             }
 
@@ -418,7 +445,7 @@ struct CommunityPostCard: View {
                 HStack(spacing: 4) {
                     Text(post.source.uppercased())
                         .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(Color(hex: "#1C42E8"))
 
                     Text("•")
                         .foregroundStyle(.secondary)
@@ -437,7 +464,7 @@ struct CommunityPostCard: View {
             Link(destination: URL(string: post.url) ?? URL(string: "https://news.com")!) {
                 Image(systemName: "arrow.up.right.circle.fill")
                     .font(.system(size: 24))
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(Color(hex: "#1C42E8"))
                     .symbolRenderingMode(.hierarchical)
             }
         }
@@ -453,6 +480,8 @@ struct CommunityPostCard: View {
             return "camera.fill"
         case "twitter", "x":
             return "message.fill"
+        case "mastodon":
+            return "person.crop.circle.fill"
         default:
             return "globe"
         }
@@ -486,7 +515,7 @@ struct CommunityPostCard: View {
             } else {
                 VStack(spacing: 12) {
                     ProgressView()
-                        .tint(.blue)
+                        .tint(Color(hex: "#1C42E8"))
                     Text(LocalizedString("status.loading"))
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
@@ -511,7 +540,7 @@ struct CommunityPostCard: View {
                 HStack(spacing: 4) {
                     Image(systemName: isLiked ? "heart.fill" : "heart")
                         .font(.system(size: 22))
-                        .foregroundStyle(isLiked ? .red : .primary)
+                        .foregroundStyle(isLiked ? Color(hex: "#FF594D") : Color.primary)
                         .symbolRenderingMode(.hierarchical)
                         .scaleEffect(CGFloat(isLiked ? 1.1 : 1.0))
 
@@ -586,13 +615,13 @@ struct CommunityPostCard: View {
                 ForEach(post.keywordArray.prefix(5), id: \.self) { keyword in
                     Text("#\(keyword)")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(Color(hex: "#1C42E8"))
                         .lineLimit(1)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
                         .background(
                             Capsule()
-                                .fill(Color.blue.opacity(0.1))
+                                .fill(Color(hex: "#1C42E8").opacity(0.1))
                         )
                 }
             }

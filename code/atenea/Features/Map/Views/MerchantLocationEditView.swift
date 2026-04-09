@@ -8,7 +8,7 @@ struct MerchantLocationEditView: View {
     @State private var pinOffset: CGSize = .zero
     @State private var isDragging = false
     @State private var confirmed = false
-    @State private var simulatedAddress = "Obteniendo dirección..."
+    @State private var simulatedAddress = LocalizedString("merchant.location.gettingAddress")
 
     var body: some View {
         VStack(spacing: 0) {
@@ -21,10 +21,10 @@ struct MerchantLocationEditView: View {
             // Header
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Editar mi ubicación")
+                    Text(LocalizedString("merchant.location.editTitle"))
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
-                    Text("Arrastra el pin para ajustar")
+                    Text(LocalizedString("merchant.location.dragToAdjust"))
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.5))
                 }
@@ -119,7 +119,7 @@ struct MerchantLocationEditView: View {
                 VStack {
                     HStack {
                         Spacer()
-                        Label("MODO EDICIÓN", systemImage: "pencil")
+                        Label(LocalizedString("merchant.location.editMode"), systemImage: "pencil")
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundColor(.orange)
                             .padding(.horizontal, 10)
@@ -160,7 +160,7 @@ struct MerchantLocationEditView: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: confirmed ? "checkmark.circle.fill" : "mappin.and.ellipse")
-                    Text(confirmed ? "Ubicación guardada" : "Confirmar ubicación")
+                    Text(confirmed ? LocalizedString("merchant.location.saved") : LocalizedString("merchant.location.confirm"))
                         .font(.system(size: 16, weight: .bold))
                 }
                 .foregroundColor(.white)
@@ -201,7 +201,7 @@ struct MerchantLocationEditView: View {
                     .filter { !$0.isEmpty }
                     .joined(separator: ", ")
             } else {
-                simulatedAddress = "Ubicación actual"
+                simulatedAddress = LocalizedString("location.current")
             }
         }
     }

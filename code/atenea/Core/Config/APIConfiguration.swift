@@ -17,17 +17,13 @@ class APIConfiguration {
 
     var claudeAPIKey: String {
         get {
-            // Primero intenta leer de UserDefaults
             if let savedKey = UserDefaults.standard.string(forKey: "claudeAPIKey"), !savedKey.isEmpty {
                 return savedKey
             }
-
-            // Si no hay clave guardada, intenta leer de Info.plist
-            if let apiKey = Bundle.main.object(forInfoDictionaryKey: "CLAUDE_API_KEY") as? String, !apiKey.isEmpty {
+            if let apiKey = Bundle.main.object(forInfoDictionaryKey: "CLAUDE_API_KEY") as? String,
+               !apiKey.isEmpty, !apiKey.hasPrefix("$(") {
                 return apiKey
             }
-
-            // Retornar vacío si no hay clave configurada
             return ""
         }
         set {
@@ -47,7 +43,8 @@ class APIConfiguration {
             if let savedKey = UserDefaults.standard.string(forKey: "stripeSecretKey"), !savedKey.isEmpty {
                 return savedKey
             }
-            if let key = Bundle.main.object(forInfoDictionaryKey: "STRIPE_SECRET_KEY") as? String, !key.isEmpty {
+            if let key = Bundle.main.object(forInfoDictionaryKey: "STRIPE_SECRET_KEY") as? String,
+               !key.isEmpty, !key.hasPrefix("$(") {
                 return key
             }
             return ""

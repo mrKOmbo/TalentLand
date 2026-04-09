@@ -23,7 +23,9 @@ class UserManager: ObservableObject {
             age: "25",
             country: "México",
             phoneNumber: "+52 55 1234 5678",
-            profileImage: "MILO"
+            profileImage: "MILO",
+            isVerified: true,
+            trustLevel: .trusted
         ),
         User(
             email: "sebas@atenea.com",
@@ -43,13 +45,86 @@ class UserManager: ObservableObject {
             age: "45",
             country: "México",
             phoneNumber: "+52 55 9876 5432",
+            profileImage: nil,
+            isVerified: true,
+            trustLevel: .trusted
+        ),
+        // Clientes nuevos
+        User(
+            email: "james@atenea.com",
+            name: "James",
+            role: .user,
+            accessibilityOption: .none,
+            age: "32",
+            country: "Estados Unidos",
+            phoneNumber: "+1 310 555 7890",
+            profileImage: nil
+        ),
+        User(
+            email: "sofia@atenea.com",
+            name: "Sofía",
+            role: .user,
+            accessibilityOption: .none,
+            age: "26",
+            country: "Argentina",
+            phoneNumber: "+54 11 4567 8901",
+            profileImage: nil
+        ),
+        User(
+            email: "carlos@atenea.com",
+            name: "Carlos",
+            role: .user,
+            accessibilityOption: .none,
+            age: "35",
+            country: "México",
+            phoneNumber: "+52 55 3344 5566",
+            profileImage: nil
+        ),
+        // Comerciantes nuevos
+        User(
+            email: "maria.elotes@atenea.com",
+            name: "María",
+            role: .merchant,
+            accessibilityOption: .none,
+            age: "38",
+            country: "México",
+            phoneNumber: "+52 55 6677 8899",
+            profileImage: nil,
+            isVerified: true,
+            trustLevel: .verified
+        ),
+        User(
+            email: "pepe.carnitas@atenea.com",
+            name: "Pepe",
+            role: .merchant,
+            accessibilityOption: .none,
+            age: "52",
+            country: "México",
+            phoneNumber: "+52 55 1122 3344",
             profileImage: nil
         )
     ]
 
+    private var needsMerchantLink = false
+
     private init() {
-        // No iniciar con ningún usuario - forzar login
-        currentUser = nil
+        // Restaurar sesión previa si existe
+        if UserDefaults.standard.bool(forKey: "isUserLoggedIn"),
+           let email = UserDefaults.standard.string(forKey: "currentUserEmail"),
+           let user = predefinedUsers.first(where: { $0.email.lowercased() == email.lowercased() }) {
+            currentUser = user
+            needsMerchantLink = user.isMerchant
+            print("🔄 Sesión restaurada: \(user.name) (\(user.role.displayName))")
+        } else {
+            currentUser = nil
+        }
+    }
+
+    /// Llamar una vez que la app esté lista para vincular el merchant profile
+    func ensureMerchantLinked() {
+        guard needsMerchantLink else { return }
+        needsMerchantLink = false
+        MerchantManager.shared.linkCurrentUserProfile()
     }
 
     // MARK: - User Management
@@ -58,22 +133,46 @@ class UserManager: ObservableObject {
     func loginUser(withEmail email: String) -> Bool {
         if let user = predefinedUsers.first(where: { $0.email.lowercased() == email.lowercased() }) {
             currentUser = user
-            // Si es merchant, vincular perfil de negocio
-            if user.isMerchant {
-                MerchantManager.shared.currentMerchantProfile = MerchantManager.shared.merchantForUser(user.id)
-            }
+            // Vincular perfil de negocio
+            MerchantManager.shared.linkCurrentUserProfile()
             print("✅ Usuario logueado: \(user.name) (\(user.role.displayName))")
+
+            // Sync user to Supabase
+            Task {
+                try? await SupabaseService.shared.saveUser(user)
+            }
+
             return true
         }
         print("❌ Usuario no encontrado: \(email)")
         return false
     }
 
-    /// Cerrar sesión
+    /// Cerrar sesión (mantiene biometría para re-login rápido)
     func logout() {
+        // Safety net: asegurar que BLE se detenga aunque el caller no lo haga
+        RadarService.shared.stopAll()
         MerchantManager.shared.currentMerchantProfile = nil
         currentUser = nil
-        print("👋 Usuario deslogueado")
+        print("👋 Usuario deslogueado — radar y merchant profile limpiados")
+    }
+
+    /// Cerrar sesión y borrar biometría (cambio de cuenta)
+    func logoutAndClearBiometrics() {
+        logout()
+        BiometricAuthService.shared.clearSession()
+        print("🔒 Biometría limpiada")
+    }
+
+    /// Login vía Face ID / Touch ID — usa el email guardado en Keychain
+    func loginWithBiometrics() async -> Bool {
+        guard BiometricAuthService.shared.hasSavedSession,
+              let email = KeychainService.shared.savedEmail else {
+            return false
+        }
+        let authenticated = await BiometricAuthService.shared.authenticate()
+        guard authenticated else { return false }
+        return loginUser(withEmail: email)
     }
 
     /// Verificar si el usuario actual es administrador

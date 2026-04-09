@@ -144,42 +144,42 @@ struct MapCategory: Identifiable, Equatable {
         lhs.id == rhs.id
     }
 
-    // Categorías disponibles
+    // Recomendaciones para el Mundial 2026
     static let allCategories: [MapCategory] = [
         MapCategory(
-            id: "restaurants",
-            name: "Restaurantes",
-            icon: "fork.knife",
-            color: .red,
-            searchTerm: "Restaurante"
-        ),
-        MapCategory(
-            id: "hotels",
-            name: "Hoteles",
-            icon: "bed.double.fill",
-            color: .blue,
-            searchTerm: "Hotel"
-        ),
-        MapCategory(
-            id: "museums",
-            name: "Museos",
-            icon: "building.columns.fill",
-            color: .purple,
-            searchTerm: "Museo"
-        ),
-        MapCategory(
-            id: "transport",
-            name: "Transporte",
-            icon: "tram.fill",
+            id: "streetfood",
+            name: LocalizedString("category.streetFood"),
+            icon: "flame.fill",
             color: .orange,
-            searchTerm: "Metro"
+            searchTerm: "Tacos"
         ),
         MapCategory(
             id: "stadiums",
-            name: "Estadios",
+            name: LocalizedString("category.stadiums"),
             icon: "trophy.fill",
             color: .green,
             searchTerm: "Estadio"
+        ),
+        MapCategory(
+            id: "metro",
+            name: LocalizedString("category.metro"),
+            icon: "tram.fill",
+            color: .blue,
+            searchTerm: "Metro"
+        ),
+        MapCategory(
+            id: "attractions",
+            name: LocalizedString("category.attractions"),
+            icon: "star.fill",
+            color: .purple,
+            searchTerm: "Monumento"
+        ),
+        MapCategory(
+            id: "pharmacy",
+            name: LocalizedString("category.pharmacy"),
+            icon: "cross.fill",
+            color: .red,
+            searchTerm: "Farmacia"
         )
     ]
 }

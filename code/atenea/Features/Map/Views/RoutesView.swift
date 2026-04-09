@@ -14,10 +14,10 @@ struct RoutesView: View {
                 .font(.system(size: 60))
                 .foregroundColor(.blue)
 
-            Text("Rutas")
+            Text(LocalizedString("routes.title"))
                 .font(.system(size: 24, weight: .bold))
 
-            Text("Aquí podrás ver tus rutas guardadas")
+            Text(LocalizedString("routes.savedRoutes"))
                 .font(.system(size: 16))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)

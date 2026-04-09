@@ -2,6 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
 	<key>MBXAccessToken</key>
 	<string>pk.eyJ1IjoibXJrb21ibyIsImEiOiJjbWg0MTJ2bm0wZmFtMm9xMGIybmR1emk5In0.2u-K5dCzznXlCQRlxtQ6QA</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
@@ -14,6 +22,8 @@
 	<array>
 		<string>audio</string>
 		<string>location</string>
+		<string>bluetooth-central</string>
+		<string>bluetooth-peripheral</string>
 	</array>
 	<key>NSLocationTemporaryUsageDescriptionDictionary</key>
 	<dict>
@@ -26,6 +36,8 @@
 		<string>fifa-26.otf</string>
 		<string>fifawelcome1.3.ttf</string>
 	</array>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Atenea usa Face ID para iniciar sesión de forma segura y rápida.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>We need access to your camera for AR navigation with real-time text detection to help you navigate better.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
@@ -34,18 +46,33 @@
 	<true/>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Atenea usa Bluetooth para descubrir comerciantes cercanos, enviar timbres virtuales y pagos de proximidad — todo sin internet.</string>
+	<key>NSNearbyInteractionUsageDescription</key>
+	<string>Atenea usa UWB para medir la distancia exacta al comerciante y confirmar pagos de proximidad de forma segura.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Atenea uses local network to discover nearby merchants and connect staff with users in emergency situations.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_atenea-sos._tcp</string>
 		<string>_atenea-sos._udp</string>
-		<string>_atenea-rdr._tcp</string>
-		<string>_atenea-rdr._udp</string>
 		<string>_atenea-pay._tcp</string>
 		<string>_atenea-pay._udp</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>atenea</string>
+			</array>
+			<key>CFBundleURLName</key>
+			<string>com.atenea.app</string>
+		</dict>
+	</array>
+	<key>CLAUDE_API_KEY</key>
+	<string>$(CLAUDE_API_KEY)</string>
 	<key>STRIPE_SECRET_KEY</key>
-	<string>sk_test_51T8Tg3GjXvm4xCpRLnNqVXIXePLUTzw8N4oUmAZ15LHTv6REUKmaafY3KBz8zBk09lbRuJswXRLcHWBKOjjjT4FV00fEDnxcDk</string>
+	<string>$(STRIPE_SECRET_KEY)</string>
 </dict>
 </plist>

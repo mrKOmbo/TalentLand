@@ -15,10 +15,16 @@ struct MapboxMapView: UIViewRepresentable {
     @Binding var routeCoordinates: [CLLocationCoordinate2D]
     let isMobileBusinesse: Bool
     let onMapTap: (CLLocationCoordinate2D) -> Void
+    @Binding var centerOnUserLocation: Bool
+    @Binding var approachRouteCoordinates: [CLLocationCoordinate2D]
 
     func makeUIView(context: Context) -> MapView {
         let mapView = MapView(frame: .zero)
         mapView.mapboxMap.styleURI = .streets
+
+        // Habilitar puck de ubicación del usuario
+        mapView.location.options.puckType = .puck2D()
+        mapView.location.options.puckBearingEnabled = true
 
         // Set initial camera to Mexico City
         let mexicoCity = CLLocationCoordinate2D(latitude: 19.4326, longitude: -99.1332)
@@ -56,6 +62,17 @@ struct MapboxMapView: UIViewRepresentable {
     func updateUIView(_ mapView: MapView, context: Context) {
         context.coordinator.updateAnnotations(waypoints: waypoints, selectedCoordinate: selectedCoordinate, isMobileBusinesse: isMobileBusinesse)
         context.coordinator.updateRoute(coordinates: routeCoordinates)
+        context.coordinator.updateApproachRoute(coordinates: approachRouteCoordinates)
+
+        if centerOnUserLocation {
+            DispatchQueue.main.async {
+                centerOnUserLocation = false
+            }
+            if let userLoc = mapView.location.latestLocation?.coordinate {
+                let camera = CameraOptions(center: userLoc, zoom: 15.5)
+                mapView.camera.ease(to: camera, duration: 0.8)
+            }
+        }
     }
 
     func makeCoordinator() -> Coordinator {
@@ -68,6 +85,8 @@ struct MapboxMapView: UIViewRepresentable {
         private var pointAnnotationManager: PointAnnotationManager?
         private var routeLayerId = "route-layer"
         private var routeSourceId = "route-source"
+        private var approachLayerId = "approach-layer"
+        private var approachSourceId = "approach-source"
 
         init(onMapTap: @escaping (CLLocationCoordinate2D) -> Void) {
             self.onMapTap = onMapTap
@@ -295,6 +314,37 @@ struct MapboxMapView: UIViewRepresentable {
             )
 
             mapView.camera.ease(to: cameraOptions, duration: 0.5)
+        }
+
+        func updateApproachRoute(coordinates: [CLLocationCoordinate2D]) {
+            guard let mapView = mapView else { return }
+
+            // Limpiar approach route previo
+            if mapView.mapboxMap.layerExists(withId: approachLayerId) {
+                try? mapView.mapboxMap.removeLayer(withId: approachLayerId)
+            }
+            if mapView.mapboxMap.sourceExists(withId: approachSourceId) {
+                try? mapView.mapboxMap.removeSource(withId: approachSourceId)
+            }
+
+            guard !coordinates.isEmpty else { return }
+
+            let lineString = LineString(coordinates.map { LocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) })
+            let feature = Feature(geometry: .lineString(lineString))
+
+            var source = GeoJSONSource(id: approachSourceId)
+            source.data = .feature(feature)
+
+            var lineLayer = LineLayer(id: approachLayerId, source: approachSourceId)
+            lineLayer.lineColor = .constant(StyleColor(UIColor.systemOrange))
+            lineLayer.lineWidth = .constant(4)
+            lineLayer.lineCap = .constant(.round)
+            lineLayer.lineJoin = .constant(.round)
+            lineLayer.lineOpacity = .constant(0.85)
+            lineLayer.lineDasharray = .constant([2, 1.5])
+
+            try? mapView.mapboxMap.addSource(source)
+            try? mapView.mapboxMap.addLayer(lineLayer)
         }
     }
 }

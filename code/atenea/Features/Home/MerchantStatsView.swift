@@ -22,9 +22,17 @@ struct MerchantStatsView: View {
     @State private var animateBars = false
 
     enum Period: String, CaseIterable {
-        case today = "Hoy"
-        case week  = "Semana"
-        case month = "Mes"
+        case today = "today"
+        case week  = "week"
+        case month = "month"
+
+        var displayName: String {
+            switch self {
+            case .today: return LocalizedString("merchantStats.today")
+            case .week: return LocalizedString("merchantStats.week")
+            case .month: return LocalizedString("merchantStats.month")
+            }
+        }
     }
 
     // Mock data
@@ -121,7 +129,7 @@ struct MerchantStatsView: View {
 
     private var header: some View {
         HStack {
-            Text("Estadísticas")
+            Text(LocalizedString("merchantStats.title"))
                 .font(.system(size: 28, weight: .bold))
                 .foregroundColor(.white)
             Spacer()
@@ -136,7 +144,7 @@ struct MerchantStatsView: View {
                 Button {
                     selectedPeriod = period
                 } label: {
-                    Text(period.rawValue)
+                    Text(period.displayName)
                         .font(.system(size: 14, weight: selectedPeriod == period ? .semibold : .regular))
                         .foregroundColor(selectedPeriod == period ? .white : .white.opacity(0.4))
                         .frame(maxWidth: .infinity)
@@ -175,9 +183,9 @@ struct MerchantStatsView: View {
 
     private var periodLabel: String {
         switch selectedPeriod {
-        case .today:  return "ganado hoy"
-        case .week:   return "esta semana"
-        case .month:  return "este mes"
+        case .today:  return LocalizedString("merchantStats.earnedToday")
+        case .week:   return LocalizedString("merchantStats.thisWeek")
+        case .month:  return LocalizedString("merchantStats.thisMonth")
         }
     }
 
@@ -198,8 +206,8 @@ struct MerchantStatsView: View {
                             RoundedRectangle(cornerRadius: 5)
                                 .fill(
                                     isBest
-                                    ? LinearGradient(colors: [.orange, .yellow], startPoint: .top, endPoint: .bottom)
-                                    : LinearGradient(colors: [.white.opacity(0.25), .white.opacity(0.1)], startPoint: .top, endPoint: .bottom)
+                                    ? LinearGradient(colors: [Color(hex: "#F0D224"), .yellow], startPoint: .top, endPoint: .bottom)
+                                    : LinearGradient(colors: [Color(hex: "#1C42E8").opacity(0.4), Color(hex: "#1C42E8").opacity(0.15)], startPoint: .top, endPoint: .bottom)
                                 )
                                 .frame(
                                     width: (geo.size.width - CGFloat(currentData.count - 1) * 6) / CGFloat(currentData.count),
@@ -233,7 +241,7 @@ struct MerchantStatsView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 10))
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Mejor \(periodDayLabel): \(day.label)")
+                Text("\(periodDayLabel): \(day.label)")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white)
                 Text(day.total, format: .currency(code: "MXN"))
@@ -248,9 +256,9 @@ struct MerchantStatsView: View {
 
     private var periodDayLabel: String {
         switch selectedPeriod {
-        case .today:  return "hora"
-        case .week:   return "día"
-        case .month:  return "semana"
+        case .today:  return LocalizedString("merchantStats.bestHour")
+        case .week:   return LocalizedString("merchantStats.bestDay")
+        case .month:  return LocalizedString("merchantStats.bestWeek")
         }
     }
 
@@ -258,7 +266,7 @@ struct MerchantStatsView: View {
 
     private var salesList: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("ÚLTIMAS VENTAS")
+            Text(LocalizedString("merchantStats.recentSales"))
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(.white.opacity(0.5))
                 .kerning(1.5)

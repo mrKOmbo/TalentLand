@@ -10,6 +10,8 @@ import SwiftUI
 
 // MARK: - Sidebar Push Menu Container
 
+// Note: Color extensions (coppelBlue, etc.) are defined in Core/Theme/CoppelColors.swift
+
 struct SidebarPushMenuContainer<Content: View>: View {
     @ObservedObject var menuStateManager = MenuStateManager.shared
     @ObservedObject var languageManager: LanguageManager
@@ -24,30 +26,44 @@ struct SidebarPushMenuContainer<Content: View>: View {
     var onFavorites: (() -> Void)?
     var onHelp: (() -> Void)?
     var onShowVenues: (() -> Void)?
-    var onShowARScanner: (() -> Void)?
-    var onShowSchedule: (() -> Void)?
     var onAccessibility: (() -> Void)?
+    var onReputation: (() -> Void)?
     var onLogout: (() -> Void)?
+
+    var selectedTab: Int
 
     init(
         languageManager: LanguageManager,
+        selectedTab: Int = 0,
         @ViewBuilder content: () -> Content
     ) {
         self.languageManager = languageManager
+        self.selectedTab = selectedTab
         self.content = content()
     }
 
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // FONDO: Menú verde (siempre visible detrás)
-                greenMenuBackground
-                    .ignoresSafeArea()
+                // Fondo base (transparente para mapa, gris para otras vistas)
+                Group {
+                    if selectedTab == 1 && !menuStateManager.showMenu {
+                        Color.clear
+                    } else {
+                        Color(hex: "#F5F3F0")
+                    }
+                }
+                .ignoresSafeArea()
+
+                // Menú azul (solo cuando menú abierto)
+                if menuStateManager.showMenu {
+                    greenMenuBackground
+                        .ignoresSafeArea()
+                }
 
                 // CONTENIDO: Vista principal que se desliza
                 content
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(.systemBackground))
                     .clipShape(
                         RoundedRectangle(
                             cornerRadius: menuStateManager.showMenu ? 24 : 0,
@@ -84,16 +100,16 @@ struct SidebarPushMenuContainer<Content: View>: View {
         }
     }
 
-    // MARK: - Green Menu Background
+    // MARK: - Blue Menu Background
 
     private var greenMenuBackground: some View {
         ZStack(alignment: .topLeading) {
-            // Fondo verde con gradiente suave
+            // Fondo azul Coppel con gradiente suave
             LinearGradient(
                 gradient: Gradient(colors: [
-                    Color(hex: "#4CAF50"),
-                    Color(hex: "#45A049"),
-                    Color(hex: "#3D8B40")
+                    Color.coppelBlue,
+                    Color.coppelMediumBlue,
+                    Color.coppelDarkBlue
                 ]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -121,58 +137,49 @@ struct SidebarPushMenuContainer<Content: View>: View {
                 // Opciones del menú
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 18) {
-                        menuItem(icon: "square.grid.2x2", title: "Categories")
-                        menuItem(icon: "creditcard", title: "Wallet")
-                        menuItem(icon: "gift", title: "Gift Ideas")
-                        menuItem(icon: "crown", title: "Subscription")
-
                         // Sección FIFA World Cup
                         menuDivider()
 
                         menuSectionTitle("FIFA World Cup 2026™")
 
-                        menuItem(icon: "location", title: "Store Locator") {
+                        menuItem(icon: "location.fill", title: LocalizedString("sidebar.venues")) {
                             onShowVenues?()
-                            closeMenu()
-                        }
-
-                        menuItem(icon: "camera.viewfinder", title: "AR Poster Scanner") {
-                            onShowARScanner?()
-                            closeMenu()
-                        }
-
-                        menuItem(icon: "ticket", title: "Reservations") {
-                            onShowSchedule?()
                             closeMenu()
                         }
 
                         // Sección de configuración
                         menuDivider()
 
-                        menuItem(icon: "person.crop.circle", title: "Profile") {
+                        menuItem(icon: "person.crop.circle.fill", title: "Profile") {
                             onProfile?()
                             closeMenu()
                         }
 
-                        menuItem(icon: "gearshape", title: "Settings") {
-                            onSettings?()
-                            closeMenu()
-                        }
-
-                        menuItem(icon: "star", title: "Favorites") {
+                        menuItem(icon: "star.fill", title: "Favorites") {
                             onFavorites?()
                             closeMenu()
                         }
 
-                        menuItem(icon: "newspaper", title: "Blog & Articles")
-                        menuItem(icon: "heart", title: "Help & Support") {
+                        menuItem(icon: "gearshape.fill", title: "Settings") {
+                            onSettings?()
+                            closeMenu()
+                        }
+
+                        menuItem(icon: "questionmark.circle.fill", title: "Help") {
                             onHelp?()
+                            closeMenu()
+                        }
+
+                        menuItem(icon: "star.circle.fill", title: "Reconocimientos") {
+                            onReputation?()
                             closeMenu()
                         }
 
                         // Accessibility (condicional)
                         if userManager.currentUser?.needsAccessibilityFeatures == true {
-                            menuItem(icon: "accessibility", title: "Accessibility") {
+                            menuDivider()
+
+                            menuItem(icon: "accessibility.fill", title: "Accessibility") {
                                 onAccessibility?()
                                 closeMenu()
                             }
@@ -194,28 +201,39 @@ struct SidebarPushMenuContainer<Content: View>: View {
     // MARK: - Menu Header
 
     private var menuHeader: some View {
-        HStack {
-            // Icono de perfil
-            ZStack {
-                Circle()
-                    .fill(Color.white.opacity(0.2))
-                    .frame(width: 50, height: 50)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                // Avatar
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.2))
+                        .frame(width: 50, height: 50)
 
-                Image(systemName: "person.fill")
-                    .font(.system(size: 24, weight: .medium))
-                    .foregroundColor(.white)
-            }
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 24, weight: .medium))
+                        .foregroundColor(.white)
+                }
 
-            Spacer()
+                // User Info
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(userManager.currentUser?.name ?? "Usuario")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
 
-            // Botón de cierre (X)
-            Button(action: {
-                closeMenu()
-            }) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.8))
-                    .frame(width: 44, height: 44)
+                    Text(userManager.currentUser?.email ?? "usuario@atenea.com")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.white.opacity(0.7))
+                }
+
+                Spacer()
+
+                // Botón de cierre (X)
+                Button(action: closeMenu) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.8))
+                        .frame(width: 44, height: 44)
+                }
             }
         }
     }
@@ -233,7 +251,7 @@ struct SidebarPushMenuContainer<Content: View>: View {
             HStack(spacing: 16) {
                 Image(systemName: icon)
                     .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundColor(.white.opacity(0.9))
                     .frame(width: 28)
 
                 Text(title)
@@ -250,14 +268,13 @@ struct SidebarPushMenuContainer<Content: View>: View {
 
     private func menuSectionTitle(_ title: String) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: "soccerball")
+            Image(systemName: "soccerball.fill")
                 .font(.system(size: 14, weight: .bold))
                 .foregroundColor(.white.opacity(0.9))
 
             Text(title)
                 .font(.system(size: 13, weight: .bold, design: .rounded))
                 .foregroundColor(.white.opacity(0.9))
-                .textCase(.uppercase)
         }
         .padding(.vertical, 12)
     }
@@ -266,7 +283,7 @@ struct SidebarPushMenuContainer<Content: View>: View {
 
     private func menuDivider() -> some View {
         Rectangle()
-            .fill(Color.white.opacity(0.15))
+            .fill(Color.white.opacity(0.2))
             .frame(height: 0.5)
             .padding(.vertical, 12)
     }
@@ -284,7 +301,7 @@ struct SidebarPushMenuContainer<Content: View>: View {
                     .foregroundColor(.white)
                     .frame(width: 28)
 
-                Text("Logout")
+                Text(LocalizedString("sidebar.logout"))
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white)
 
@@ -294,7 +311,7 @@ struct SidebarPushMenuContainer<Content: View>: View {
             .padding(.horizontal, 20)
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color.white.opacity(0.15))
+                    .fill(Color.white.opacity(0.2))
             )
         }
     }
@@ -305,6 +322,58 @@ struct SidebarPushMenuContainer<Content: View>: View {
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
             menuStateManager.closeMenu()
         }
+    }
+}
+
+// MARK: - Builder Extensions
+
+extension SidebarPushMenuContainer {
+    func onProfile(_ action: @escaping () -> Void) -> Self {
+        var view = self
+        view.onProfile = action
+        return view
+    }
+
+    func onSettings(_ action: @escaping () -> Void) -> Self {
+        var view = self
+        view.onSettings = action
+        return view
+    }
+
+    func onFavorites(_ action: @escaping () -> Void) -> Self {
+        var view = self
+        view.onFavorites = action
+        return view
+    }
+
+    func onHelp(_ action: @escaping () -> Void) -> Self {
+        var view = self
+        view.onHelp = action
+        return view
+    }
+
+    func onShowVenues(_ action: @escaping () -> Void) -> Self {
+        var view = self
+        view.onShowVenues = action
+        return view
+    }
+
+    func onAccessibility(_ action: @escaping () -> Void) -> Self {
+        var view = self
+        view.onAccessibility = action
+        return view
+    }
+
+    func onReputation(_ action: @escaping () -> Void) -> Self {
+        var view = self
+        view.onReputation = action
+        return view
+    }
+
+    func onLogout(_ action: @escaping () -> Void) -> Self {
+        var view = self
+        view.onLogout = action
+        return view
     }
 }
 

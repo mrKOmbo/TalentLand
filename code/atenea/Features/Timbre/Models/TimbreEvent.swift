@@ -14,12 +14,14 @@ enum TimbreType: String, Codable, CaseIterable {
     case ring = "ring"
     case question = "question"
     case hurry = "hurry"
+    case message = "message"
 
     var emoji: String {
         switch self {
         case .ring: return "🔔"
         case .question: return "❓"
         case .hurry: return "🏃"
+        case .message: return "💬"
         }
     }
 
@@ -28,6 +30,7 @@ enum TimbreType: String, Codable, CaseIterable {
         case .ring: return "Quiero comprar"
         case .question: return "Tengo una pregunta"
         case .hurry: return "Ven rápido"
+        case .message: return "Mensaje"
         }
     }
 
@@ -36,7 +39,13 @@ enum TimbreType: String, Codable, CaseIterable {
         case .ring: return "Avísale que estás cerca y quieres algo"
         case .question: return "Pregunta si tiene un producto"
         case .hurry: return "Pide que se acerque pronto"
+        case .message: return ""
         }
+    }
+
+    /// Tipos que aparecen como botones rápidos (excluye .message)
+    static var quickActions: [TimbreType] {
+        [.ring, .question, .hurry]
     }
 }
 
@@ -56,6 +65,7 @@ struct TimbreEvent: Identifiable, Codable, Equatable {
     var isRead: Bool
     var isResponded: Bool
     var response: TimbreResponse?
+    var responses: [TimbreResponse]
 
     init(
         id: UUID = UUID(),
@@ -70,7 +80,8 @@ struct TimbreEvent: Identifiable, Codable, Equatable {
         timestamp: Date = Date(),
         isRead: Bool = false,
         isResponded: Bool = false,
-        response: TimbreResponse? = nil
+        response: TimbreResponse? = nil,
+        responses: [TimbreResponse] = []
     ) {
         self.id = id
         self.clientId = clientId
@@ -85,6 +96,7 @@ struct TimbreEvent: Identifiable, Codable, Equatable {
         self.isRead = isRead
         self.isResponded = isResponded
         self.response = response
+        self.responses = responses
     }
 
     var clientCoordinate: CLLocationCoordinate2D {
@@ -110,6 +122,7 @@ enum TimbreResponseType: String, Codable, CaseIterable {
     case waitHere = "wait_here"
     case busy = "busy"
     case closed = "closed"
+    case message = "message"
 
     var emoji: String {
         switch self {
@@ -117,6 +130,7 @@ enum TimbreResponseType: String, Codable, CaseIterable {
         case .waitHere: return "📍"
         case .busy: return "⏳"
         case .closed: return "🔒"
+        case .message: return "💬"
         }
     }
 
@@ -126,7 +140,13 @@ enum TimbreResponseType: String, Codable, CaseIterable {
         case .waitHere: return "Espérame ahí"
         case .busy: return "Estoy ocupado"
         case .closed: return "Ya cerré"
+        case .message: return "Mensaje"
         }
+    }
+
+    /// Tipos que aparecen como botones rápidos (excluye .message)
+    static var quickActions: [TimbreResponseType] {
+        [.onMyWay, .waitHere, .busy]
     }
 }
 
@@ -156,4 +176,11 @@ struct TimbreResponse: Identifiable, Codable, Equatable {
         self.message = message
         self.timestamp = timestamp
     }
+}
+
+// MARK: - P2P Message Envelope
+
+enum TimbreP2PMessage: Codable {
+    case timbreEvent(TimbreEvent)
+    case timbreResponse(TimbreResponse)
 }

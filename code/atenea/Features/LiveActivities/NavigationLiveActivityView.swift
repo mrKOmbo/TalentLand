@@ -73,7 +73,7 @@ struct NavigationLiveActivityView: View {
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(Color(hex: attributes.venueColorHex))
 
-                    Text("Restante")
+                    Text(LocalizedString("liveActivity.remaining"))
                         .font(.system(size: 12))
                         .foregroundColor(.secondary)
                 }
@@ -87,7 +87,7 @@ struct NavigationLiveActivityView: View {
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.primary)
 
-                    Text("minutos")
+                    Text(LocalizedString("liveActivity.minutes"))
                         .font(.system(size: 12))
                         .foregroundColor(.secondary)
                 }
@@ -190,7 +190,7 @@ struct NavigationLiveActivityExpandedView: View {
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.white)
 
-                    Text("Restante")
+                    Text(LocalizedString("liveActivity.remaining"))
                         .font(.system(size: 12))
                         .foregroundColor(.white.opacity(0.7))
                 }

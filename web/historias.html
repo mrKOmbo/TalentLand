@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Atenea - Historias que inspiran</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "coppel-blue": "#1C42E8",
+                        "coppel-yellow": "#F0D224",
+                        "background": "#FFFFFF",
+                        "surface": "#FFFFFF",
+                    },
+                    fontFamily: {
+                        sans: ["Plus Jakarta Sans", "sans-serif"],
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #FFFFFF;
+            margin: 0;
+            padding: 0;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .nav-link {
+            position: relative;
+            padding-bottom: 4px;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: #F0D224;
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover::after {
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="antialiased text-[#1C42E8] min-h-screen flex flex-col bg-white">
+
+    <nav class="w-full bg-[#1C42E8] text-white sticky top-0 z-50 shadow-md">
+        <div class="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20 py-4">
+            <div class="flex items-center justify-between gap-6">
+                <a class="text-3xl lg:text-4xl font-black tracking-tighter uppercase shrink-0" href="/">
+                    Atenea
+                </a>
+                <div class="hidden xl:flex items-center gap-8 font-semibold text-[15px]">
+                    <a class="nav-link hover:text-[#F0D224] transition-colors" href="/">Inicio</a>
+                    <a class="nav-link hover:text-[#F0D224] transition-colors" href="#">Nosotros</a>
+                    <a class="nav-link hover:text-[#F0D224] transition-colors" href="#">Encuentra Negocios</a>
+                    <a class="nav-link hover:text-[#F0D224] text-[#F0D224] transition-colors" href="/historias.html">Historias que inspiran</a>
+                </div>
+                <div class="flex items-center gap-4 w-full xl:w-auto justify-end">
+                    <div class="hidden md:block relative w-full max-w-[280px] lg:max-w-[320px]">
+                        <input class="w-full bg-white text-[#1C42E8] py-2.5 px-5 pr-12 rounded-full text-sm font-medium focus:ring-2 focus:ring-[#F0D224]/50 border-none placeholder:text-[#1C42E8]/40 shadow-sm" placeholder="¿Qué estás buscando?" type="text"/>
+                        <button class="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 bg-[#F0D224] text-[#1C42E8] rounded-full flex items-center justify-center hover:scale-105 transition-transform">
+                            <span class="material-symbols-outlined text-[18px]">search</span>
+                        </button>
+                    </div>
+                    <button class="xl:hidden p-2 text-white hover:bg-white/10 rounded-lg transition-colors" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                </div>
+            </div>
+            <div id="mobile-menu" class="hidden xl:hidden mt-4 pb-2 flex flex-col gap-3 font-semibold text-[15px]">
+                <a class="hover:text-[#F0D224] transition-colors" href="/">Inicio</a>
+                <a class="hover:text-[#F0D224] transition-colors" href="#">Nosotros</a>
+                <a class="hover:text-[#F0D224] transition-colors" href="#">Encuentra Negocios</a>
+                <a class="text-[#F0D224] transition-colors" href="/historias.html">Historias que inspiran</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow pt-16 pb-20 px-6 relative overflow-hidden">
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-[#1C42E8]/[0.03] rounded-full blur-3xl -z-10"></div>
+
+        <div class="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20">
+
+            <header class="text-center mb-16 max-w-4xl mx-auto">
+                <div class="flex items-center justify-center gap-2 mb-4">
+                    <span class="material-symbols-outlined text-[#F0D224] text-4xl">hotel_class</span>
+                </div>
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[#1C42E8] tracking-tight mb-6 leading-[1.1]">
+                    Historias que inspiran, <br class="hidden md:block"/> de gente como tú y como yo
+                </h1>
+                <p class="text-lg md:text-xl text-[#1C42E8]/80 font-medium leading-relaxed max-w-3xl mx-auto">
+                    Al igual que tú, estas personas salen adelante todos los días con la calidad de su producto como carta de presentación. Con ATENEA estos comerciantes potenciaron sus ventas aún más y llegaron a clientes que nunca imaginaron.
+                </p>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 xl:gap-10">
+
+                <!-- Elena -->
+                <div class="bg-white rounded-[2rem] p-8 shadow-lg shadow-[#1C42E8]/5 border border-[#1C42E8]/10 flex flex-col gap-6 hover:shadow-xl hover:-translate-y-2 transition-all duration-300 group">
+                    <div class="relative w-full aspect-square rounded-2xl overflow-hidden bg-[#1C42E8]/5">
+                        <img alt="Elena Rodríguez" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="/img/elena-rodriguez.jpeg"/>
+                        <div class="absolute bottom-4 left-4">
+                            <span class="bg-[#F0D224] text-[#1C42E8] text-xs font-bold px-4 py-2 rounded-full uppercase tracking-widest shadow-md">Artesanías</span>
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <h3 class="text-2xl font-bold text-[#1C42E8] tracking-tight">Elena Rodríguez</h3>
+                        <p class="text-[#1C42E8]/60 font-bold uppercase text-xs tracking-widest">Tejidos del Alma</p>
+                    </div>
+                    <blockquote class="text-[#1C42E8]/80 leading-relaxed italic text-base">
+                        "Nunca pensé que mis bordados llegarían a otras ciudades. Atenea me dio las herramientas para mostrar mi arte de forma profesional."
+                    </blockquote>
+                    <div class="mt-auto pt-4 flex items-center gap-2 text-[#1C42E8] font-bold group-hover:text-[#F0D224] cursor-pointer transition-colors">
+                        <span>Ver historia completa</span>
+                        <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </div>
+                </div>
+
+                <!-- Ricardo -->
+                <div class="bg-white rounded-[2rem] p-8 shadow-lg shadow-[#1C42E8]/5 border border-[#1C42E8]/10 flex flex-col gap-6 hover:shadow-xl hover:-translate-y-2 transition-all duration-300 group">
+                    <div class="relative w-full aspect-square rounded-2xl overflow-hidden bg-[#1C42E8]/5">
+                        <img alt="Ricardo Santos" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="/img/ricardo-santos.jpeg"/>
+                        <div class="absolute bottom-4 left-4">
+                            <span class="bg-[#F0D224] text-[#1C42E8] text-xs font-bold px-4 py-2 rounded-full uppercase tracking-widest shadow-md">Gastronomía</span>
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <h3 class="text-2xl font-bold text-[#1C42E8] tracking-tight">Ricardo Santos</h3>
+                        <p class="text-[#1C42E8]/60 font-bold uppercase text-xs tracking-widest">Panadería "El Sol"</p>
+                    </div>
+                    <blockquote class="text-[#1C42E8]/80 leading-relaxed italic text-base">
+                        "El crecimiento fue inmediato. La plataforma es intuitiva y mis clientes aman lo fácil que es encontrarme ahora."
+                    </blockquote>
+                    <div class="mt-auto pt-4 flex items-center gap-2 text-[#1C42E8] font-bold group-hover:text-[#F0D224] cursor-pointer transition-colors">
+                        <span>Ver historia completa</span>
+                        <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </div>
+                </div>
+
+                <!-- Marina -->
+                <div class="bg-white rounded-[2rem] p-8 shadow-lg shadow-[#1C42E8]/5 border border-[#1C42E8]/10 flex flex-col gap-6 hover:shadow-xl hover:-translate-y-2 transition-all duration-300 group">
+                    <div class="relative w-full aspect-square rounded-2xl overflow-hidden bg-[#1C42E8]/5">
+                        <img alt="Marina López" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="/img/marina-lopez.jpeg"/>
+                        <div class="absolute bottom-4 left-4">
+                            <span class="bg-[#F0D224] text-[#1C42E8] text-xs font-bold px-4 py-2 rounded-full uppercase tracking-widest shadow-md">Decoración</span>
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <h3 class="text-2xl font-bold text-[#1C42E8] tracking-tight">Marina López</h3>
+                        <p class="text-[#1C42E8]/60 font-bold uppercase text-xs tracking-widest">Cerámicas Luna</p>
+                    </div>
+                    <blockquote class="text-[#1C42E8]/80 leading-relaxed italic text-base">
+                        "Atenea es más que una app, es una comunidad que me impulsó a creer que mi pequeño negocio podía ser grande."
+                    </blockquote>
+                    <div class="mt-auto pt-4 flex items-center gap-2 text-[#1C42E8] font-bold group-hover:text-[#F0D224] cursor-pointer transition-colors">
+                        <span>Ver historia completa</span>
+                        <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <section class="mt-24 p-12 bg-[#1C42E8] rounded-[3rem] text-center text-white relative overflow-hidden shadow-2xl">
+                <div class="absolute -right-20 -top-20 w-80 h-80 bg-[#F0D224] rounded-full blur-[100px] opacity-20"></div>
+                <div class="absolute -left-20 -bottom-20 w-80 h-80 bg-white rounded-full blur-[100px] opacity-10"></div>
+                <div class="relative z-10 flex flex-col items-center">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-6 tracking-tight">¿Listo para escribir tu propia historia?</h2>
+                    <p class="text-lg md:text-xl opacity-90 mb-10 max-w-2xl mx-auto font-medium">
+                        Únete a los miles de comerciantes que ya están transformando su futuro con Atenea Digital Commerce.
+                    </p>
+                    <button class="bg-[#F0D224] text-[#1C42E8] px-10 py-5 rounded-2xl font-extrabold text-xl hover:scale-105 hover:shadow-xl hover:shadow-[#F0D224]/20 transition-all active:scale-[0.98]">
+                        Comenzar hoy mismo
+                    </button>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <footer class="w-full py-8 md:py-10 border-t border-[#1C42E8]/10 bg-white mt-auto">
+        <div class="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <p class="text-[10px] md:text-[11px] text-[#1C42E8]/60 font-bold tracking-[0.2em] uppercase text-center md:text-left">
+                    &copy; 2026 Atenea Digital Commerce. Todos los derechos reservados.
+                </p>
+                <div class="flex flex-wrap justify-center gap-6 md:gap-8 text-[10px] md:text-[11px] text-[#1C42E8]/60 font-bold uppercase tracking-widest">
+                    <a class="hover:text-[#1C42E8] transition-colors" href="#">Privacidad</a>
+                    <a class="hover:text-[#1C42E8] transition-colors" href="#">Términos</a>
+                    <a class="hover:text-[#1C42E8] transition-colors" href="#">Accesibilidad</a>
+                    <a class="hover:text-[#1C42E8] transition-colors" href="#">Soporte</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

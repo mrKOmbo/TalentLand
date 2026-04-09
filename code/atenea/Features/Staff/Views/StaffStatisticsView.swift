@@ -30,7 +30,7 @@ struct StaffStatisticsView: View {
                         HStack(spacing: 8) {
                             Image(systemName: "chevron.left")
                                 .font(.system(size: 16, weight: .semibold))
-                            Text("Atrás")
+                            Text(LocalizedString("staff.stats.back"))
                                 .font(.system(size: 16, weight: .medium))
                         }
                         .foregroundColor(.white.opacity(0.7))
@@ -38,7 +38,7 @@ struct StaffStatisticsView: View {
 
                     Spacer()
 
-                    Text("Estadísticas")
+                    Text(LocalizedString("staff.stats.title"))
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.white)
 
@@ -71,14 +71,14 @@ struct StaffStatisticsView: View {
                         VStack(spacing: 16) {
                             HStack(spacing: 16) {
                                 StatCard(
-                                    title: "Usuarios Totales",
+                                    title: LocalizedString("staff.stats.totalUsers"),
                                     value: "1,234",
                                     icon: "person.3.fill",
                                     color: .blue
                                 )
 
                                 StatCard(
-                                    title: "Activos Hoy",
+                                    title: LocalizedString("staff.stats.activeToday"),
                                     value: "856",
                                     icon: "person.fill.checkmark",
                                     color: .green
@@ -87,14 +87,14 @@ struct StaffStatisticsView: View {
 
                             HStack(spacing: 16) {
                                 StatCard(
-                                    title: "Reservaciones",
+                                    title: LocalizedString("staff.stats.reservations"),
                                     value: "2,450",
                                     icon: "ticket.fill",
                                     color: .purple
                                 )
 
                                 StatCard(
-                                    title: "Emergencias",
+                                    title: LocalizedString("staff.stats.emergencies"),
                                     value: "12",
                                     icon: "exclamationmark.triangle.fill",
                                     color: .red
@@ -103,14 +103,14 @@ struct StaffStatisticsView: View {
 
                             HStack(spacing: 16) {
                                 StatCard(
-                                    title: "Lugares Visitados",
+                                    title: LocalizedString("staff.stats.placesVisited"),
                                     value: "4,521",
                                     icon: "mappin.circle.fill",
                                     color: .orange
                                 )
 
                                 StatCard(
-                                    title: "Búsquedas IA",
+                                    title: LocalizedString("staff.stats.aiSearches"),
                                     value: "8,934",
                                     icon: "sparkles",
                                     color: .cyan
@@ -122,7 +122,7 @@ struct StaffStatisticsView: View {
 
                         // Sección de gráficos
                         VStack(alignment: .leading, spacing: 16) {
-                            Text("Actividad Semanal")
+                            Text(LocalizedString("staff.stats.weeklyActivity"))
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 20)

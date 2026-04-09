@@ -121,14 +121,14 @@ struct TripStartedView: View {
 
                         // Título
                         VStack(spacing: 12) {
-                            Text("Trip Started!")
+                            Text(LocalizedString("trip.started"))
                                 .font(.system(size: 36, weight: .bold))
                                 .foregroundColor(.white)
                                 .scaleEffect(showContent ? CGFloat(1.0) : CGFloat(0.8))
                                 .opacity(showContent ? 1.0 : 0.0)
                                 .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.3), value: showContent)
 
-                            Text("Navigating to")
+                            Text(LocalizedString("trip.navigatingTo"))
                                 .font(.system(size: 16, weight: .medium))
                                 .foregroundColor(.white.opacity(0.7))
                                 .opacity(showContent ? 1.0 : 0.0)
@@ -147,14 +147,14 @@ struct TripStartedView: View {
                         HStack(spacing: 40) {
                             TripInfoCard(
                                 icon: "clock.fill",
-                                title: "ETA",
+                                title: LocalizedString("trip.eta"),
                                 value: route.durationText,
                                 color: Color(hex: "00D084")
                             )
 
                             TripInfoCard(
                                 icon: "location.fill",
-                                title: "Distance",
+                                title: LocalizedString("trip.distance"),
                                 value: route.distanceText,
                                 color: Color(hex: "C8FF00")
                             )
@@ -177,7 +177,7 @@ struct TripStartedView: View {
                                 Image(systemName: "location.fill")
                                     .font(.system(size: 20, weight: .semibold))
 
-                                Text("Start Navigation")
+                                Text(LocalizedString("trip.startNavigation"))
                                     .font(.system(size: 18, weight: .semibold))
                             }
                             .foregroundColor(.black)
@@ -202,7 +202,7 @@ struct TripStartedView: View {
                                 isPresented = false
                             }
                         }) {
-                            Text("End Trip")
+                            Text(LocalizedString("trip.endTrip"))
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.7))
                                 .frame(maxWidth: .infinity)

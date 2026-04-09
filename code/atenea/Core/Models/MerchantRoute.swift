@@ -9,7 +9,7 @@ import Foundation
 import CoreLocation
 
 // MARK: - Route Waypoint
-struct RouteWaypoint: Codable, Identifiable {
+struct RouteWaypoint: Codable, Identifiable, Equatable {
     let id: UUID
     let latitude: Double
     let longitude: Double

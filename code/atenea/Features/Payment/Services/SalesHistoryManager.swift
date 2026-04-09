@@ -11,6 +11,7 @@ class SalesHistoryManager: ObservableObject {
 
     private init() {
         loadSales()
+        loadVouchers()
     }
 
     // MARK: - Public
@@ -40,6 +41,57 @@ class SalesHistoryManager: ObservableObject {
             .filter { $0.createdAt > cutoff }
             .reduce(0) { $0 + $1.amount }
         return Double(cents) / 100.0
+    }
+
+    // MARK: - BLE Vouchers (pagos offline pendientes de reconciliación)
+
+    @Published var pendingVouchers: [PaymentVoucher] = []
+    private let voucherStorageKey = "atenea_pending_vouchers"
+
+    func addPendingVoucher(_ voucher: PaymentVoucher) {
+        pendingVouchers.insert(voucher, at: 0)
+        saveVouchers()
+        print("💰 [Sales] Voucher guardado: \(voucher.clientName) → \(voucher.formattedAmount) (pendientes: \(pendingVouchers.count))")
+    }
+
+    var pendingVoucherCount: Int { pendingVouchers.count }
+
+    var pendingVoucherTotal: Double {
+        Double(pendingVouchers.reduce(0) { $0 + $1.amount }) / 100.0
+    }
+
+    /// Placeholder: cuando haya internet, envía vouchers al backend
+    func reconcilePending() {
+        guard !pendingVouchers.isEmpty else { return }
+        print("💰 [Sales] Reconciliando \(pendingVouchers.count) vouchers pendientes...")
+        // TODO: Enviar a AppSync/DynamoDB cuando el backend esté listo
+        // Por ahora, marcarlos como reconciliados (moverlos a sales)
+        for voucher in pendingVouchers {
+            let sale = SaleRecord(
+                amount: voucher.amount,
+                currency: voucher.currency,
+                description: "BLE Offline: \(voucher.clientName) — \(voucher.description)",
+                status: .completed,
+                paymentLinkId: voucher.id.uuidString,
+                merchantId: voucher.merchantID
+            )
+            sales.insert(sale, at: 0)
+        }
+        pendingVouchers.removeAll()
+        saveSales()
+        saveVouchers()
+        print("💰 [Sales] ✅ Reconciliación completada")
+    }
+
+    private func saveVouchers() {
+        guard let data = try? JSONEncoder().encode(pendingVouchers) else { return }
+        UserDefaults.standard.set(data, forKey: voucherStorageKey)
+    }
+
+    private func loadVouchers() {
+        guard let data = UserDefaults.standard.data(forKey: voucherStorageKey),
+              let decoded = try? JSONDecoder().decode([PaymentVoucher].self, from: data) else { return }
+        pendingVouchers = decoded
     }
 
     // MARK: - Persistence

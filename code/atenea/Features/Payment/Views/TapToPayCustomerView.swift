@@ -14,7 +14,7 @@ struct TapToPayCustomerView: View {
                     peerService.stop()
                     dismiss()
                 }) {
-                    Text("Cancelar")
+                    Text(LocalizedString("payment.cancel"))
                         .font(.system(size: 17, weight: .medium))
                         .foregroundColor(.white.opacity(0.7))
                 }
@@ -59,7 +59,7 @@ struct TapToPayCustomerView: View {
                     Text(String(format: "$%.2f", Double(amount) / 100.0))
                         .font(.system(size: 32, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
-                    Text("MXN")
+                    Text(LocalizedString("payment.currency"))
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white.opacity(0.4))
                     if let merchant = peerService.receivedMerchantName {
@@ -88,6 +88,19 @@ struct TapToPayCustomerView: View {
                 let notification = UINotificationFeedbackGenerator()
                 notification.notificationOccurred(.success)
 
+                // Registrar pago del lado del cliente
+                if let amount = peerService.receivedAmount {
+                    let sale = SaleRecord(
+                        amount: amount,
+                        currency: "MXN",
+                        description: peerService.receivedDescription ?? "Tap to Pay",
+                        status: .completed,
+                        paymentLinkId: "customer-tap-\(UUID().uuidString)",
+                        merchantId: nil
+                    )
+                    SalesHistoryManager.shared.addSale(sale)
+                }
+
                 DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                     peerService.stop()
                     dismiss()
@@ -107,10 +120,10 @@ struct TapToPayCustomerView: View {
             ProgressView()
                 .scaleEffect(CGSize(width: 1.5, height: 1.5))
                 .tint(.white)
-            Text("Buscando comerciante...")
+            Text(LocalizedString("payment.searchingMerchant"))
                 .font(.system(size: 18, weight: .medium))
                 .foregroundColor(.white.opacity(0.6))
-            Text("Asegúrate de que el comerciante\ntenga la pantalla de cobro abierta")
+            Text(LocalizedString("payment.ensureMerchantOpen"))
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.3))
                 .multilineTextAlignment(.center)
@@ -142,18 +155,18 @@ struct TapToPayCustomerView: View {
             }
 
             VStack(spacing: 8) {
-                Text("Acerca tu iPhone")
+                Text(LocalizedString("payment.bringCloser"))
                     .font(.system(size: 22, weight: .semibold))
                     .foregroundColor(.white)
 
                 if let merchant = peerService.receivedMerchantName {
-                    Text("Pagar a \(merchant)")
+                    Text(String(format: LocalizedString("payment.payTo"), merchant))
                         .font(.system(size: 16))
                         .foregroundColor(.cyan)
                 }
             }
 
-            Text("Mantén los dispositivos cerca")
+            Text(LocalizedString("payment.keepDevicesClose"))
                 .font(.system(size: 15))
                 .foregroundColor(.white.opacity(0.4))
         }
@@ -172,7 +185,7 @@ struct TapToPayCustomerView: View {
                     .symbolEffect(.pulse, options: .repeating)
             }
 
-            Text("Conectando...")
+            Text(LocalizedString("payment.connecting"))
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(.white)
         }
@@ -190,7 +203,7 @@ struct TapToPayCustomerView: View {
                     .tint(.cyan)
             }
 
-            Text("Procesando...")
+            Text(LocalizedString("payment.processing"))
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(.white)
         }
@@ -212,7 +225,7 @@ struct TapToPayCustomerView: View {
                     .foregroundColor(.white)
             }
 
-            Text("¡Pago enviado!")
+            Text(LocalizedString("payment.paymentSent"))
                 .font(.system(size: 24, weight: .bold))
                 .foregroundColor(.green)
 
@@ -237,7 +250,7 @@ struct TapToPayCustomerView: View {
                     .foregroundColor(.red)
             }
 
-            Text("Error")
+            Text(LocalizedString("payment.error"))
                 .font(.system(size: 24, weight: .bold))
                 .foregroundColor(.red)
 

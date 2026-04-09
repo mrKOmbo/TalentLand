@@ -49,7 +49,7 @@ struct SidebarMenuView: View {
     var body: some View {
         ZStack {
             // Fondo oscuro con animación de opacidad
-            Color.black.opacity(0.45)
+            Color.coppelDarkBlue.opacity(0.45)
                 .ignoresSafeArea()
                 .onTapGesture {
                     closeSidebar()
@@ -71,7 +71,7 @@ struct SidebarMenuView: View {
                         // Perfil
                         modernMenuButton(
                             icon: "person.fill",
-                            title: "Perfil",
+                            title: L("menu.profile"),
                             gradient: [Color.blue, Color.cyan],
                             action: {
                                 selectedItem = "Perfil"
@@ -83,7 +83,7 @@ struct SidebarMenuView: View {
                         // Configuración
                         modernMenuButton(
                             icon: "gearshape.fill",
-                            title: "Configuración",
+                            title: L("menu.settings"),
                             gradient: [Color.purple, Color.pink],
                             action: {
                                 selectedItem = "Configuración"
@@ -96,7 +96,7 @@ struct SidebarMenuView: View {
                         if userManager.currentUser?.needsAccessibilityFeatures == true {
                             modernMenuButton(
                                 icon: "accessibility",
-                                title: "Accesibilidad",
+                                title: L("menu.accessibility"),
                                 gradient: [Color.green, Color.mint],
                                 action: {
                                     selectedItem = "Accesibilidad"
@@ -109,7 +109,7 @@ struct SidebarMenuView: View {
                         // Favoritos
                         modernMenuButton(
                             icon: "star.fill",
-                            title: "Favoritos",
+                            title: L("menu.favorites"),
                             gradient: [Color.orange, Color.yellow],
                             action: {
                                 selectedItem = "Favoritos"
@@ -121,7 +121,7 @@ struct SidebarMenuView: View {
                         // Ayuda
                         modernMenuButton(
                             icon: "questionmark.circle.fill",
-                            title: "Ayuda",
+                            title: L("menu.help"),
                             gradient: [Color.indigo, Color.blue],
                             action: {
                                 selectedItem = "Ayuda"
@@ -166,39 +166,14 @@ struct SidebarMenuView: View {
                     .padding(.horizontal, 12)
                 }
                 .frame(maxHeight: .infinity)
-                .background(
-                    LinearGradient(
-                        gradient: Gradient(colors: [
-                            Color.white,
-                            Color.gray.opacity(0.02)
-                        ]),
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+                .background(Color.white)
 
                 // Cerrar Sesión al final (fijo)
                 logoutSection
             }
             .frame(width: 300)
             .frame(maxHeight: .infinity)
-            .background(
-                ZStack {
-                    // Fondo con glassmorphism
-                    Color.white
-
-                    // Efecto de blur sutil
-                    LinearGradient(
-                        gradient: Gradient(colors: [
-                            Color.blue.opacity(0.02),
-                            Color.purple.opacity(0.02),
-                            Color.pink.opacity(0.02)
-                        ]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                }
-            )
+            .background(Color.white)
             .clipShape(
                 .rect(
                     topLeadingRadius: 24,
@@ -207,8 +182,7 @@ struct SidebarMenuView: View {
                     topTrailingRadius: 0
                 )
             )
-            .shadow(color: Color.black.opacity(0.15), radius: 30, x: -8, y: 0)
-            .shadow(color: Color.blue.opacity(0.08), radius: 20, x: -4, y: 0)
+            .shadow(color: Color.coppelDarkBlue.opacity(0.15), radius: 24, x: -8, y: 0)
                 .transition(.move(edge: .trailing))
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
@@ -222,89 +196,34 @@ struct SidebarMenuView: View {
     private var headerView: some View {
         GeometryReader { geometry in
             ZStack {
-                // Gradiente de fondo mejorado
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color(red: 0.1, green: 0.4, blue: 0.9),
-                        Color(red: 0.3, green: 0.2, blue: 0.8),
-                        Color(red: 0.5, green: 0.3, blue: 0.7)
-                    ]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-
-                // Efecto de brillo sutil
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color.white.opacity(0.2),
-                        Color.clear
-                    ]),
-                    startPoint: .top,
-                    endPoint: .center
-                )
+                // Coppel Blue solid background
+                Color.coppelBlue
 
                 // Contenido
                 HStack(spacing: 14) {
-                    // Avatar con efecto glow
+                    // Avatar
                     ZStack {
-                        // Glow effect
                         Circle()
-                            .fill(
-                                RadialGradient(
-                                    gradient: Gradient(colors: [
-                                        Color.white.opacity(0.3),
-                                        Color.clear
-                                    ]),
-                                    center: .center,
-                                    startRadius: 20,
-                                    endRadius: 40
-                                )
-                            )
-                            .frame(width: 70, height: 70)
-                            .blur(radius: 8)
-
-                        // Avatar principal
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [
-                                        Color.white,
-                                        Color.blue.opacity(0.3)
-                                    ]),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                            .fill(Color.white)
                             .frame(width: 56, height: 56)
                             .overlay(
                                 Circle()
-                                    .stroke(Color.white.opacity(0.5), lineWidth: 2.5)
+                                    .stroke(Color.coppelYellow, lineWidth: 2.5)
                             )
-                            .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
 
                         Image(systemName: "person.fill")
                             .font(.system(size: 24, weight: .semibold))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [
-                                        Color(red: 0.2, green: 0.4, blue: 0.9),
-                                        Color(red: 0.4, green: 0.3, blue: 0.8)
-                                    ]),
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
+                            .foregroundColor(Color.coppelBlue)
                     }
 
                     // Información del usuario
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(userManager.currentUser?.name ?? "Usuario")
+                        Text(userManager.currentUser?.name ?? L("menu.defaultUser"))
                             .font(.system(size: 17, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                             .lineLimit(1)
-                            .shadow(color: Color.black.opacity(0.2), radius: 2, x: 0, y: 1)
 
-                        Text(userManager.currentUser?.email ?? "usuario@email.com")
+                        Text(userManager.currentUser?.email ?? L("menu.defaultEmail"))
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(.white.opacity(0.85))
                             .lineLimit(1)
@@ -324,53 +243,32 @@ struct SidebarMenuView: View {
     private func modernMenuButton(icon: String, title: String, gradient: [Color], action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
-                // Ícono con gradiente
                 ZStack {
-                    // Sombra del círculo
                     Circle()
-                        .fill(gradient[0].opacity(0.2))
-                        .frame(width: 40, height: 40)
-                        .blur(radius: 4)
-
-                    // Círculo principal
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(colors: gradient.map { $0.opacity(0.12) }),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(Color.coppelBlue.opacity(0.08))
                         .frame(width: 38, height: 38)
 
                     Image(systemName: icon)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(
-                            LinearGradient(
-                                gradient: Gradient(colors: gradient),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .foregroundColor(Color.coppelBlue)
                 }
 
                 Text(title)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.primary)
+                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .foregroundColor(Color.coppelDarkBlue)
 
                 Spacer(minLength: 4)
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(.gray.opacity(0.4))
+                    .foregroundColor(Color.coppelDarkGrey.opacity(0.4))
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
             .background(
                 RoundedRectangle(cornerRadius: 14)
                     .fill(Color.white)
-                    .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
-                    .shadow(color: gradient[0].opacity(0.08), radius: 12, x: 0, y: 4)
+                    .shadow(color: Color.coppelDarkBlue.opacity(0.06), radius: 8, x: 0, y: 2)
             )
         }
         .buttonStyle(ModernButtonStyle())
@@ -378,17 +276,10 @@ struct SidebarMenuView: View {
 
     // MARK: - Elegant Divider
     private func elegantDivider() -> some View {
-        LinearGradient(
-            gradient: Gradient(colors: [
-                Color.clear,
-                Color.gray.opacity(0.2),
-                Color.clear
-            ]),
-            startPoint: .leading,
-            endPoint: .trailing
-        )
-        .frame(height: 1)
-        .padding(.vertical, 10)
+        Rectangle()
+            .fill(Color.coppelBeige)
+            .frame(height: 1)
+            .padding(.vertical, 10)
     }
 
     // MARK: - Map Style Section
@@ -402,49 +293,30 @@ struct SidebarMenuView: View {
                 HStack(spacing: 12) {
                     ZStack {
                         Circle()
-                            .fill(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [Color.purple.opacity(0.12), Color.pink.opacity(0.08)]),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                            .fill(Color.coppelLightBlue.opacity(0.12))
                             .frame(width: 38, height: 38)
 
                         Image(systemName: "map.fill")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [Color.purple, Color.pink]),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                            .foregroundColor(Color.coppelLightBlue)
                     }
 
-                    Text("Estilo de Mapa")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.primary)
+                    Text(L("menu.mapStyle"))
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .foregroundColor(Color.coppelDarkBlue)
 
                     Spacer(minLength: 4)
 
-                    Image(systemName: isMapStyleExpanded ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
-                        .font(.system(size: 18))
-                        .foregroundStyle(
-                            LinearGradient(
-                                gradient: Gradient(colors: [Color.purple.opacity(0.6), Color.pink.opacity(0.5)]),
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
+                    Image(systemName: isMapStyleExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(Color.coppelDarkGrey)
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
                 .background(
                     RoundedRectangle(cornerRadius: 14)
                         .fill(Color.white)
-                        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
-                        .shadow(color: Color.purple.opacity(0.08), radius: 12, x: 0, y: 4)
+                        .shadow(color: Color.coppelDarkBlue.opacity(0.06), radius: 8, x: 0, y: 2)
                 )
             }
             .buttonStyle(ModernButtonStyle())
@@ -452,21 +324,21 @@ struct SidebarMenuView: View {
             if isMapStyleExpanded, let mapStyleBinding = selectedMapStyle {
                 VStack(spacing: 8) {
                     mapStyleOptionButton(
-                        title: "Estándar",
+                        title: L("menu.mapStandard"),
                         icon: "map",
                         mapStyle: .standard,
                         currentStyle: mapStyleBinding
                     )
 
                     mapStyleOptionButton(
-                        title: "Satélite",
+                        title: L("menu.mapSatellite"),
                         icon: "globe.americas.fill",
                         mapStyle: .satellite,
                         currentStyle: mapStyleBinding
                     )
 
                     mapStyleOptionButton(
-                        title: "Híbrido",
+                        title: L("menu.mapHybrid"),
                         icon: "map.fill",
                         mapStyle: .satelliteStreets,
                         currentStyle: mapStyleBinding
@@ -483,59 +355,43 @@ struct SidebarMenuView: View {
 
     // MARK: - Map Style Option Button
     private func mapStyleOptionButton(title: String, icon: String, mapStyle: MapStyle, currentStyle: Binding<MapStyle>) -> some View {
-        Button(action: {
+        let isSelected = currentStyle.wrappedValue == mapStyle
+        return Button(action: {
             withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
                 currentStyle.wrappedValue = mapStyle
             }
         }) {
             HStack(spacing: 12) {
                 Circle()
-                    .fill(currentStyle.wrappedValue == mapStyle ?
-                          LinearGradient(
-                            gradient: Gradient(colors: [Color.purple, Color.pink]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                          ) :
-                          LinearGradient(
-                            gradient: Gradient(colors: [Color.clear]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                          )
-                    )
+                    .fill(isSelected ? Color.coppelBlue : Color.clear)
                     .frame(width: 8, height: 8)
                     .overlay(
                         Circle()
-                            .stroke(Color.purple.opacity(0.3), lineWidth: 1.5)
+                            .stroke(Color.coppelBlue.opacity(0.3), lineWidth: 1.5)
                     )
 
                 Image(systemName: icon)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(currentStyle.wrappedValue == mapStyle ? .purple : .gray)
+                    .foregroundColor(isSelected ? Color.coppelBlue : Color.coppelDarkGrey)
                     .frame(width: 20)
 
                 Text(title)
-                    .font(.system(size: 14, weight: currentStyle.wrappedValue == mapStyle ? .semibold : .medium))
-                    .foregroundColor(currentStyle.wrappedValue == mapStyle ? .purple : .primary)
+                    .font(.system(size: 14, weight: isSelected ? .semibold : .medium, design: .rounded))
+                    .foregroundColor(isSelected ? Color.coppelBlue : Color.coppelDarkBlue)
 
                 Spacer()
 
-                if currentStyle.wrappedValue == mapStyle {
+                if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 16))
-                        .foregroundStyle(
-                            LinearGradient(
-                                gradient: Gradient(colors: [Color.purple, Color.pink]),
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
+                        .foregroundColor(Color.coppelBlue)
                 }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(currentStyle.wrappedValue == mapStyle ? Color.purple.opacity(0.06) : Color.gray.opacity(0.03))
+                    .fill(isSelected ? Color.coppelBlue.opacity(0.06) : Color.coppelBeige.opacity(0.5))
             )
         }
         .buttonStyle(ModernButtonStyle())
@@ -552,55 +408,36 @@ struct SidebarMenuView: View {
                 HStack(spacing: 12) {
                     ZStack {
                         Circle()
-                            .fill(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [Color.orange.opacity(0.12), Color.yellow.opacity(0.08)]),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                            .fill(Color.coppelOrange.opacity(0.12))
                             .frame(width: 38, height: 38)
 
                         Image(systemName: "globe")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [Color.orange, Color.yellow]),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                            .foregroundColor(Color.coppelOrange)
                     }
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Idioma")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.primary)
+                        Text(L("menu.language"))
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundColor(Color.coppelDarkBlue)
 
                         Text(LanguageManager.availableLanguages[languageManager.currentLanguage] ?? "Español")
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.gray)
+                            .foregroundColor(Color.coppelDarkGrey)
                     }
 
                     Spacer(minLength: 4)
 
-                    Image(systemName: isLanguageExpanded ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
-                        .font(.system(size: 18))
-                        .foregroundStyle(
-                            LinearGradient(
-                                gradient: Gradient(colors: [Color.orange.opacity(0.6), Color.yellow.opacity(0.5)]),
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
+                    Image(systemName: isLanguageExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(Color.coppelDarkGrey)
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
                 .background(
                     RoundedRectangle(cornerRadius: 14)
                         .fill(Color.white)
-                        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
-                        .shadow(color: Color.orange.opacity(0.08), radius: 12, x: 0, y: 4)
+                        .shadow(color: Color.coppelDarkBlue.opacity(0.06), radius: 8, x: 0, y: 2)
                 )
             }
             .buttonStyle(ModernButtonStyle())
@@ -608,6 +445,7 @@ struct SidebarMenuView: View {
             if isLanguageExpanded {
                 VStack(spacing: 6) {
                     ForEach(Array(LanguageManager.availableLanguages.keys.sorted()), id: \.self) { languageCode in
+                        let isSelected = languageManager.currentLanguage == languageCode
                         Button(action: {
                             withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
                                 languageManager.setLanguage(languageCode)
@@ -616,52 +454,35 @@ struct SidebarMenuView: View {
                         }) {
                             HStack(spacing: 12) {
                                 Circle()
-                                    .fill(languageManager.currentLanguage == languageCode ?
-                                          LinearGradient(
-                                            gradient: Gradient(colors: [Color.orange, Color.yellow]),
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                          ) :
-                                          LinearGradient(
-                                            gradient: Gradient(colors: [Color.clear]),
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                          )
-                                    )
+                                    .fill(isSelected ? Color.coppelBlue : Color.clear)
                                     .frame(width: 8, height: 8)
                                     .overlay(
                                         Circle()
-                                            .stroke(Color.orange.opacity(0.3), lineWidth: 1.5)
+                                            .stroke(Color.coppelBlue.opacity(0.3), lineWidth: 1.5)
                                     )
 
                                 Text(languageCode.uppercased())
-                                    .font(.system(size: 13, weight: .bold))
-                                    .foregroundColor(languageManager.currentLanguage == languageCode ? .orange : .gray)
+                                    .font(.system(size: 13, weight: .bold, design: .monospaced))
+                                    .foregroundColor(isSelected ? Color.coppelBlue : Color.coppelDarkGrey)
                                     .frame(width: 24)
 
                                 Text(LanguageManager.availableLanguages[languageCode] ?? languageCode)
-                                    .font(.system(size: 14, weight: languageManager.currentLanguage == languageCode ? .semibold : .medium))
-                                    .foregroundColor(languageManager.currentLanguage == languageCode ? .orange : .primary)
+                                    .font(.system(size: 14, weight: isSelected ? .semibold : .medium, design: .rounded))
+                                    .foregroundColor(isSelected ? Color.coppelBlue : Color.coppelDarkBlue)
 
                                 Spacer()
 
-                                if languageManager.currentLanguage == languageCode {
+                                if isSelected {
                                     Image(systemName: "checkmark.circle.fill")
                                         .font(.system(size: 16))
-                                        .foregroundStyle(
-                                            LinearGradient(
-                                                gradient: Gradient(colors: [Color.orange, Color.yellow]),
-                                                startPoint: .top,
-                                                endPoint: .bottom
-                                            )
-                                        )
+                                        .foregroundColor(Color.coppelBlue)
                                 }
                             }
                             .padding(.horizontal, 16)
                             .padding(.vertical, 10)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .fill(languageManager.currentLanguage == languageCode ? Color.orange.opacity(0.06) : Color.gray.opacity(0.03))
+                                    .fill(isSelected ? Color.coppelBlue.opacity(0.06) : Color.coppelBeige.opacity(0.5))
                             )
                         }
                         .buttonStyle(ModernButtonStyle())
@@ -679,49 +500,30 @@ struct SidebarMenuView: View {
     // MARK: - FIFA 2026 Section
     private var fifa2026Section: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // Header con gradiente mejorado
+            // Header — coppelDarkBlue background, coppelYellow headline
             HStack(spacing: 10) {
                 Image(systemName: "soccerball")
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(Color.coppelYellow)
 
-                Text("FIFA World Cup 2026™")
+                Text("FIFA World Cup 2026")
                     .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
+                    .foregroundColor(Color.coppelYellow)
 
                 Spacer(minLength: 4)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             .background(
-                ZStack {
-                    LinearGradient(
-                        gradient: Gradient(colors: [
-                            Color(red: 0.2, green: 0.7, blue: 0.3),
-                            Color(red: 0.1, green: 0.6, blue: 0.4)
-                        ]),
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-
-                    LinearGradient(
-                        gradient: Gradient(colors: [
-                            Color.white.opacity(0.2),
-                            Color.clear
-                        ]),
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                }
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color.coppelDarkBlue)
             )
-            .cornerRadius(14)
-            .shadow(color: Color.green.opacity(0.3), radius: 12, x: 0, y: 4)
 
             VStack(spacing: 8) {
                 fifaButton(
                     icon: "map.fill",
-                    title: "Explorar Sedes",
-                    gradient: [Color.green, Color.mint],
+                    title: L("menu.exploreVenues2"),
+                    color: Color.coppelGreen,
                     action: {
                         onShowVenues?()
                         closeSidebar()
@@ -730,8 +532,8 @@ struct SidebarMenuView: View {
 
                 fifaButton(
                     icon: "camera.viewfinder",
-                    title: "Escanear Posters",
-                    gradient: [Color.purple, Color.blue],
+                    title: L("menu.scanPosters"),
+                    color: Color.coppelPurple,
                     action: {
                         onShowARScanner?()
                         closeSidebar()
@@ -740,8 +542,8 @@ struct SidebarMenuView: View {
 
                 fifaButton(
                     icon: "ticket.fill",
-                    title: "Reservar",
-                    gradient: [Color.orange, Color.yellow],
+                    title: L("menu.reserve2"),
+                    color: Color.coppelOrange,
                     action: {
                         onShowSchedule?()
                         closeSidebar()
@@ -752,48 +554,35 @@ struct SidebarMenuView: View {
     }
 
     // MARK: - FIFA Button
-    private func fifaButton(icon: String, title: String, gradient: [Color], action: @escaping () -> Void) -> some View {
+    private func fifaButton(icon: String, title: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
                 ZStack {
                     Circle()
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(colors: gradient.map { $0.opacity(0.15) }),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(color.opacity(0.12))
                         .frame(width: 38, height: 38)
 
                     Image(systemName: icon)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(
-                            LinearGradient(
-                                gradient: Gradient(colors: gradient),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .foregroundColor(color)
                 }
 
                 Text(title)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.primary)
+                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .foregroundColor(Color.coppelDarkBlue)
 
                 Spacer(minLength: 4)
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(.gray.opacity(0.4))
+                    .foregroundColor(Color.coppelDarkGrey.opacity(0.4))
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 11)
             .background(
                 RoundedRectangle(cornerRadius: 14)
                     .fill(Color.white)
-                    .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
-                    .shadow(color: gradient[0].opacity(0.08), radius: 12, x: 0, y: 4)
+                    .shadow(color: Color.coppelDarkBlue.opacity(0.06), radius: 8, x: 0, y: 2)
             )
         }
         .buttonStyle(ModernButtonStyle())
@@ -810,49 +599,30 @@ struct SidebarMenuView: View {
                 HStack(spacing: 12) {
                     ZStack {
                         Circle()
-                            .fill(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [Color.indigo.opacity(0.12), Color.blue.opacity(0.08)]),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                            .fill(Color.coppelBlue.opacity(0.12))
                             .frame(width: 38, height: 38)
 
                         Image(systemName: "tram.fill")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [Color.indigo, Color.blue]),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                            .foregroundColor(Color.coppelBlue)
                     }
 
-                    Text("Líneas del Metro")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.primary)
+                    Text(L("menu.metroLines"))
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .foregroundColor(Color.coppelDarkBlue)
 
                     Spacer(minLength: 4)
 
-                    Image(systemName: isMetroLinesExpanded ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
-                        .font(.system(size: 18))
-                        .foregroundStyle(
-                            LinearGradient(
-                                gradient: Gradient(colors: [Color.indigo.opacity(0.6), Color.blue.opacity(0.5)]),
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
+                    Image(systemName: isMetroLinesExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(Color.coppelDarkGrey)
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
                 .background(
                     RoundedRectangle(cornerRadius: 14)
                         .fill(Color.white)
-                        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
-                        .shadow(color: Color.indigo.opacity(0.08), radius: 12, x: 0, y: 4)
+                        .shadow(color: Color.coppelDarkBlue.opacity(0.06), radius: 8, x: 0, y: 2)
                 )
             }
             .buttonStyle(ModernButtonStyle())
@@ -892,41 +662,31 @@ struct SidebarMenuView: View {
     private func metroLineButton(number: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
-                ZStack {
-                    // Glow effect
-                    Circle()
-                        .fill(color.opacity(0.3))
-                        .frame(width: 38, height: 38)
-                        .blur(radius: 6)
+                Circle()
+                    .fill(color)
+                    .frame(width: 36, height: 36)
+                    .overlay(
+                        Text(number)
+                            .font(.system(size: 15, weight: .black))
+                            .foregroundColor(.white)
+                    )
 
-                    Circle()
-                        .fill(color)
-                        .frame(width: 36, height: 36)
-                        .shadow(color: color.opacity(0.5), radius: 6, x: 0, y: 3)
-                        .overlay(
-                            Text(number)
-                                .font(.system(size: 15, weight: .black))
-                                .foregroundColor(.white)
-                        )
-                }
-
-                Text("Línea \(number)")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.primary)
+                Text(String(format: L("menu.line"), number))
+                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .foregroundColor(Color.coppelDarkBlue)
 
                 Spacer(minLength: 4)
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(.gray.opacity(0.4))
+                    .foregroundColor(Color.coppelDarkGrey.opacity(0.4))
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 11)
             .background(
                 RoundedRectangle(cornerRadius: 14)
                     .fill(Color.white)
-                    .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
-                    .shadow(color: color.opacity(0.08), radius: 12, x: 0, y: 4)
+                    .shadow(color: Color.coppelDarkBlue.opacity(0.06), radius: 8, x: 0, y: 2)
             )
         }
         .buttonStyle(ModernButtonStyle())
@@ -941,60 +701,40 @@ struct SidebarMenuView: View {
             HStack(spacing: 12) {
                 ZStack {
                     Circle()
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(colors: [Color.orange.opacity(0.15), Color.red.opacity(0.1)]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(Color.coppelRed.opacity(0.12))
                         .frame(width: 38, height: 38)
 
                     Image(systemName: "person.badge.key.fill")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(
-                            LinearGradient(
-                                gradient: Gradient(colors: [Color.orange, Color.red]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .foregroundColor(Color.coppelRed)
                 }
 
-                Text("Staff Access")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(.primary)
+                Text(L("menu.staffAccess"))
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .foregroundColor(Color.coppelDarkBlue)
 
                 Spacer(minLength: 4)
 
-                Text("ADMIN")
+                Text("Admin")
                     .font(.system(size: 9, weight: .black))
                     .foregroundColor(.white)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(
                         Capsule()
-                            .fill(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [Color.orange, Color.red]),
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .shadow(color: Color.orange.opacity(0.4), radius: 4, x: 0, y: 2)
+                            .fill(Color.coppelRed)
                     )
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(.gray.opacity(0.4))
+                    .foregroundColor(Color.coppelDarkGrey.opacity(0.4))
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 11)
             .background(
                 RoundedRectangle(cornerRadius: 14)
                     .fill(Color.white)
-                    .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
-                    .shadow(color: Color.orange.opacity(0.12), radius: 12, x: 0, y: 4)
+                    .shadow(color: Color.coppelDarkBlue.opacity(0.06), radius: 8, x: 0, y: 2)
             )
         }
         .buttonStyle(ModernButtonStyle())
@@ -1003,16 +743,9 @@ struct SidebarMenuView: View {
     // MARK: - Logout Section
     private var logoutSection: some View {
         VStack(spacing: 0) {
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color.clear,
-                    Color.gray.opacity(0.15),
-                    Color.clear
-                ]),
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-            .frame(height: 1)
+            Rectangle()
+                .fill(Color.coppelBeige)
+                .frame(height: 1)
 
             Button(action: {
                 onLogout?()
@@ -1021,35 +754,17 @@ struct SidebarMenuView: View {
                 HStack(spacing: 12) {
                     ZStack {
                         Circle()
-                            .fill(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [Color.red.opacity(0.12), Color.pink.opacity(0.08)]),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                            .fill(Color.coppelRed.opacity(0.10))
                             .frame(width: 40, height: 40)
 
                         Image(systemName: "rectangle.portrait.and.arrow.right")
                             .font(.system(size: 17, weight: .bold))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [Color.red, Color.pink]),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                            .foregroundColor(Color.coppelRed)
                     }
 
-                    Text("Cerrar Sesión")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(
-                            LinearGradient(
-                                gradient: Gradient(colors: [Color.red, Color.pink]),
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                    Text(L("menu.logout"))
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundColor(Color.coppelRed)
 
                     Spacer(minLength: 4)
                 }
@@ -1057,16 +772,7 @@ struct SidebarMenuView: View {
                 .padding(.vertical, 16)
             }
             .buttonStyle(ModernButtonStyle())
-            .background(
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color.white,
-                        Color.red.opacity(0.02)
-                    ]),
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
+            .background(Color.white)
         }
     }
 

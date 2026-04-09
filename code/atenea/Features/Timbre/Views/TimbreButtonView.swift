@@ -26,7 +26,7 @@ struct TimbreButtonView: View {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 36))
                         .foregroundColor(.green)
-                    Text("Timbre enviado")
+                    Text(LocalizedString("timbre.sent"))
                         .font(.system(size: 14, weight: .semibold))
                 }
                 .transition(.scale.combined(with: .opacity))
@@ -71,7 +71,7 @@ struct TimbreButtonView: View {
                     }
                 }
 
-                Text("Timbrar")
+                Text(LocalizedString("timbre.ring"))
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.orange)
             }
@@ -86,13 +86,13 @@ struct TimbreButtonView: View {
         VStack(spacing: 16) {
             // Header
             VStack(spacing: 4) {
-                Text("¿Qué quieres comunicar?")
+                Text(LocalizedString("timbre.whatToCommunicate"))
                     .font(.system(size: 16, weight: .bold))
             }
 
             // Opciones
             VStack(spacing: 8) {
-                ForEach(TimbreType.allCases, id: \.self) { type in
+                ForEach(TimbreType.quickActions, id: \.self) { type in
                     Button {
                         selectedType = type
                     } label: {
@@ -130,7 +130,7 @@ struct TimbreButtonView: View {
             }
 
             // Mensaje opcional
-            TextField("Mensaje opcional...", text: $customMessage)
+            TextField(LocalizedString("timbre.optionalMessage"), text: $customMessage)
                 .textFieldStyle(.roundedBorder)
                 .font(.system(size: 14))
 
@@ -141,7 +141,7 @@ struct TimbreButtonView: View {
                         showOptions = false
                     }
                 } label: {
-                    Text("Cancelar")
+                    Text(LocalizedString("timbre.cancel"))
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.secondary)
                         .frame(maxWidth: .infinity)
@@ -156,7 +156,7 @@ struct TimbreButtonView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "bell.fill")
                             .font(.system(size: 14))
-                        Text("Enviar")
+                        Text(LocalizedString("timbre.send"))
                             .font(.system(size: 14, weight: .bold))
                     }
                     .foregroundColor(.white)
@@ -184,7 +184,7 @@ struct TimbreButtonView: View {
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
 
-        timbreManager.sendTimbre(
+        let timbre = timbreManager.sendTimbre(
             from: client,
             to: merchant,
             type: selectedType,
@@ -193,7 +193,13 @@ struct TimbreButtonView: View {
             clientLongitude: mockUserLongitude
         )
 
-        print("✅ [Timbre] Enviado de \(client.name) a \(merchant.businessName) tipo: \(selectedType.rawValue)")
+        // Enviar por P2P si el merchant fue descubierto por MPC
+        if let peer = RadarService.shared.discoveredMerchants.first(where: { $0.businessName == merchant.businessName }) {
+            RadarService.shared.sendTimbreP2P(timbre, to: peer)
+            print("✅ [Timbre] Enviado P2P de \(client.name) a \(merchant.businessName)")
+        } else {
+            print("✅ [Timbre] Enviado LOCAL de \(client.name) a \(merchant.businessName) (merchant no descubierto por MPC)")
+        }
 
         showOptions = false
         customMessage = ""

@@ -24,15 +24,23 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         #endif
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
+        manager.distanceFilter = kCLDistanceFilterNone
         manager.headingFilter = 5
-        manager.requestWhenInUseAuthorization()
-        manager.startUpdatingLocation()
-        manager.startUpdatingHeading()
+        manager.activityType = .fitness
+
+        let status = manager.authorizationStatus
+        print("📍 [LocationManager] init — authStatus=\(status.rawValue)")
+
+        if status == .authorizedWhenInUse || status == .authorizedAlways {
+            manager.startUpdatingLocation()
+            manager.startUpdatingHeading()
+        } else if status == .notDetermined {
+            manager.requestWhenInUseAuthorization()
+        }
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         #if targetEnvironment(simulator)
-        // En simulador ignoramos actualizaciones del sistema (San Francisco) y mantenemos Expo Santa Fe
         if currentLocation == nil {
             currentLocation = Self.expoSantaFe
         }
@@ -41,6 +49,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
            CLLocationCoordinate2DIsValid(location),
            !(location.latitude == 0.0 && location.longitude == 0.0) {
             currentLocation = location
+            print("📍 [GPS] Ubicación real: \(location.latitude), \(location.longitude)")
         }
         #endif
     }
@@ -52,9 +61,32 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
 
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        let status = manager.authorizationStatus
+        print("📍 [LocationManager] authChanged → \(status.rawValue)")
+
+        switch status {
+        case .authorizedWhenInUse, .authorizedAlways:
+            manager.startUpdatingLocation()
+            manager.startUpdatingHeading()
+            print("📍 [LocationManager] startUpdatingLocation activado")
+        case .denied, .restricted:
+            print("📍 [LocationManager] ⚠️ Permiso de ubicación denegado/restringido")
+        case .notDetermined:
+            print("📍 [LocationManager] Permiso aún no determinado")
+        @unknown default:
+            break
+        }
+    }
+
     // Delegate method called when location updates fail
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("Failed to get location: \(error)") // Print error if location fails
+    }
+
+    // Request location permission
+    func requestLocationPermission() {
+        manager.requestWhenInUseAuthorization()
     }
 }
 
@@ -94,13 +126,13 @@ struct DestinationListView: View {
         NavigationStack {
             List {
                 // Sección de modelo 3D
-                Section(header: Text("Modelo 3D")) {
+                Section(header: Text(LocalizedString("menu.3dModel"))) {
                     Button(action: {
                         showTangaraView = true
                     }) {
                         HStack {
                             Image(systemName: "cube.fill").foregroundColor(.purple)
-                            Text("Ver Tren Tangara 3D")
+                            Text(LocalizedString("menu.viewTangara3D"))
                             Spacer()
                             Image(systemName: "arrow.right.circle").foregroundColor(.gray)
                         }
@@ -109,7 +141,7 @@ struct DestinationListView: View {
                 }
 
                 // Sección de navegación
-                Section(header: Text("Navegación")) {
+                Section(header: Text(LocalizedString("menu.navigation"))) {
                     ForEach(destinations) { destination in
                         Button(action: {
                             // Check if the current location is available and valid before proceeding
@@ -143,7 +175,7 @@ struct DestinationListView: View {
                     }
                 }
             }
-            .navigationTitle("Choose Destination") // Title for the navigation stack
+            .navigationTitle(LocalizedString("destination.chooseTitle")) // Title for the navigation stack
             // Present the navigation view full screen when OD pair is set
             .fullScreenCover(item: $preparedNavigation) { preparedNavigation in
                 NavigationViewWrapper(

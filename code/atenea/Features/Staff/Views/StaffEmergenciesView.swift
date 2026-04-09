@@ -160,7 +160,7 @@ struct StaffEmergenciesView: View {
                         HStack(spacing: 8) {
                             Image(systemName: "chevron.left")
                                 .font(.system(size: 16, weight: .semibold))
-                            Text("Atrás")
+                            Text(LocalizedString("staff.emergencies.back"))
                                 .font(.system(size: 16, weight: .medium))
                         }
                         .foregroundColor(.white.opacity(0.7))
@@ -168,7 +168,7 @@ struct StaffEmergenciesView: View {
 
                     Spacer()
 
-                    Text("Emergencias")
+                    Text(LocalizedString("staff.emergencies.title"))
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.white)
 
@@ -204,19 +204,19 @@ struct StaffEmergenciesView: View {
                 HStack(spacing: 12) {
                     EmergencyCountBadge(
                         count: emergencies.filter { $0.status == .active }.count,
-                        title: "Activas",
+                        title: LocalizedString("staff.emergencies.active"),
                         color: .red
                     )
 
                     EmergencyCountBadge(
                         count: emergencies.filter { $0.status == .disconnected }.count,
-                        title: "Desconectadas",
+                        title: LocalizedString("staff.emergencies.disconnected"),
                         color: .yellow
                     )
 
                     EmergencyCountBadge(
                         count: emergencies.filter { $0.status == .resolved }.count,
-                        title: "Resueltas",
+                        title: LocalizedString("staff.emergencies.resolved"),
                         color: .green
                     )
                 }
@@ -245,13 +245,13 @@ struct StaffEmergenciesView: View {
                 }
             }
         }
-        .confirmationDialog("¿Qué deseas hacer?", isPresented: $showEmergencyOptions, titleVisibility: .visible) {
-            Button("Navegación AR (Realidad Aumentada)") {
+        .confirmationDialog(LocalizedString("staff.emergencies.whatToDo"), isPresented: $showEmergencyOptions, titleVisibility: .visible) {
+            Button(LocalizedString("staff.emergencies.arNavigation")) {
                 showARNavigation = true
                 selectedEmergency = nil
             }
 
-            Button("Mostrar Ubicación") {
+            Button(LocalizedString("staff.emergencies.showLocation")) {
                 if let emergency = selectedEmergency {
                     isPresented = false
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -260,7 +260,7 @@ struct StaffEmergenciesView: View {
                 }
             }
 
-            Button("Empezar Navegación") {
+            Button(LocalizedString("staff.emergencies.startNavigation")) {
                 if let emergency = selectedEmergency {
                     isPresented = false
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -271,25 +271,25 @@ struct StaffEmergenciesView: View {
 
             // Opciones de gestión de emergencias
             if let emergency = selectedEmergency, emergency.status != .resolved {
-                Button("Marcar como Resuelta") {
+                Button(LocalizedString("staff.emergencies.markResolved")) {
                     niManager.resolveEmergency(emergencyID: emergency.id)
                     selectedEmergency = nil
                 }
             }
 
             if let emergency = selectedEmergency {
-                Button("Eliminar del Historial", role: .destructive) {
+                Button(LocalizedString("staff.emergencies.removeFromHistory"), role: .destructive) {
                     niManager.removeEmergency(emergencyID: emergency.id)
                     selectedEmergency = nil
                 }
             }
 
-            Button("Cancelar", role: .cancel) {
+            Button(LocalizedString("action.cancel"), role: .cancel) {
                 selectedEmergency = nil
             }
         } message: {
             if let emergency = selectedEmergency {
-                Text("Emergencia de \(emergency.userName) en \(emergency.location)")
+                Text(String(format: LocalizedString("staff.emergencies.emergencyFormat"), emergency.userName, emergency.location))
             }
         }
         .fullScreenCover(isPresented: $showARNavigation) {
@@ -330,11 +330,11 @@ struct EmptyEmergenciesView: View {
             }
 
             VStack(spacing: 12) {
-                Text("Sin Emergencias Activas")
+                Text(LocalizedString("staff.emergencies.noActive"))
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.white)
 
-                Text("No hay emergencias reportadas en este momento")
+                Text(LocalizedString("staff.emergencies.noActiveDesc"))
                     .font(.system(size: 16))
                     .foregroundColor(.white.opacity(0.6))
                     .multilineTextAlignment(.center)
@@ -345,19 +345,19 @@ struct EmptyEmergenciesView: View {
             VStack(spacing: 16) {
                 InfoRow(
                     icon: "checkmark.circle.fill",
-                    text: "Sistema monitoreando 24/7",
+                    text: LocalizedString("staff.emergencies.monitoring"),
                     color: .green
                 )
 
                 InfoRow(
                     icon: "bell.badge.fill",
-                    text: "Alertas automáticas habilitadas",
+                    text: LocalizedString("staff.emergencies.autoAlerts"),
                     color: .blue
                 )
 
                 InfoRow(
                     icon: "location.fill",
-                    text: "Seguimiento en tiempo real",
+                    text: LocalizedString("staff.emergencies.realTimeTracking"),
                     color: .cyan
                 )
             }
