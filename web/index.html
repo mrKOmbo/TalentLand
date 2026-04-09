@@ -115,8 +115,42 @@
             background: #EEE8E3; border-radius: 12px; flex-shrink: 0;
         }
         .biz-page .product-photo {
-            width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
-            object-fit: cover; background: #EEE8E3;
+            width: 72px; height: 72px; border-radius: 14px; flex-shrink: 0;
+            object-fit: cover; background: #EEE8E3; cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        .biz-page .product-photo:hover { transform: scale(1.05); }
+
+        /* Lightbox */
+        .lightbox-overlay {
+            position: fixed; inset: 0; z-index: 9999;
+            background: rgba(8,23,84,0.85); backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.25s ease; pointer-events: none;
+            padding: 24px;
+        }
+        .lightbox-overlay.active { opacity: 1; pointer-events: auto; }
+        .lightbox-overlay img {
+            max-width: 100%; max-height: 85vh; border-radius: 20px;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+            transform: scale(0.9); transition: transform 0.3s ease;
+        }
+        .lightbox-overlay.active img { transform: scale(1); }
+        .lightbox-close {
+            position: absolute; top: 20px; right: 20px;
+            width: 40px; height: 40px; border-radius: 50%;
+            background: rgba(255,255,255,0.15); border: none;
+            color: white; font-size: 20px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s ease;
+        }
+        .lightbox-close:hover { background: rgba(255,255,255,0.3); }
+        .lightbox-name {
+            position: absolute; bottom: 32px; left: 50%;
+            transform: translateX(-50%); color: white;
+            font-size: 16px; font-weight: 700; text-align: center;
+            background: rgba(8,23,84,0.6); padding: 8px 20px;
+            border-radius: 12px; backdrop-filter: blur(4px);
         }
         .biz-page .product-info { flex: 1; min-width: 0; }
         .biz-page .product-name { font-size: 15px; font-weight: 600; color: #081754; }
@@ -420,6 +454,25 @@
     function getMapsUrl(lat, lng, name) { return 'https://maps.apple.com/?q=' + encodeURIComponent(name) + '&ll=' + lat + ',' + lng; }
     function escapeHtml(t) { var d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 
+    // ===== Lightbox =====
+    var lightboxEl = document.createElement('div');
+    lightboxEl.className = 'lightbox-overlay';
+    lightboxEl.innerHTML = '<button class="lightbox-close" onclick="closeLightbox()">&times;</button><img src="" alt=""/><div class="lightbox-name"></div>';
+    document.body.appendChild(lightboxEl);
+    lightboxEl.addEventListener('click', function(e) { if (e.target === lightboxEl) closeLightbox(); });
+
+    function openLightbox(src, name) {
+        lightboxEl.querySelector('img').src = src;
+        lightboxEl.querySelector('.lightbox-name').textContent = name || '';
+        lightboxEl.classList.add('active');
+    }
+
+    function closeLightbox() {
+        lightboxEl.classList.remove('active');
+    }
+
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeLightbox(); });
+
     // ===== Nav Search =====
     var searchTimeout = null;
     var navSearchInput = document.getElementById('navSearchInput');
@@ -533,7 +586,7 @@
             html += '<div class="biz-card animate-in delay-1"><div class="biz-card-title">Productos</div>';
             biz.products.forEach(function(p) {
                 html += '<div class="product-item ' + (!p.available ? 'product-unavailable' : '') + '">' +
-                    (p.imageURL ? '<img class="product-photo" src="' + p.imageURL + '" alt="' + escapeHtml(p.name) + '"/>' : '<div class="product-emoji">' + (p.emoji || '🍽') + '</div>') +
+                    (p.imageURL ? '<img class="product-photo" src="' + p.imageURL + '" alt="' + escapeHtml(p.name) + '" onclick="openLightbox(\'' + p.imageURL + '\',\'' + escapeHtml(p.name).replace(/'/g, "\\'") + '\')"/>' : '<div class="product-emoji">' + (p.emoji || '🍽') + '</div>') +
                     '<div class="product-info"><div class="product-name">' + escapeHtml(p.name) + '</div>' +
                     (p.desc ? '<div class="product-desc">' + escapeHtml(p.desc) + '</div>' : '') + '</div>' +
                     '<div class="product-price">' + formatPrice(p.price) + '</div></div>';
