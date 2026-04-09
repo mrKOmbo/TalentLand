@@ -75,19 +75,6 @@ class SaleViewModel: ObservableObject {
         tapToPayPhase = .preparing
         tapToPayResult = nil
         currentStep = .tapToPay
-
-        Task {
-            // Fase 1: Preparando lector (1s)
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
-            tapToPayPhase = .waitingForCard
-
-            // Fase 2: Esperando tarjeta — el usuario "acerca" la tarjeta
-            // (se avanza manualmente con simulateTapCard() o auto después de 3s)
-            try? await Task.sleep(nanoseconds: 3_000_000_000)
-            if tapToPayPhase == .waitingForCard {
-                simulateTapCard()
-            }
-        }
     }
 
     func simulateTapCard() {

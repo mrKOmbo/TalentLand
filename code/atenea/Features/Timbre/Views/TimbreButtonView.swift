@@ -184,7 +184,7 @@ struct TimbreButtonView: View {
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
 
-        timbreManager.sendTimbre(
+        let timbre = timbreManager.sendTimbre(
             from: client,
             to: merchant,
             type: selectedType,
@@ -193,7 +193,13 @@ struct TimbreButtonView: View {
             clientLongitude: mockUserLongitude
         )
 
-        print("✅ [Timbre] Enviado de \(client.name) a \(merchant.businessName) tipo: \(selectedType.rawValue)")
+        // Enviar por P2P si el merchant fue descubierto por MPC
+        if let peer = RadarService.shared.discoveredMerchants.first(where: { $0.businessName == merchant.businessName }) {
+            RadarService.shared.sendTimbreP2P(timbre, to: peer)
+            print("✅ [Timbre] Enviado P2P de \(client.name) a \(merchant.businessName)")
+        } else {
+            print("✅ [Timbre] Enviado LOCAL de \(client.name) a \(merchant.businessName) (merchant no descubierto por MPC)")
+        }
 
         showOptions = false
         customMessage = ""

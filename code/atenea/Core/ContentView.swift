@@ -70,7 +70,7 @@ struct ContentView: View {
                 } else {
                     let _ = print("📱 [ContentView] → Showing MAIN CONTENT")
                     // Main app content with sidebar push menu
-                    SidebarPushMenuContainer(languageManager: languageManager) {
+                    SidebarPushMenuContainer(languageManager: languageManager, selectedTab: selectedTab) {
                         // Contenido principal con tabs
                         ZStack {
                             Group {
@@ -78,12 +78,15 @@ struct ContentView: View {
                                 case 0:
                                     HomeView(selectedTab: $selectedTab, pendingMerchantPlace: .constant(nil))
                                         .environmentObject(languageManager)
+                                        .background(Color(hex: "#F5F3F0").ignoresSafeArea())
                                 case 1:
                                     MainMapView(selectedTab: $selectedTab, isLoggedIn: $isLoggedIn)
                                         .environmentObject(languageManager)
+                                        .ignoresSafeArea()
                                 case 2:
                                     CommunityView(selectedTab: $selectedTab)
                                         .environmentObject(languageManager)
+                                        .background(Color(hex: "#F5F3F0").ignoresSafeArea())
                                 case 3:
                                     StickerAlbumView(
                                         selectedTab: $selectedTab,
@@ -92,11 +95,14 @@ struct ContentView: View {
                                         showCollectionAnimation: $showCollectionAnimation
                                     )
                                     .environmentObject(languageManager)
+                                    .background(Color(hex: "#F5F3F0").ignoresSafeArea())
                                 case 4:
                                     MerchantStatsView()
+                                        .background(Color(hex: "#F5F3F0").ignoresSafeArea())
                                 default:
                                     HomeView(selectedTab: $selectedTab, pendingMerchantPlace: .constant(nil))
                                         .environmentObject(languageManager)
+                                        .background(Color(hex: "#F5F3F0").ignoresSafeArea())
                                 }
                             }
                             .transition(.opacity)

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UIKit
 internal import Combine
 
 class TimbreManager: ObservableObject {
@@ -108,6 +109,18 @@ class TimbreManager: ObservableObject {
 
         lastResponse = response
 
+        // Enviar respuesta por P2P al cliente
+        if let timbre = pendingTimbres.first(where: { $0.id == timbreId }) {
+            // Buscar el peer del cliente que envió este timbre
+            let clientPeerID = RadarService.shared.connectedPeers.first { peer in
+                RadarService.shared.peerMerchantMap[peer] == timbre.clientName
+            }
+            if let clientPeer = clientPeerID {
+                RadarService.shared.sendResponseP2P(response, to: clientPeer)
+                print("🔔 [Timbre P2P] 📤 Respuesta enviada al cliente \(timbre.clientName)")
+            }
+        }
+
         // Si respondió "Ya voy", iniciar LiveTrack para el cliente
         if responseType == .onMyWay,
            let merchant = MerchantManager.shared.currentMerchantProfile,
@@ -132,6 +145,38 @@ class TimbreManager: ObservableObject {
 
     func timbresFromClient(_ clientId: UUID) -> [TimbreEvent] {
         sentTimbres.filter { $0.clientId == clientId }
+    }
+
+    // MARK: - P2P Reception
+
+    /// Llamado cuando un timbre llega de otro dispositivo vía MPC
+    func receiveTimbre(_ timbre: TimbreEvent) {
+        pendingTimbres.insert(timbre, at: 0)
+        newTimbreReceived = timbre
+        print("🔔 [Timbre P2P] ⚡ Recibido de \(timbre.clientName): \(timbre.type.displayName)")
+
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.warning)
+
+        // Auto-clear después de 60s
+        DispatchQueue.main.asyncAfter(deadline: .now() + 60) { [weak self] in
+            if self?.newTimbreReceived?.id == timbre.id {
+                self?.newTimbreReceived = nil
+            }
+        }
+    }
+
+    /// Llamado cuando una respuesta llega de otro dispositivo vía MPC
+    func receiveResponse(_ response: TimbreResponse) {
+        if let index = sentTimbres.firstIndex(where: { $0.id == response.timbreId }) {
+            sentTimbres[index].isResponded = true
+            sentTimbres[index].response = response
+        }
+        lastResponse = response
+        print("🔔 [Timbre P2P] ✅ Respuesta recibida: \(response.type.displayName)")
+
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
     }
 
     // MARK: - Cleanup

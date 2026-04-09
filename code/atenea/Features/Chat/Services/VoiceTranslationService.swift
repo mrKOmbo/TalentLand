@@ -33,6 +33,8 @@ class VoiceTranslationService: NSObject, ObservableObject {
     @Published var isListening = false
     @Published var currentTranscription = ""
     @Published var lastTranslation = ""
+    @Published var streamingTranslation = ""
+    @Published var isTranslating = false
     @Published var isSpeaking = false
     @Published var messages: [TranslationMessage] = []
     @Published var errorMessage: String?
@@ -54,6 +56,9 @@ class VoiceTranslationService: NSObject, ObservableObject {
     private var silenceTimer: Timer?
     private var lastTranscriptionUpdate: Date?
     private var isMerchantSpeaking = true
+
+    // Cache de traducciones (respuesta instantánea para frases repetidas)
+    private var translationCache: [String: String] = [:]
 
     private override init() {
         super.init()
@@ -168,7 +173,7 @@ class VoiceTranslationService: NSObject, ObservableObject {
 
     private func resetSilenceTimer() {
         silenceTimer?.invalidate()
-        silenceTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { [weak self] _ in
+        silenceTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { [weak self] _ in
             guard let self = self else { return }
             let text = self.currentTranscription
             if !text.isEmpty {
@@ -185,37 +190,128 @@ class VoiceTranslationService: NSObject, ObservableObject {
 
         let sourceCode = isMerchantSpeaking ? merchantLanguage : touristLanguage
         let targetCode = isMerchantSpeaking ? touristLanguage : merchantLanguage
+        let fromMerchant = isMerchantSpeaking
 
-        // Usar traducción local simplificada para demo
-        translateText(text, from: sourceCode, to: targetCode) { [weak self] translated in
-            guard let self = self else { return }
+        // Cache: respuesta instantánea si ya tradujimos esto
+        let cacheKey = "\(sourceCode)|\(targetCode)|\(text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines))"
+        if let cached = translationCache[cacheKey] {
+            addMessage(original: text, translated: cached, source: sourceCode, target: targetCode, fromMerchant: fromMerchant)
+            speak(cached, language: targetCode)
+            return
+        }
 
-            let message = TranslationMessage(
-                originalText: text,
-                translatedText: translated,
-                sourceLanguage: sourceCode,
-                targetLanguage: targetCode,
-                isFromMerchant: self.isMerchantSpeaking,
-                timestamp: Date()
-            )
-
-            DispatchQueue.main.async {
-                self.messages.append(message)
-                self.lastTranslation = translated
-                self.currentTranscription = ""
+        Task {
+            await MainActor.run {
+                self.isTranslating = true
+                self.streamingTranslation = ""
             }
 
-            // Sintetizar voz traducida
-            self.speak(translated, language: targetCode)
+            let translated: String
+            if APIConfiguration.shared.hasClaudeAPIKey {
+                translated = await translateWithClaude(text, from: sourceCode, to: targetCode)
+            } else {
+                translated = LocalTranslationDictionary.translate(text, from: sourceCode, to: targetCode)
+            }
+
+            translationCache[cacheKey] = translated
+
+            await MainActor.run {
+                self.isTranslating = false
+                self.streamingTranslation = ""
+            }
+
+            addMessage(original: text, translated: translated, source: sourceCode, target: targetCode, fromMerchant: fromMerchant)
+            speak(translated, language: targetCode)
         }
     }
 
-    // MARK: - Traducción con diccionario local (demo-ready, offline)
+    private func addMessage(original: String, translated: String, source: String, target: String, fromMerchant: Bool) {
+        let message = TranslationMessage(
+            originalText: original, translatedText: translated,
+            sourceLanguage: source, targetLanguage: target,
+            isFromMerchant: fromMerchant, timestamp: Date()
+        )
+        DispatchQueue.main.async {
+            self.messages.append(message)
+            self.lastTranslation = translated
+            self.currentTranscription = ""
+        }
+    }
 
-    private func translateText(_ text: String, from source: String, to target: String, completion: @escaping (String) -> Void) {
-        // Para demo: traducción con diccionario de frases comunes del comercio ambulante
-        let translated = LocalTranslationDictionary.translate(text, from: source, to: target)
-        completion(translated)
+    // MARK: - Traducción con Claude API (streaming)
+
+    private func translateWithClaude(_ text: String, from source: String, to target: String) async -> String {
+        let apiKey = APIConfiguration.shared.claudeAPIKey
+        let srcName = Self.langName(source)
+        let tgtName = Self.langName(target)
+
+        guard let url = URL(string: "https://api.anthropic.com/v1/messages") else {
+            return LocalTranslationDictionary.translate(text, from: source, to: target)
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.setValue("application/json", forHTTPHeaderField: "content-type")
+        request.timeoutInterval = 8
+
+        let body: [String: Any] = [
+            "model": "claude-haiku-4-5-20251001",
+            "max_tokens": 200,
+            "stream": true,
+            "messages": [["role": "user", "content": "\(srcName) → \(tgtName): \(text)"]],
+            "system": """
+            You are a real-time translator for street food vendors and tourists in Mexico City (World Cup 2026).
+            Rules:
+            - Return ONLY the translated text. No quotes, no explanations.
+            - For Mexican food with no direct translation, keep the original name and add a brief description in parentheses. Example: "tacos de canasta (soft steamed basket tacos)", "huitlacoche (corn truffle mushroom)", "tlacoyo (stuffed oval corn cake)".
+            - Common foods like tacos, quesadillas, tamales can stay as-is — tourists know them.
+            - Be casual, friendly, natural. Translate the FULL sentence idiomatically.
+            """
+        ]
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+            let (bytes, response) = try await URLSession.shared.bytes(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                return LocalTranslationDictionary.translate(text, from: source, to: target)
+            }
+
+            var fullText = ""
+            for try await line in bytes.lines {
+                guard line.hasPrefix("data: ") else { continue }
+                let jsonStr = String(line.dropFirst(6))
+                if jsonStr == "[DONE]" { break }
+
+                guard let data = jsonStr.data(using: .utf8),
+                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let type = json["type"] as? String else { continue }
+
+                if type == "content_block_delta",
+                   let delta = json["delta"] as? [String: Any],
+                   let chunk = delta["text"] as? String {
+                    fullText += chunk
+                    let current = fullText
+                    await MainActor.run { self.streamingTranslation = current }
+                }
+            }
+
+            let result = fullText.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !result.isEmpty { return result }
+        } catch {
+            // Fallback silencioso
+        }
+
+        return LocalTranslationDictionary.translate(text, from: source, to: target)
+    }
+
+    private static func langName(_ code: String) -> String {
+        let p = code.components(separatedBy: "-").first ?? code
+        return ["es": "Spanish", "en": "English", "ja": "Japanese", "ko": "Korean",
+                "de": "German", "fr": "French", "pt": "Portuguese", "zh": "Chinese",
+                "ar": "Arabic", "it": "Italian", "ru": "Russian", "tr": "Turkish"][p] ?? "English"
     }
 
     // MARK: - Text-to-Speech

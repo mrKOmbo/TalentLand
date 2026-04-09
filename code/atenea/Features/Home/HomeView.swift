@@ -87,15 +87,21 @@ struct MerchantHomeView: View {
     }
 
     var body: some View {
-        ZStack {
-            Color(hex: "#F5F3F0")
-                .ignoresSafeArea()
+        GeometryReader { geo in
+            let topInset = geo.safeAreaInsets.top
+            ZStack {
+                Color(hex: "#F5F3F0")
+                    .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 16) {
-                        // Header
-                        merchantHeader
+                VStack(spacing: 0) {
+                    // Spacer dinámico que empuja contenido debajo del safe area
+                    Color(hex: "#F5F3F0")
+                        .frame(height: topInset)
+
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 16) {
+                            // Header
+                            merchantHeader
 
                         // Status toggle
                         businessStatusCard
@@ -157,7 +163,8 @@ struct MerchantHomeView: View {
                 .zIndex(100)
             }
 
-        }
+            } // ZStack
+        } // GeometryReader
         .onAppear {
             Task { @MainActor in
                 // Cargar datos ANTES de mostrar la UI
@@ -443,14 +450,20 @@ struct CustomerHomeView: View {
     }
 
     var body: some View {
-        ZStack {
-            Color(hex: "#F5F3F0")
-                .ignoresSafeArea()
+        GeometryReader { geo in
+            let topInset = geo.safeAreaInsets.top
+            ZStack {
+                Color(hex: "#F5F3F0")
+                    .ignoresSafeArea()
 
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 16) {
-                    // Header
-                    customerHeader
+                VStack(spacing: 0) {
+                    Color(hex: "#F5F3F0")
+                        .frame(height: topInset)
+
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 16) {
+                            // Header
+                            customerHeader
 
                     // Radar P2P — merchants detectados en vivo
                     radarSection
@@ -476,11 +489,9 @@ struct CustomerHomeView: View {
                 .padding(.top, 16)
                 .padding(.bottom, 16)
             }
-            .safeAreaInset(edge: .top, spacing: 0) {
-                Color(hex: "#F5F3F0")
-                    .frame(height: 0)
-            }
-        }
+                } // VStack
+            } // ZStack
+        } // GeometryReader
         .onAppear {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.1)) {
                 animateCards = true

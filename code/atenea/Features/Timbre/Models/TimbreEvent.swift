@@ -157,3 +157,10 @@ struct TimbreResponse: Identifiable, Codable, Equatable {
         self.timestamp = timestamp
     }
 }
+
+// MARK: - P2P Message Envelope
+
+enum TimbreP2PMessage: Codable {
+    case timbreEvent(TimbreEvent)
+    case timbreResponse(TimbreResponse)
+}

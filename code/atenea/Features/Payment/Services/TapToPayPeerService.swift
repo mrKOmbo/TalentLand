@@ -39,7 +39,7 @@ class TapToPayPeerService: NSObject, ObservableObject {
     let merchantName: String?
     let paymentDescription: String?
 
-    private let tapThreshold: Float = 0.06  // 6 cm
+    private let tapThreshold: Float = 0.30  // 30 cm
     private var hasTriggered = false
     private var isActive = false
 
@@ -122,6 +122,8 @@ class TapToPayPeerService: NSObject, ObservableObject {
 
     // MARK: - Merchant: enviar confirmación por BLE notify
 
+    private var pendingConfirmationData: Data?
+
     func sendConfirmation(approved: Bool) {
         print("[TapToPay] Merchant: enviando confirmación BLE approved=\(approved)")
         guard let char = charConfirmMutable,
@@ -131,8 +133,20 @@ class TapToPayPeerService: NSObject, ObservableObject {
         }
         let payload: [String: Any] = ["approved": approved]
         guard let data = try? JSONSerialization.data(withJSONObject: payload) else { return }
+        pendingConfirmationData = data
         let sent = manager.updateValue(data, for: char, onSubscribedCentrals: nil)
-        print("[TapToPay] Merchant: notify enviado=\(sent)")
+        print("[TapToPay] Merchant: notify enviado=\(sent) — si false, se reintentará en peripheralManagerIsReady")
+        if sent { pendingConfirmationData = nil }
+    }
+
+    // Retry automático cuando la cola BLE está lista (updateValue retornó false)
+    func peripheralManagerIsReady(toUpdateSubscribers peripheral: CBPeripheralManager) {
+        guard let data = pendingConfirmationData,
+              let char = charConfirmMutable else { return }
+        print("[TapToPay] Merchant: reintentando notify (cola BLE liberada)")
+        let sent = peripheral.updateValue(data, for: char, onSubscribedCentrals: nil)
+        print("[TapToPay] Merchant: retry notify enviado=\(sent)")
+        if sent { pendingConfirmationData = nil }
     }
 
     // MARK: - Merchant: construir servicio GATT
@@ -448,9 +462,18 @@ extension TapToPayPeerService: CBPeripheralDelegate {
             // Confirmación del merchant (notify)
             if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
                 let approved = json["approved"] as? Bool ?? false
-                print("[TapToPay] Customer: 🔔 confirmación recibida — approved=\(approved)")
+                print("[TapToPay] Customer: 🔔 confirmación recibida — approved=\(approved) hasTriggered=\(self.hasTriggered)")
                 DispatchQueue.main.async {
-                    self.phase = approved ? .approved : .declined("Pago rechazado")
+                    if approved && !self.hasTriggered {
+                        self.hasTriggered = true
+                        self.phase = .processing
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            print("[TapToPay] Customer: llamando onPaymentTriggered")
+                            self.onPaymentTriggered?()
+                        }
+                    } else if !approved {
+                        self.phase = .declined("Pago rechazado")
+                    }
                 }
             }
 

@@ -58,6 +58,7 @@ class RadarService: NSObject, ObservableObject {
     // MARK: - Published State
 
     @Published var discoveredMerchants: [RadarPeer] = []
+    @Published var connectedPeers: [MCPeerID] = []
     @Published var isScanning = false
     @Published var isAdvertising = false
     @Published var radarStatus: String = "Inactivo"
@@ -68,9 +69,12 @@ class RadarService: NSObject, ObservableObject {
     private var myPeerID: MCPeerID
     private var advertiser: MCNearbyServiceAdvertiser?
     private var browser: MCNearbyServiceBrowser?
-    private var session: MCSession? // Requerido por MPC aunque no lo usemos para data
+    private var session: MCSession?
     private var pruneTimer: Timer?
     private var refreshTimer: Timer?
+
+    // Mapeo peerID → nombre para rutear respuestas
+    var peerMerchantMap: [MCPeerID: String] = [:]
 
     // MARK: - Init
 
@@ -190,8 +194,67 @@ class RadarService: NSObject, ObservableObject {
         stopScanning()
         DispatchQueue.main.async {
             self.discoveredMerchants.removeAll()
+            self.connectedPeers.removeAll()
+            self.peerMerchantMap.removeAll()
             self.radarStatus = "Inactivo"
         }
+    }
+
+    // MARK: - P2P Timbre (envío de datos reales entre dispositivos)
+
+    /// Cliente invita a un merchant para enviarle un timbre
+    func connectToPeer(_ peer: RadarPeer) {
+        guard let browser = browser, let session = session else {
+            print("📡 [Radar P2P] ❌ No hay browser/session activo")
+            return
+        }
+        browser.invitePeer(peer.peerID, to: session, withContext: "timbre".data(using: .utf8), timeout: 10)
+        peerMerchantMap[peer.peerID] = peer.businessName
+        print("📡 [Radar P2P] 📤 Invitación enviada a \(peer.businessName)")
+    }
+
+    /// Envía un mensaje P2P a un peer conectado
+    func sendP2P(_ message: TimbreP2PMessage, to peerID: MCPeerID) {
+        guard let session = session else {
+            print("📡 [Radar P2P] ❌ No hay session")
+            return
+        }
+        do {
+            let data = try JSONEncoder().encode(message)
+            try session.send(data, toPeers: [peerID], with: .reliable)
+            print("📡 [Radar P2P] ✅ Mensaje enviado (\(data.count) bytes) a \(peerID.displayName)")
+        } catch {
+            print("📡 [Radar P2P] ❌ Error enviando: \(error.localizedDescription)")
+        }
+    }
+
+    /// Envía timbre al merchant — conecta si no está conectado, luego envía
+    func sendTimbreP2P(_ timbre: TimbreEvent, to peer: RadarPeer) {
+        let peerID = peer.peerID
+
+        if connectedPeers.contains(peerID) {
+            // Ya conectado, enviar directo
+            sendP2P(.timbreEvent(timbre), to: peerID)
+        } else {
+            // Conectar primero, luego enviar cuando la conexión se establezca
+            connectToPeer(peer)
+            // Guardar el timbre para enviarlo cuando se conecte
+            pendingTimbreToSend = (timbre, peerID)
+            print("📡 [Radar P2P] ⏳ Conectando a \(peer.businessName) — timbre en cola")
+        }
+    }
+
+    /// Timbre pendiente de envío (esperando conexión)
+    private var pendingTimbreToSend: (timbre: TimbreEvent, peer: MCPeerID)?
+
+    /// Envía respuesta de timbre al cliente
+    func sendResponseP2P(_ response: TimbreResponse, to peerID: MCPeerID) {
+        sendP2P(.timbreResponse(response), to: peerID)
+    }
+
+    /// Busca el peerID de un merchant por nombre
+    func peerForMerchant(named name: String) -> MCPeerID? {
+        peerMerchantMap.first(where: { $0.value == name })?.key
     }
 
     // MARK: - Internal
@@ -275,8 +338,16 @@ extension RadarService: MCNearbyServiceBrowserDelegate {
 extension RadarService: MCNearbyServiceAdvertiserDelegate {
 
     func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
-        // No aceptar invitaciones — solo usamos discovery, no conexión
-        invitationHandler(false, nil)
+        // Aceptar invitaciones de timbre
+        let contextStr = context.flatMap { String(data: $0, encoding: .utf8) } ?? ""
+        if contextStr == "timbre" {
+            print("📡 [Radar P2P] 📥 Invitación de timbre aceptada de \(peerID.displayName)")
+            invitationHandler(true, self.session)
+        } else {
+            // Aceptar todas las demás también (para flexibilidad)
+            print("📡 [Radar P2P] 📥 Invitación aceptada de \(peerID.displayName) (contexto: \(contextStr))")
+            invitationHandler(true, self.session)
+        }
     }
 
     func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
@@ -288,11 +359,61 @@ extension RadarService: MCNearbyServiceAdvertiserDelegate {
     }
 }
 
-// MARK: - MCSessionDelegate (requerido pero no usado)
+// MARK: - MCSessionDelegate (P2P data exchange)
 
 extension RadarService: MCSessionDelegate {
-    func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {}
-    func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {}
+
+    func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
+        DispatchQueue.main.async {
+            switch state {
+            case .connected:
+                if !self.connectedPeers.contains(peerID) {
+                    self.connectedPeers.append(peerID)
+                }
+                print("📡 [Radar P2P] 🤝 Conectado con \(peerID.displayName)")
+
+                // Si hay un timbre pendiente de envío, enviarlo ahora
+                if let pending = self.pendingTimbreToSend, pending.peer == peerID {
+                    self.sendP2P(.timbreEvent(pending.timbre), to: peerID)
+                    self.pendingTimbreToSend = nil
+                }
+
+            case .notConnected:
+                self.connectedPeers.removeAll { $0 == peerID }
+                print("📡 [Radar P2P] 👋 Desconectado de \(peerID.displayName)")
+
+            case .connecting:
+                print("📡 [Radar P2P] ⏳ Conectando con \(peerID.displayName)...")
+
+            @unknown default:
+                break
+            }
+        }
+    }
+
+    func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
+        do {
+            let message = try JSONDecoder().decode(TimbreP2PMessage.self, from: data)
+            print("📡 [Radar P2P] 📨 Mensaje recibido de \(peerID.displayName) (\(data.count) bytes)")
+
+            DispatchQueue.main.async {
+                switch message {
+                case .timbreEvent(let timbre):
+                    // Soy merchant, recibí un timbre de un cliente
+                    TimbreManager.shared.receiveTimbre(timbre)
+                    // Guardar mapping para poder responder
+                    self.peerMerchantMap[peerID] = timbre.clientName
+
+                case .timbreResponse(let response):
+                    // Soy cliente, recibí respuesta del merchant
+                    TimbreManager.shared.receiveResponse(response)
+                }
+            }
+        } catch {
+            print("📡 [Radar P2P] ❌ Error decodificando mensaje: \(error.localizedDescription)")
+        }
+    }
+
     func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {}
     func session(_ session: MCSession, didStartReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, with progress: Progress) {}
     func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?) {}

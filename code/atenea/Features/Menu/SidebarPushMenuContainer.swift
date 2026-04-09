@@ -29,25 +29,40 @@ struct SidebarPushMenuContainer<Content: View>: View {
     var onAccessibility: (() -> Void)?
     var onLogout: (() -> Void)?
 
+    var selectedTab: Int
+
     init(
         languageManager: LanguageManager,
+        selectedTab: Int = 0,
         @ViewBuilder content: () -> Content
     ) {
         self.languageManager = languageManager
+        self.selectedTab = selectedTab
         self.content = content()
     }
 
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // FONDO: Menú verde (siempre visible detrás)
-                greenMenuBackground
-                    .ignoresSafeArea()
+                // Fondo base (transparente para mapa, gris para otras vistas)
+                Group {
+                    if selectedTab == 1 && !menuStateManager.showMenu {
+                        Color.clear
+                    } else {
+                        Color(hex: "#F5F3F0")
+                    }
+                }
+                .ignoresSafeArea()
+
+                // Menú azul (solo cuando menú abierto)
+                if menuStateManager.showMenu {
+                    greenMenuBackground
+                        .ignoresSafeArea()
+                }
 
                 // CONTENIDO: Vista principal que se desliza
                 content
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(.systemBackground))
                     .clipShape(
                         RoundedRectangle(
                             cornerRadius: menuStateManager.showMenu ? 24 : 0,

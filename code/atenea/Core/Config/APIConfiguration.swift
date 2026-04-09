@@ -15,20 +15,21 @@ class APIConfiguration {
 
     // MARK: - Claude API Key
 
+    // Key bundled para demo hackathon
+    private var bundledClaudeKey: String {
+        Bundle.main.infoDictionary?["CLAUDE_API_KEY"] as? String ?? ""
+    }
+
     var claudeAPIKey: String {
         get {
-            // Primero intenta leer de UserDefaults
             if let savedKey = UserDefaults.standard.string(forKey: "claudeAPIKey"), !savedKey.isEmpty {
                 return savedKey
             }
-
-            // Si no hay clave guardada, intenta leer de Info.plist
-            if let apiKey = Bundle.main.object(forInfoDictionaryKey: "CLAUDE_API_KEY") as? String, !apiKey.isEmpty {
+            if let apiKey = Bundle.main.object(forInfoDictionaryKey: "CLAUDE_API_KEY") as? String,
+               !apiKey.isEmpty, !apiKey.hasPrefix("$(") {
                 return apiKey
             }
-
-            // Retornar vacío si no hay clave configurada
-            return ""
+            return bundledClaudeKey
         }
         set {
             UserDefaults.standard.set(newValue, forKey: "claudeAPIKey")
