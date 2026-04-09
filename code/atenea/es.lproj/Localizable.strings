@@ -1356,3 +1356,11 @@
 "products.skip" = "Omitir";
 "products.namePlaceholder" = "Nombre del producto";
 "products.addPhoto" = "Agregar foto";
+
+// MARK: - Route Tracking
+"route.nearRoute" = "Estás cerca de tu ruta";
+"route.startPrompt" = "Tu ruta tiene %d paradas. ¿Iniciar recorrido?";
+"route.notNow" = "Ahora no";
+"route.startRoute" = "Iniciar ruta";
+"route.onRoute" = "En ruta";
+"route.endRoute" = "Terminar ruta";

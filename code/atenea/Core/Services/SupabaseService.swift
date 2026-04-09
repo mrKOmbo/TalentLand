@@ -35,7 +35,9 @@ class SupabaseService {
             "age": user.age ?? "",
             "country": user.country ?? "",
             "phone_number": user.phoneNumber ?? "",
-            "accessibility_option": user.accessibilityOption.rawValue
+            "accessibility_option": user.accessibilityOption.rawValue,
+            "is_verified": user.isVerified,
+            "trust_level": user.trustLevel.rawValue
         ]
 
         let jsonData = try JSONSerialization.data(withJSONObject: payload)
@@ -217,7 +219,9 @@ class SupabaseService {
             "emoji": merchant.emoji,
             "description": merchant.description,
             "is_active": merchant.isActive,
-            "is_static": merchant.isStatic
+            "is_static": merchant.isStatic,
+            "is_verified": merchant.isVerified,
+            "trust_level": merchant.trustLevel.rawValue
         ]
 
         if let location = merchant.currentLocation {
@@ -229,6 +233,39 @@ class SupabaseService {
             payload["schedule_open"] = schedule.openTime
             payload["schedule_close"] = schedule.closeTime
             payload["schedule_days"] = schedule.daysOfWeek
+        }
+
+        if let route = merchant.route {
+            let waypoints: [[String: Any]] = route.sortedWaypoints.map { wp in
+                var w: [String: Any] = [
+                    "id": wp.id.uuidString,
+                    "latitude": wp.latitude,
+                    "longitude": wp.longitude,
+                    "order": wp.order
+                ]
+                if let name = wp.name {
+                    w["name"] = name
+                }
+                return w
+            }
+            var routePayload: [String: Any] = [
+                "id": route.id.uuidString,
+                "merchant_id": route.merchantId.uuidString,
+                "waypoints": waypoints,
+                "is_active": route.isActive,
+                "created_at": ISO8601DateFormatter().string(from: route.createdAt),
+                "updated_at": ISO8601DateFormatter().string(from: route.updatedAt)
+            ]
+            if let geometry = route.routeGeometry {
+                routePayload["route_geometry"] = geometry
+            }
+            if let duration = route.estimatedDuration {
+                routePayload["estimated_duration"] = duration
+            }
+            if let distance = route.estimatedDistance {
+                routePayload["estimated_distance"] = distance
+            }
+            payload["route"] = routePayload
         }
 
         let products: [[String: Any]] = merchant.products.map { product in

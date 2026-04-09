@@ -18,6 +18,7 @@ class MerchantManager: ObservableObject {
     private init() {
         loadMockMerchants()
         syncMocksToSupabaseIfNeeded()
+        fetchMerchantsFromSupabase()
     }
 
     /// Sync mock merchants to Supabase once on first launch
@@ -28,6 +29,122 @@ class MerchantManager: ObservableObject {
         Task {
             await SupabaseService.shared.syncAllMerchants(merchants)
             UserDefaults.standard.set(true, forKey: key)
+        }
+    }
+
+    /// Cargar merchants desde Supabase y mergear con los mocks locales
+    private func fetchMerchantsFromSupabase() {
+        Task {
+            do {
+                let records = try await SupabaseService.shared.fetchMerchants()
+                let existingIds = Set(merchants.map { $0.id.uuidString })
+
+                var newMerchants: [Merchant] = []
+                for record in records {
+                    guard let idString = record["id"] as? String,
+                          !existingIds.contains(idString),
+                          let id = UUID(uuidString: idString) else { continue }
+
+                    let businessName = record["business_name"] as? String ?? ""
+                    let categoryRaw = record["category"] as? String ?? "otro"
+                    let category = MerchantCategory(rawValue: categoryRaw) ?? .otro
+                    let emoji = record["emoji"] as? String ?? category.emoji
+                    let description = record["description"] as? String ?? ""
+                    let isActive = record["is_active"] as? Bool ?? false
+                    let isStatic = record["is_static"] as? Bool ?? true
+
+                    var location: MerchantLocation?
+                    if let lat = record["latitude"] as? Double, let lon = record["longitude"] as? Double {
+                        location = MerchantLocation(latitude: lat, longitude: lon)
+                    }
+
+                    var schedule: MerchantSchedule?
+                    if let open = record["schedule_open"] as? String,
+                       let close = record["schedule_close"] as? String {
+                        let days = record["schedule_days"] as? [Int] ?? []
+                        schedule = MerchantSchedule(openTime: open, closeTime: close, daysOfWeek: days)
+                    }
+
+                    // Parsear productos
+                    var products: [Product] = []
+                    if let productsJSON = record["products"] as? [[String: Any]] {
+                        for p in productsJSON {
+                            let pName = p["name"] as? String ?? ""
+                            let pPrice = p["price"] as? Double ?? 0
+                            let pEmoji = p["emoji"] as? String ?? "🛒"
+                            let pAvailable = p["available"] as? Bool ?? true
+                            let pDesc = p["desc"] as? String
+                            let pImageURL = p["imageURL"] as? String
+                            products.append(Product(name: pName, price: pPrice, description: pDesc, emoji: pEmoji, isAvailable: pAvailable, imageURL: pImageURL))
+                        }
+                    }
+
+                    // Parsear ruta
+                    var route: MerchantRoute?
+                    if let routeJSON = record["route"] as? [String: Any] {
+                        let routeId = UUID(uuidString: routeJSON["id"] as? String ?? "") ?? UUID()
+                        let merchantId = UUID(uuidString: routeJSON["merchant_id"] as? String ?? "") ?? id
+                        let routeActive = routeJSON["is_active"] as? Bool ?? false
+                        let geometry = routeJSON["route_geometry"] as? String
+                        let duration = routeJSON["estimated_duration"] as? Double
+                        let distance = routeJSON["estimated_distance"] as? Double
+
+                        var waypoints: [RouteWaypoint] = []
+                        if let wps = routeJSON["waypoints"] as? [[String: Any]] {
+                            for wp in wps {
+                                let wpLat = wp["latitude"] as? Double ?? 0
+                                let wpLon = wp["longitude"] as? Double ?? 0
+                                let wpOrder = wp["order"] as? Int ?? 0
+                                let wpName = wp["name"] as? String
+                                waypoints.append(RouteWaypoint(
+                                    coordinate: CLLocationCoordinate2D(latitude: wpLat, longitude: wpLon),
+                                    order: wpOrder,
+                                    name: wpName
+                                ))
+                            }
+                        }
+
+                        route = MerchantRoute(
+                            id: routeId,
+                            merchantId: merchantId,
+                            waypoints: waypoints,
+                            routeGeometry: geometry,
+                            estimatedDuration: duration,
+                            estimatedDistance: distance,
+                            isActive: routeActive
+                        )
+                    }
+
+                    let merchant = Merchant(
+                        id: id,
+                        userId: UUID(),
+                        businessName: businessName,
+                        category: category,
+                        emoji: emoji,
+                        description: description,
+                        products: products,
+                        schedule: schedule,
+                        isActive: isActive,
+                        isStatic: isStatic,
+                        currentLocation: location,
+                        route: route,
+                        isVerified: record["is_verified"] as? Bool ?? false,
+                        trustLevel: TrustLevel(rawValue: record["trust_level"] as? String ?? "unverified") ?? .unverified
+                    )
+                    newMerchants.append(merchant)
+                }
+
+                if !newMerchants.isEmpty {
+                    await MainActor.run {
+                        merchants.append(contentsOf: newMerchants)
+                        print("☁️ \(newMerchants.count) merchants cargados desde Supabase")
+                    }
+                } else {
+                    print("☁️ No hay merchants nuevos en Supabase")
+                }
+            } catch {
+                print("⚠️ Error cargando merchants desde Supabase: \(error.localizedDescription)")
+            }
         }
     }
 
@@ -255,10 +372,12 @@ class MerchantManager: ObservableObject {
                         RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3620, longitude: -99.2670), order: 2, name: "Torre Corporativa"),
                         RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3590, longitude: -99.2700), order: 3, name: "Parque"),
                     ],
-                    estimatedDuration: 1800, // 30 min
-                    estimatedDistance: 2500, // 2.5 km
+                    estimatedDuration: 1800,
+                    estimatedDistance: 2500,
                     isActive: true
-                )
+                ),
+                isVerified: true,
+                trustLevel: .verified
             ),
             Merchant(
                 userId: UUID(),
@@ -283,10 +402,12 @@ class MerchantManager: ObservableObject {
                         RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3595, longitude: -99.2650), order: 2, name: "Samara"),
                         RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3610, longitude: -99.2680), order: 3, name: "Punta Santa Fe"),
                     ],
-                    estimatedDuration: 1200, // 20 min
+                    estimatedDuration: 1200,
                     estimatedDistance: 1800,
                     isActive: true
-                )
+                ),
+                isVerified: true,
+                trustLevel: .trusted
             ),
             Merchant(
                 userId: UUID(),
@@ -359,7 +480,9 @@ class MerchantManager: ObservableObject {
                 ],
                 schedule: MerchantSchedule(openTime: "10:00", closeTime: "22:00", daysOfWeek: [1, 2, 3, 4, 5, 6, 7]),
                 isStatic: true,
-                currentLocation: MerchantLocation(latitude: 19.3029, longitude: -99.1506)
+                currentLocation: MerchantLocation(latitude: 19.3029, longitude: -99.1506),
+                isVerified: true,
+                trustLevel: .trusted
             ),
             Merchant(
                 userId: UUID(),
@@ -449,7 +572,9 @@ class MerchantManager: ObservableObject {
                     estimatedDuration: 1200,
                     estimatedDistance: 1500,
                     isActive: true
-                )
+                ),
+                isVerified: true,
+                trustLevel: .verified
             ),
             Merchant(
                 userId: pepeUserId,

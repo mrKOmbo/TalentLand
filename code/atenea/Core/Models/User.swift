@@ -7,6 +7,7 @@
 
 import Foundation
 import CoreLocation
+import SwiftUI
 
 // MARK: - User Role
 enum UserRole: String, Codable {
@@ -20,6 +21,45 @@ enum UserRole: String, Codable {
         case .merchant: return "Comerciante"
         case .user: return "Usuario"
         }
+    }
+}
+
+// MARK: - Trust Level
+enum TrustLevel: String, Codable, CaseIterable {
+    case unverified = "unverified"
+    case basic = "basic"           // Email verificado
+    case verified = "verified"     // Identidad verificada
+    case trusted = "trusted"       // Cadena de confianza (verificado por otros verificados)
+
+    var displayName: String {
+        switch self {
+        case .unverified: return "Sin verificar"
+        case .basic: return "Básico"
+        case .verified: return "Verificado"
+        case .trusted: return "Confianza"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .unverified: return "person.fill.questionmark"
+        case .basic: return "person.fill.checkmark"
+        case .verified: return "checkmark.seal.fill"
+        case .trusted: return "checkmark.shield.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .unverified: return .gray
+        case .basic: return .blue
+        case .verified: return .green
+        case .trusted: return .green
+        }
+    }
+
+    var isGreen: Bool {
+        self == .verified || self == .trusted
     }
 }
 
@@ -45,8 +85,10 @@ struct User: Codable, Identifiable {
     let profileImage: String?
     var currentLocation: UserLocation?
     var routeHistory: [UserLocation]
+    let isVerified: Bool
+    let trustLevel: TrustLevel
 
-    init(id: UUID = UUID(), email: String, name: String, role: UserRole, createdAt: Date = Date(), accessibilityOption: AccessibilityOption = .none, age: String? = nil, country: String? = nil, phoneNumber: String? = nil, profileImage: String? = nil, currentLocation: UserLocation? = nil, routeHistory: [UserLocation] = []) {
+    init(id: UUID = UUID(), email: String, name: String, role: UserRole, createdAt: Date = Date(), accessibilityOption: AccessibilityOption = .none, age: String? = nil, country: String? = nil, phoneNumber: String? = nil, profileImage: String? = nil, currentLocation: UserLocation? = nil, routeHistory: [UserLocation] = [], isVerified: Bool = false, trustLevel: TrustLevel = .unverified) {
         self.id = id
         self.email = email
         self.name = name
@@ -59,6 +101,8 @@ struct User: Codable, Identifiable {
         self.profileImage = profileImage
         self.currentLocation = currentLocation
         self.routeHistory = routeHistory
+        self.isVerified = isVerified
+        self.trustLevel = trustLevel
     }
 
     // Verificar si el usuario es administrador

@@ -7,6 +7,7 @@
 
 import Foundation
 import CoreLocation
+import SwiftUI
 internal import Combine
 
 /// ViewModel que maneja toda la lógica de búsqueda de lugares
@@ -846,11 +847,68 @@ class SearchViewModel: ObservableObject {
         print("✅ \(allPlaces.count) lugares cargados en la base de datos local")
     }
 
+    // MARK: - Dynamic Sources (merchants + venues)
+
+    /// Convierte merchants activos a SearchPlace para incluirlos en la búsqueda
+    private var merchantPlaces: [SearchPlace] {
+        MerchantManager.shared.merchants
+            .filter { $0.isActive && $0.currentLocation != nil }
+            .map { merchant in
+                SearchPlace(
+                    id: "merchant-\(merchant.id.uuidString)",
+                    name: merchant.businessName,
+                    subtitle: merchant.description,
+                    fullAddress: nil,
+                    category: merchant.category.displayName,
+                    icon: merchantCategoryIcon(merchant.category),
+                    coordinate: merchant.currentLocation.map {
+                        CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
+                    },
+                    isRecommended: false
+                )
+            }
+    }
+
+    /// Convierte sedes FIFA a SearchPlace para incluirlas en la búsqueda
+    private var venuePlaces: [SearchPlace] {
+        WorldCupVenue.allVenues.map { venue in
+            SearchPlace(
+                id: "venue-\(venue.id.uuidString)",
+                name: venue.name,
+                subtitle: "\(venue.city), \(venue.country)",
+                fullAddress: "\(venue.name), \(venue.city), \(venue.country) — \(venue.capacity)",
+                category: "Estadio",
+                icon: "sportscourt.fill",
+                coordinate: venue.coordinate,
+                isRecommended: true
+            )
+        }
+    }
+
+    /// Todos los elementos buscables (lugares + merchants + venues)
+    private var allSearchable: [SearchPlace] {
+        allPlaces + merchantPlaces + venuePlaces
+    }
+
+    private func merchantCategoryIcon(_ category: MerchantCategory) -> String {
+        switch category {
+        case .tacos: return "flame.fill"
+        case .tamales: return "takeoutbag.and.cup.and.straw.fill"
+        case .helados: return "snowflake"
+        case .jugos: return "cup.and.saucer.fill"
+        case .elotes: return "leaf.fill"
+        case .frutas: return "carrot.fill"
+        case .antojitos: return "fork.knife"
+        case .bebidas: return "mug.fill"
+        case .postres: return "birthday.cake.fill"
+        case .otro: return "bag.fill"
+        }
+    }
+
     // MARK: - Search Methods
 
-    /// Realiza búsqueda local en la base de datos de lugares
+    /// Realiza búsqueda local en la base de datos de lugares, merchants y sedes FIFA
     func performSearch(query: String) {
-        // Limpiar resultados si la búsqueda está vacía
         guard !query.isEmpty else {
             suggestions = []
             isSearching = false
@@ -860,48 +918,43 @@ class SearchViewModel: ObservableObject {
         isSearching = true
         errorMessage = nil
 
-        // Simular delay de red (opcional, puede removerse)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-            guard let self = self else { return }
+        let lowercasedQuery = query.lowercased()
+        let searchable = allSearchable
 
-            let lowercasedQuery = query.lowercased()
-
-            // Buscar en nombre, subtítulo, dirección y categoría
-            let results = self.allPlaces.filter { place in
-                place.name.lowercased().contains(lowercasedQuery) ||
-                place.subtitle.lowercased().contains(lowercasedQuery) ||
-                (place.fullAddress?.lowercased().contains(lowercasedQuery) ?? false) ||
-                place.category.lowercased().contains(lowercasedQuery)
-            }
-
-            // Ordenar por relevancia (primero coincidencias exactas en el nombre)
-            let sortedResults = results.sorted { place1, place2 in
-                let name1StartsWithQuery = place1.name.lowercased().hasPrefix(lowercasedQuery)
-                let name2StartsWithQuery = place2.name.lowercased().hasPrefix(lowercasedQuery)
-
-                if name1StartsWithQuery && !name2StartsWithQuery {
-                    return true
-                } else if !name1StartsWithQuery && name2StartsWithQuery {
-                    return false
-                }
-
-                // Si ambos tienen la misma relevancia, ordenar por distancia
-                if let userLoc = self.userLocation,
-                   let coord1 = place1.coordinate,
-                   let coord2 = place2.coordinate {
-                    let dist1 = self.calculateDistance(from: userLoc, to: coord1)
-                    let dist2 = self.calculateDistance(from: userLoc, to: coord2)
-                    return dist1 < dist2
-                }
-
-                return place1.name < place2.name
-            }
-
-            self.suggestions = Array(sortedResults.prefix(10)) // Limitar a 10 resultados
-            self.isSearching = false
-
-            print("✅ Búsqueda local exitosa: \(self.suggestions.count) resultados para '\(query)'")
+        // Buscar en nombre, subtítulo, dirección y categoría
+        let results = searchable.filter { place in
+            place.name.lowercased().contains(lowercasedQuery) ||
+            place.subtitle.lowercased().contains(lowercasedQuery) ||
+            (place.fullAddress?.lowercased().contains(lowercasedQuery) ?? false) ||
+            place.category.lowercased().contains(lowercasedQuery)
         }
+
+        // Ordenar por relevancia (primero coincidencias exactas en el nombre)
+        let sortedResults = results.sorted { place1, place2 in
+            let name1StartsWithQuery = place1.name.lowercased().hasPrefix(lowercasedQuery)
+            let name2StartsWithQuery = place2.name.lowercased().hasPrefix(lowercasedQuery)
+
+            if name1StartsWithQuery && !name2StartsWithQuery {
+                return true
+            } else if !name1StartsWithQuery && name2StartsWithQuery {
+                return false
+            }
+
+            if let userLoc = self.userLocation,
+               let coord1 = place1.coordinate,
+               let coord2 = place2.coordinate {
+                let dist1 = self.calculateDistance(from: userLoc, to: coord1)
+                let dist2 = self.calculateDistance(from: userLoc, to: coord2)
+                return dist1 < dist2
+            }
+
+            return place1.name < place2.name
+        }
+
+        self.suggestions = Array(sortedResults.prefix(10))
+        self.isSearching = false
+
+        print("✅ Búsqueda: \(self.suggestions.count) resultados para '\(query)' (de \(searchable.count) elementos)")
     }
 
     /// Selecciona un lugar
