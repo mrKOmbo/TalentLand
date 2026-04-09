@@ -6,6 +6,7 @@ struct TapToPaySimulationView: View {
 
     @StateObject private var peerService: TapToPayPeerService
     @State private var pulseScale: CGFloat = 1.0
+    @State private var autoTriggerTask: Task<Void, Never>?
 
     init(viewModel: SaleViewModel, onCancel: @escaping () -> Void) {
         self.viewModel = viewModel
@@ -128,7 +129,34 @@ struct TapToPaySimulationView: View {
             peerService.start()
         }
         .onDisappear {
+            autoTriggerTask?.cancel()
+            autoTriggerTask = nil
             peerService.stop()
+        }
+        .onChange(of: peerService.isConnected) { connected in
+            if connected && peerService.phase == .waitingForCard {
+                // Auto-trigger: 1 segundo después de detectar el otro iPhone
+                autoTriggerTask = Task {
+                    try? await Task.sleep(nanoseconds: 1_000_000_000)
+                    guard !Task.isCancelled else { return }
+                    await MainActor.run {
+                        guard peerService.phase == .waitingForCard else { return }
+                        let impact = UIImpactFeedbackGenerator(style: .medium)
+                        impact.impactOccurred()
+                        viewModel.simulateTapCard()
+                        peerService.phase = .reading
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                            peerService.phase = .processing
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                                peerService.onPaymentTriggered?()
+                            }
+                        }
+                    }
+                }
+            } else if !connected {
+                autoTriggerTask?.cancel()
+                autoTriggerTask = nil
+            }
         }
     }
 
@@ -183,28 +211,29 @@ struct TapToPaySimulationView: View {
                 .foregroundColor(.white.opacity(0.4))
                 .multilineTextAlignment(.center)
 
-            // Fallback: botón manual por si NI no funciona (simulador)
-            Button {
-                let impact = UIImpactFeedbackGenerator(style: .medium)
-                impact.impactOccurred()
-                viewModel.simulateTapCard()
-                // También actualizar la fase del peer service
-                peerService.phase = .reading
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                    peerService.phase = .processing
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                        peerService.onPaymentTriggered?()
+            // Fallback: botón manual solo visible si NO hay conexión BLE (simulador)
+            if !peerService.isConnected {
+                Button {
+                    let impact = UIImpactFeedbackGenerator(style: .medium)
+                    impact.impactOccurred()
+                    viewModel.simulateTapCard()
+                    peerService.phase = .reading
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                        peerService.phase = .processing
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            peerService.onPaymentTriggered?()
+                        }
                     }
+                } label: {
+                    Text(LocalizedString("payment.simulateContact"))
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.white.opacity(0.3))
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 10)
+                        .background(Capsule().stroke(.white.opacity(0.15)))
                 }
-            } label: {
-                Text(LocalizedString("payment.simulateContact"))
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.white.opacity(0.3))
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 10)
-                    .background(Capsule().stroke(.white.opacity(0.15)))
+                .padding(.top, 16)
             }
-            .padding(.top, 16)
         }
     }
 

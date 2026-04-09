@@ -1,3 +1,4 @@
+/*
 //
 //  DemandZoneManager.swift
 //  atenea
@@ -165,3 +166,4 @@ class DemandZoneManager: ObservableObject {
         }
     }
 }
+*/

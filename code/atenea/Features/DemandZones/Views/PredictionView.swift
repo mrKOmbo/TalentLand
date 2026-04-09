@@ -1,3 +1,4 @@
+/*
 //
 //  PredictionView.swift
 //  atenea
@@ -511,3 +512,4 @@ extension WeatherCondition {
         }
     }
 }
+*/

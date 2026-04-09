@@ -1172,6 +1172,12 @@
 "home.merchantsNearby" = "Comerciantes cerca";
 "home.askAteneaAI" = "Pregúntale a Atenea IA";
 "home.askAteneaAIDesc" = "¿Dónde están los mejores tacos cerca del Azteca?";
+"home.atenea.live" = "EN VIVO";
+"home.chip.breakfast" = "Desayuno";
+"home.chip.tacos" = "Tacos cerca";
+"home.chip.night" = "Abierto ahora";
+"home.chip.match" = "Antes del partido";
+"home.chip.hotZone" = "Zona caliente";
 "home.voiceTranslator" = "Traductor de voz";
 "home.voiceTranslatorDesc" = "Habla y el vendedor te entiende al instante";
 "home.matchToday" = "Hoy hay partido";

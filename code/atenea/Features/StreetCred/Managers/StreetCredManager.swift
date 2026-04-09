@@ -271,11 +271,13 @@ class StreetCredManager: ObservableObject {
         let zoneNorm = min(Double(uniqueZones) / 10.0, 1.0)
 
         // Presencia en zonas de alta demanda
-        let demandZones = DemandZoneManager.shared.topZones(limit: 5)
+        /* let demandZones = DemandZoneManager.shared.topZones(limit: 5)
         let demandGeohashes = Set(demandZones.map { $0.geohash })
         let merchantGeohashes = Set(log.compactMap { $0.geohash })
         let demandOverlap = Double(demandGeohashes.intersection(merchantGeohashes).count)
         let demandNorm = demandGeohashes.isEmpty ? 0.5 : min(demandOverlap / Double(demandGeohashes.count), 1.0)
+        */
+        let demandNorm = 0.5
 
         // Distancia total recorrida (proxy por número de ubicaciones diferentes)
         let locations = log.count

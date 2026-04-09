@@ -52,13 +52,14 @@ class TimbreManager: ObservableObject {
         pendingTimbres.insert(timbre, at: 0)
         newTimbreReceived = timbre
 
-        // Registrar demanda
+        /* // Registrar demanda
         DemandZoneManager.shared.recordDemand(
             latitude: clientLatitude,
             longitude: clientLongitude,
             source: .timbre,
             category: merchant.category
         )
+        */
 
         // Auto-limpiar notificación después de 5s
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in

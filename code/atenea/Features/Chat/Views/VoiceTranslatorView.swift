@@ -41,7 +41,24 @@ struct VoiceTranslatorView: View {
                 VStack(spacing: 0) {
                     languageHeader
                     messagesArea
-                    if translator.isListening { listeningIndicator }
+
+                    // Sugerencias inteligentes (Feature 3)
+                    if !translator.currentSuggestions.isEmpty {
+                        suggestionsBar
+                    }
+
+                    // Estado de escucha / traducción
+                    if translator.isListening {
+                        listeningIndicator
+                    } else if translator.isTranslating {
+                        translatingIndicator
+                    }
+
+                    // Frases rápidas (Feature 2) — solo cuando idle
+                    if !translator.isListening && !translator.isTranslating {
+                        quickPhrasesBar
+                    }
+
                     controlArea
                 }
             }
@@ -79,6 +96,13 @@ struct VoiceTranslatorView: View {
             }
             .onChange(of: selectedTouristLanguage) { _, newValue in
                 translator.touristLanguage = newValue
+            }
+            .onChange(of: translator.isMerchantSpeakingPublic) { _, newValue in
+                if translator.isAutoDetectEnabled {
+                    withAnimation(.spring(response: 0.3)) {
+                        isMerchantMode = newValue
+                    }
+                }
             }
         }
     }
@@ -253,25 +277,189 @@ struct VoiceTranslatorView: View {
         .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 
-    // MARK: - Control Area
+    // MARK: - Translating Indicator
+
+    private var translatingIndicator: some View {
+        HStack(spacing: 10) {
+            ProgressView()
+                .tint(Color(hex: "#1C42E8"))
+
+            VStack(alignment: .leading, spacing: 2) {
+                if translator.streamingTranslation.isEmpty {
+                    Text("Traduciendo...")
+                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .foregroundColor(Color(hex: "#1C42E8"))
+                } else {
+                    Text(translator.streamingTranslation)
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .foregroundColor(Color(hex: "#081754"))
+                        .lineLimit(3)
+                }
+            }
+            Spacer()
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(hex: "#1C42E8").opacity(0.06))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(Color(hex: "#1C42E8").opacity(0.15), lineWidth: 1)
+                )
+        )
+        .padding(.horizontal, 20)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+    }
+
+    // MARK: - Quick Phrases (Feature 2)
+
+    private var quickPhrasesBar: some View {
+        let phrases = isMerchantMode
+            ? VoiceTranslationService.merchantPhrases
+            : VoiceTranslationService.touristPhrases
+        let activeColor = isMerchantMode ? Color(hex: "#FFAE43") : Color(hex: "#1CA8F7")
+
+        return ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(phrases) { phrase in
+                    Button {
+                        translator.sendQuickPhrase(phrase.text, asMerchant: isMerchantMode)
+                    } label: {
+                        HStack(spacing: 5) {
+                            Text(phrase.emoji)
+                                .font(.system(size: 13))
+                            Text(phrase.text)
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        }
+                        .foregroundColor(Color(hex: "#081754"))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(activeColor.opacity(0.08))
+                                .overlay(
+                                    Capsule()
+                                        .strokeBorder(activeColor.opacity(0.25), lineWidth: 1)
+                                )
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(translator.isTranslating || translator.isSpeaking)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 10)
+        }
+        .animation(.easeInOut(duration: 0.2), value: isMerchantMode)
+    }
+
+    // MARK: - Smart Suggestions (Feature 3)
+
+    private var suggestionsBar: some View {
+        let color = translator.suggestionsForMerchant ? Color(hex: "#FFAE43") : Color(hex: "#1CA8F7")
+        let label = translator.suggestionsForMerchant ? "Sugerir al vendedor:" : "Sugerir al turista:"
+
+        return VStack(alignment: .leading, spacing: 6) {
+            Text(label)
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .foregroundColor(Color(hex: "#4A4A4A").opacity(0.5))
+                .padding(.leading, 20)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(translator.currentSuggestions, id: \.self) { suggestion in
+                        Button {
+                            withAnimation { translator.sendSuggestion(suggestion) }
+                        } label: {
+                            Text(suggestion)
+                                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                .foregroundColor(Color(hex: "#081754"))
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
+                                .background(
+                                    Capsule()
+                                        .fill(color.opacity(0.1))
+                                        .overlay(
+                                            Capsule()
+                                                .strokeBorder(color.opacity(0.3), lineWidth: 1)
+                                        )
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 20)
+            }
+        }
+        .padding(.vertical, 8)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+        .animation(.spring(response: 0.3), value: translator.currentSuggestions)
+    }
+
+    // MARK: - Control Area (Feature 7: Auto-detect toggle)
 
     private var controlArea: some View {
         VStack(spacing: 20) {
-            // Toggle vendedor/turista
-            HStack(spacing: 12) {
-                TranslatorModeButton(
-                    label: LocalizedString("translator.merchant"),
-                    emoji: "🇲🇽",
-                    isActive: isMerchantMode,
-                    color: Color(hex: "#FFAE43")
-                ) { isMerchantMode = true }
+            // Feature 7: Auto-detect o toggle manual
+            if translator.isAutoDetectEnabled {
+                HStack(spacing: 8) {
+                    Image(systemName: "waveform.badge.magnifyingglass")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(Color(hex: "#1C42E8"))
+                    Text("Auto-Detect")
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .foregroundColor(Color(hex: "#081754"))
 
-                TranslatorModeButton(
-                    label: LocalizedString("translator.tourist"),
-                    emoji: availableLanguages.first { $0.code == selectedTouristLanguage }?.flag ?? "🌍",
-                    isActive: !isMerchantMode,
-                    color: Color(hex: "#1CA8F7")
-                ) { isMerchantMode = false }
+                    if let detected = translator.detectedLanguageLabel {
+                        Text("· \(detected)")
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundColor(Color(hex: "#0ABF4F"))
+                            .transition(.opacity)
+                    }
+
+                    Spacer()
+
+                    Button {
+                        translator.isAutoDetectEnabled = false
+                    } label: {
+                        Text("Manual")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            .foregroundColor(Color(hex: "#4A4A4A"))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Capsule().fill(Color(hex: "#EEE8E3")))
+                    }
+                }
+            } else {
+                VStack(spacing: 10) {
+                    HStack(spacing: 12) {
+                        TranslatorModeButton(
+                            label: LocalizedString("translator.merchant"),
+                            emoji: "🇲🇽",
+                            isActive: isMerchantMode,
+                            color: Color(hex: "#FFAE43")
+                        ) { isMerchantMode = true }
+
+                        TranslatorModeButton(
+                            label: LocalizedString("translator.tourist"),
+                            emoji: availableLanguages.first { $0.code == selectedTouristLanguage }?.flag ?? "🌍",
+                            isActive: !isMerchantMode,
+                            color: Color(hex: "#1CA8F7")
+                        ) { isMerchantMode = false }
+                    }
+
+                    Button {
+                        translator.isAutoDetectEnabled = true
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "waveform.badge.magnifyingglass")
+                                .font(.system(size: 11))
+                            Text("Activar Auto-Detect")
+                                .font(.system(size: 11, weight: .medium, design: .rounded))
+                        }
+                        .foregroundColor(Color(hex: "#1C42E8"))
+                    }
+                }
             }
 
             // Botón micrófono grande

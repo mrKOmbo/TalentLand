@@ -358,7 +358,6 @@ class RadarService: NSObject, ObservableObject {
     private func pruneAndUpdateSignals() {
         DispatchQueue.main.async {
             self.discoveredMerchants.removeAll { $0.isStale }
-            self.objectWillChange.send()
         }
     }
 

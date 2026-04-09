@@ -1126,6 +1126,12 @@
 "home.merchantsNearby" = "Merchants nearby";
 "home.askAteneaAI" = "Ask Atenea AI";
 "home.askAteneaAIDesc" = "Where are the best tacos near Azteca?";
+"home.atenea.live" = "LIVE";
+"home.chip.breakfast" = "Breakfast";
+"home.chip.tacos" = "Tacos nearby";
+"home.chip.night" = "Open now";
+"home.chip.match" = "Pre-match eats";
+"home.chip.hotZone" = "Hot zone";
 "home.voiceTranslator" = "Voice translator";
 "home.voiceTranslatorDesc" = "Speak and the vendor understands you instantly";
 "home.matchToday" = "There's a match today";

@@ -19,7 +19,7 @@ struct MainMapView: View {
     @EnvironmentObject var languageManager: LanguageManager
     @ObservedObject private var emergencyManager = EmergencyModeManager.shared
     @ObservedObject private var menuState = MenuStateManager.shared
-    @ObservedObject private var demandManager = DemandZoneManager.shared
+    // @ObservedObject private var demandManager = DemandZoneManager.shared
     @ObservedObject private var userManager = UserManager.shared
     @ObservedObject private var merchantManager = MerchantManager.shared
     @Binding var selectedTab: Int
@@ -392,7 +392,7 @@ struct MainMapView: View {
                         .padding(.leading, 20)
                         .transition(.move(edge: .leading).combined(with: .opacity))
 
-                        // Botón de heatmap
+                        /* // Botón de heatmap
                         Button(action: {
                                 let generator = UIImpactFeedbackGenerator(style: .medium)
                                 generator.impactOccurred()
@@ -410,6 +410,7 @@ struct MainMapView: View {
                                 }
                             }
                         .transition(.scale.combined(with: .opacity))
+                        */
 
                     Spacer()
 
@@ -804,8 +805,8 @@ struct MainMapView: View {
                 cameraPitch: cameraPitch,
                 shouldFollowUser: shouldFollowUser,
                 isEmergencyActive: emergencyManager.isEmergencyActive,
-                demandZones: demandManager.demandZones,
-                showHeatMap: demandManager.showHeatMap,
+                // demandZones: demandManager.demandZones,
+                // showHeatMap: demandManager.showHeatMap,
                 onMarkerTapped: { marker in
                     handleMarkerTap(marker)
                 },
@@ -1954,8 +1955,8 @@ struct MapboxMainMapView: UIViewRepresentable {
     var cameraPitch: Double
     var shouldFollowUser: Bool
     var isEmergencyActive: Bool
-    var demandZones: [DemandZone]
-    var showHeatMap: Bool
+    // var demandZones: [DemandZone]
+    // var showHeatMap: Bool
     var onMarkerTapped: ((SearchPlace) -> Void)?
     var onVenueTapped: ((WorldCupVenue) -> Void)?
     var onMerchantTapped: ((Merchant) -> Void)?
@@ -1996,7 +1997,7 @@ struct MapboxMainMapView: UIViewRepresentable {
                 if !self.merchantMarkers.isEmpty {
                     context.coordinator.updateMerchantMarkers(self.merchantMarkers, on: mapView)
                 }
-                // Agregar heatmap pendiente o activo
+                /* // Agregar heatmap pendiente o activo
                 print("🔥 [styleLoaded] showHeatMap=\(self.showHeatMap), zones=\(self.demandZones.count), pending=\(context.coordinator.pendingHeatmapZones?.count ?? -1)")
                 if let pendingZones = context.coordinator.pendingHeatmapZones {
                     print("🔥 [styleLoaded] Agregando heatmap pendiente con \(pendingZones.count) zonas")
@@ -2008,6 +2009,7 @@ struct MapboxMainMapView: UIViewRepresentable {
                 } else {
                     print("🔥 [styleLoaded] No se agrega heatmap — showHeatMap=\(self.showHeatMap), zones=\(self.demandZones.count)")
                 }
+                */
             }
         }
 
@@ -2109,10 +2111,11 @@ struct MapboxMainMapView: UIViewRepresentable {
                     context.coordinator.updateMerchantMarkers(self.merchantMarkers, on: mapView)
                     // Re-agregar rutas
                     context.coordinator.updateRoutePolylines(routePolylines, selectedIndex: selectedRouteIndex, transportMode: selectedTransportMode, on: mapView)
-                    // Re-agregar heatmap si estaba activo
+                    /* // Re-agregar heatmap si estaba activo
                     if self.showHeatMap && !self.demandZones.isEmpty {
                         context.coordinator.addDemandHeatmap(zones: self.demandZones, on: mapView)
                     }
+                    */
                 }
             }
         }
@@ -2184,7 +2187,7 @@ struct MapboxMainMapView: UIViewRepresentable {
             context.coordinator.updateEmergencyPuck(isActive: isEmergencyActive, on: mapView)
         }
 
-        // Actualizar heatmap de demanda
+        /* // Actualizar heatmap de demanda
         let heatmapToggled = context.coordinator.currentShowHeatMap != showHeatMap
         let zonesChanged = context.coordinator.currentDemandZoneCount != demandZones.count
 
@@ -2219,6 +2222,7 @@ struct MapboxMainMapView: UIViewRepresentable {
                 context.coordinator.addDemandHeatmap(zones: demandZones, on: mapView)
             }
         }
+        */
     }
 
     func makeCoordinator() -> Coordinator {
@@ -2248,11 +2252,11 @@ struct MapboxMainMapView: UIViewRepresentable {
         var onVenueTapped: ((WorldCupVenue) -> Void)?
         var onMerchantTapped: ((Merchant) -> Void)?
         var onMapTapped: ((CLLocationCoordinate2D) -> Void)?
-        var currentShowHeatMap: Bool = false
-        var currentDemandZoneCount: Int = 0
-        var heatmapAdded: Bool = false
+        // var currentShowHeatMap: Bool = false
+        // var currentDemandZoneCount: Int = 0
+        // var heatmapAdded: Bool = false
         var styleLoaded: Bool = false
-        var pendingHeatmapZones: [DemandZone]?
+        // var pendingHeatmapZones: [DemandZone]?
 
         init(initialStyle: MapStyle, onMarkerTapped: ((SearchPlace) -> Void)?, onVenueTapped: ((WorldCupVenue) -> Void)?, onMerchantTapped: ((Merchant) -> Void)?, onMapTapped: ((CLLocationCoordinate2D) -> Void)?) {
             self.currentStyle = initialStyle
@@ -3202,7 +3206,7 @@ struct MapboxMainMapView: UIViewRepresentable {
             }
         }
 
-        // MARK: - Demand Heatmap
+        /* // MARK: - Demand Heatmap
 
         func addDemandHeatmap(zones: [DemandZone], on mapView: MapView) {
             removeDemandHeatmap(from: mapView)
@@ -3267,6 +3271,7 @@ struct MapboxMainMapView: UIViewRepresentable {
                 print("❌ Error toggling heatmap: \(error)")
             }
         }
+        */
 
         private func removeRouteLayers(from mapView: MapView) {
             // Eliminar todas las capas y sources de rutas anteriores

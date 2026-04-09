@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CoreLocation
+internal import Combine
 
 // MARK: - Nearby Merchant Model
 
@@ -58,18 +59,18 @@ struct MerchantHomeView: View {
 
     @ObservedObject private var merchantManager = MerchantManager.shared
     @ObservedObject private var timbreManager = TimbreManager.shared
-    @ObservedObject private var demandManager = DemandZoneManager.shared
+    // @ObservedObject private var demandManager = DemandZoneManager.shared
     @ObservedObject private var radarService = RadarService.shared
     @State private var profileViews = 87
     @State private var animateCards = false
     @State private var isReady = false
     @State private var showTimbreHistory = false
-    @State private var showDemandInsights = false
+    // @State private var showDemandInsights = false
     @State private var showStreetCredDetail = false
-    @State private var showPredictionDetail = false
+    // @State private var showPredictionDetail = false
     @State private var showBusinessQR = false
     @State private var streetCredScore: StreetCredScore?
-    @State private var matchPrediction: MatchPrediction?
+    // @State private var matchPrediction: MatchPrediction?
 
     private var isBusinessActive: Bool {
         merchantManager.currentMerchantProfile?.isActive ?? false
@@ -120,10 +121,10 @@ struct MerchantHomeView: View {
                         // Acciones rápidas
                         quickActionsSection
 
-                        // Tip del día
-                        demandTipCard
+                        // // Tip del día
+                        // demandTipCard
 
-                        // Predicción del próximo partido
+                        /* // Predicción del próximo partido
                         if let prediction = matchPrediction {
                             PredictionCardView(
                                 prediction: prediction,
@@ -133,6 +134,7 @@ struct MerchantHomeView: View {
                             .opacity(animateCards ? 1 : 0)
                             .offset(y: animateCards ? 0 : 20)
                         }
+                        */
 
                         Spacer(minLength: 100)
                     }
@@ -168,7 +170,7 @@ struct MerchantHomeView: View {
                 // Cargar datos ANTES de mostrar la UI
                 try? await Task.sleep(nanoseconds: 200_000_000)
 
-                demandManager.refreshMockData(around: (19.3585, -99.2740))
+                // demandManager.refreshMockData(around: (19.3585, -99.2740))
 
                 if let merchant = merchantManager.currentMerchantProfile {
                     let scm = StreetCredManager.shared
@@ -177,7 +179,7 @@ struct MerchantHomeView: View {
                     }
                     streetCredScore = scm.calculateScore(for: merchant)
                 }
-                matchPrediction = PredictionEngine.shared.predictNextMatch()
+                // matchPrediction = PredictionEngine.shared.predictNextMatch()
 
                 // Mostrar UI
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
@@ -216,11 +218,12 @@ struct MerchantHomeView: View {
                 StreetCredDetailView(score: score)
             }
         }
-        .sheet(isPresented: $showPredictionDetail) {
+        /* .sheet(isPresented: $showPredictionDetail) {
             if let prediction = matchPrediction {
                 PredictionDetailView(prediction: prediction, selectedTab: $selectedTab)
             }
         }
+        */
     }
 
     // MARK: - Header
@@ -362,7 +365,7 @@ struct MerchantHomeView: View {
                     selectedTab = 1
                 }
 
-                MerchantActionRow(
+                /* MerchantActionRow(
                     icon: "map.fill",
                     title: LocalizedString("home.viewDemandZones"),
                     subtitle: String(format: LocalizedString("home.searchesThisHour"), demandManager.totalDemandLastHour()),
@@ -370,6 +373,7 @@ struct MerchantHomeView: View {
                 ) {
                     showDemandInsights = true
                 }
+                */
 
                 MerchantActionRow(
                     icon: "qrcode",
@@ -393,7 +397,7 @@ struct MerchantHomeView: View {
         }
     }
 
-    // MARK: - Demand Tip
+    /* // MARK: - Demand Tip
 
     private var demandTipCard: some View {
         let topZone = demandManager.topZones(limit: 1).first
@@ -439,6 +443,7 @@ struct MerchantHomeView: View {
             DemandInsightsView(selectedTab: $selectedTab)
         }
     }
+    */
 }
 
 // MARK: - Customer Home
@@ -450,12 +455,16 @@ struct CustomerHomeView: View {
 
     @StateObject private var merchantManager = MerchantManager.shared
     @StateObject private var radarService = RadarService.shared
+    @StateObject private var contextEngine = ContextEngine()
     @State private var animateCards = false
     @State private var selectedMerchantForTimbre: Merchant?
     @State private var showRadar = false
     @State private var showTapToPay = false
     @State private var showARStreetMenu = false
     @State private var showVoiceTranslator = false
+    @State private var showAIChat = false
+    @State private var aiChatPrefill: String = ""
+    @State private var insightTransition = false
 
     private var nearbyMerchants: [NearbyMerchant] {
         merchantManager.nearbyMerchantsList(fromLatitude: mockUserLatitude, longitude: mockUserLongitude)
@@ -481,8 +490,6 @@ struct CustomerHomeView: View {
                     // Comerciantes activos cerca
                     nearbyMerchantsSection
 
-                    // Recomendación IA
-                    aiRecommendationCard
 
                     // Traductor de voz
                     voiceTranslatorCard
@@ -505,9 +512,11 @@ struct CustomerHomeView: View {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.1)) {
                 animateCards = true
             }
-            // Iniciar radar automáticamente (diferido para evitar "Publishing changes from within view updates")
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 RadarService.shared.startScanning()
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                contextEngine.evaluate()
             }
         }
         .fullScreenCover(isPresented: $showRadar) {
@@ -519,6 +528,19 @@ struct CustomerHomeView: View {
         .fullScreenCover(isPresented: $showARStreetMenu) {
             ARStreetMenuView()
                 .environmentObject(LanguageManager.shared)
+        }
+        .fullScreenCover(isPresented: $showAIChat) {
+            AISearchView(
+                isPresented: $showAIChat,
+                onNavigateToLocation: { coord, name, zoom in
+                    showAIChat = false
+                    selectedTab = 1
+                },
+                onShowDirections: { coord, name in
+                    showAIChat = false
+                    selectedTab = 1
+                }
+            )
         }
         .sheet(isPresented: $showVoiceTranslator) {
             VoiceTranslatorView()
@@ -740,44 +762,141 @@ struct CustomerHomeView: View {
         .offset(y: animateCards ? 0 : 20)
     }
 
-    // MARK: - AI Recommendation
+    // MARK: - AI Recommendation (Atenea Knows)
 
     private var aiRecommendationCard: some View {
-        Button(action: {
+        VStack(spacing: 12) {
+            // Tarjeta principal contextual
+            if let insight = contextEngine.currentInsight {
+                Button(action: {
+                    handleInsightAction(insight.action)
+                }) {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color(hex: insight.accentColor), Color(hex: insight.accentColor).opacity(0.6)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 48, height: 48)
+
+                            Image(systemName: insight.icon)
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(.white)
+                        }
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 6) {
+                                Text("Atenea")
+                                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                                    .foregroundColor(Color(hex: insight.accentColor))
+                                    .kerning(1.2)
+                                    .textCase(.uppercase)
+
+                                Circle()
+                                    .fill(Color(hex: "#0ABF4F"))
+                                    .frame(width: 6, height: 6)
+
+                                Text(LocalizedString("home.atenea.live"))
+                                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                                    .foregroundColor(Color(hex: "#0ABF4F"))
+                            }
+
+                            Text(insight.title)
+                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                .foregroundColor(Color(hex: "#081754"))
+                                .lineLimit(1)
+
+                            Text(insight.subtitle)
+                                .font(.system(size: 13, weight: .regular, design: .rounded))
+                                .foregroundColor(Color(hex: "#4A4A4A"))
+                                .lineLimit(2)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Color(hex: insight.accentColor))
+                    }
+                    .padding(14)
+                    .background(Color(hex: "#FFFFFF"))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color(hex: insight.accentColor).opacity(0.15), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(PressButtonStyle())
+                .id(insight.title)
+                .transition(.asymmetric(
+                    insertion: .opacity.combined(with: .move(edge: .trailing)),
+                    removal: .opacity.combined(with: .move(edge: .leading))
+                ))
+            }
+
+            // Smart Chips
+            if !contextEngine.chips.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(contextEngine.chips) { chip in
+                            Button(action: {
+                                aiChatPrefill = chip.query
+                                showAIChat = true
+                            }) {
+                                HStack(spacing: 6) {
+                                    Text(chip.emoji)
+                                        .font(.system(size: 14))
+                                    Text(chip.label)
+                                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                                        .foregroundColor(Color(hex: "#081754"))
+                                        .lineLimit(1)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(Color(hex: "#F5F3F0"))
+                                .cornerRadius(20)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color(hex: "#E0DCD7"), lineWidth: 1)
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+        }
+        .opacity(animateCards ? 1 : 0)
+        .offset(y: animateCards ? 0 : 20)
+        .onReceive(Timer.publish(every: 6, on: .main, in: .common).autoconnect()) { _ in
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                contextEngine.nextInsight()
+            }
+        }
+    }
+
+    private func handleInsightAction(_ action: ContextAction) {
+        switch action {
+        case .openMap:
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 selectedTab = 1
             }
-        }) {
-            HStack(spacing: 12) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(Color(hex: "#1C42E8"))
-                    .frame(width: 44, height: 44)
-                    .background(Color(hex: "#1C42E8").opacity(0.12))
-                    .cornerRadius(12)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(LocalizedString("home.askAteneaAI"))
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
-                        .foregroundColor(Color(hex: "#081754"))
-                    Text(LocalizedString("home.askAteneaAIDesc"))
-                        .font(.system(size: 13, weight: .regular, design: .rounded))
-                        .foregroundColor(Color(hex: "#4A4A4A"))
-                        .lineLimit(2)
-                }
-
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(Color(hex: "#1C42E8"))
+        case .openChat(let prefill):
+            aiChatPrefill = prefill
+            showAIChat = true
+        case .openMerchant(let name):
+            if let merchant = merchantManager.merchants.first(where: { $0.businessName == name }) {
+                selectedMerchantForTimbre = merchant
+            } else {
+                selectedTab = 1
             }
-            .padding(14)
-            .background(Color(hex: "#FFFFFF"))
-            .cornerRadius(12)
+        case .openPrediction:
+            selectedTab = 1
         }
-        .buttonStyle(PressButtonStyle())
-        .opacity(animateCards ? 1 : 0)
-        .offset(y: animateCards ? 0 : 20)
     }
 
     // MARK: - Voice Translator
@@ -839,9 +958,6 @@ struct CustomerHomeView: View {
                     if let first = merchantManager.activeMerchants().first {
                         selectedMerchantForTimbre = first
                     }
-                }
-                CustomerActionButton(icon: "mappin.and.ellipse", label: LocalizedString("home.search"), color: Color(hex: "#1C42E8")) {
-                    selectedTab = 1
                 }
             }
         }

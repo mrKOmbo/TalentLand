@@ -11,6 +11,7 @@ private let kCharMToken   = CBUUID(string: "A7B3C2D1-0001-4A6B-8C7D-9E0F1A2B3C4D
 private let kCharCToken   = CBUUID(string: "A7B3C2D1-0002-4A6B-8C7D-9E0F1A2B3C4D") // customer NI token (write)
 private let kCharPayInfo  = CBUUID(string: "A7B3C2D1-0003-4A6B-8C7D-9E0F1A2B3C4D") // payment info JSON (read)
 private let kCharConfirm  = CBUUID(string: "A7B3C2D1-0004-4A6B-8C7D-9E0F1A2B3C4D") // confirmation (notify)
+private let kCharPayVoucher = CBUUID(string: "A7B3C2D1-0005-4A6B-8C7D-9E0F1A2B3C4D") // voucher write (customer → merchant)
 
 // MARK: - Role
 
@@ -31,6 +32,8 @@ class TapToPayPeerService: NSObject, ObservableObject {
     @Published var receivedMerchantName: String?
     @Published var receivedAmount: Int?
     @Published var receivedDescription: String?
+    @Published var receivedVoucher: PaymentVoucher?
+    @Published var receivedReceipt: PaymentReceipt?
 
     // MARK: - Config
 
@@ -203,10 +206,57 @@ class TapToPayPeerService: NSObject, ObservableObject {
             permissions: [.readable]
         )
 
+        // Characteristic: voucher write — el customer escribe su voucher de pago
+        let charVoucher = CBMutableCharacteristic(
+            type: kCharPayVoucher,
+            properties: [.write],
+            value: nil,
+            permissions: [.writeable]
+        )
+
         let service = CBMutableService(type: kServiceUUID, primary: true)
-        service.characteristics = [charMerchantToken, charCustomerToken, charPayInfoChar, charConfirmMutable!]
+        service.characteristics = [charMerchantToken, charCustomerToken, charPayInfoChar, charConfirmMutable!, charVoucher]
         peripheralManager?.add(service)
         print("[TapToPay] Merchant: servicio GATT agregado al manager")
+    }
+
+    // MARK: - Customer: enviar voucher de pago al merchant
+
+    func sendPaymentVoucher() {
+        guard role == .customer else { return }
+        guard let user = UserManager.shared.currentUser else {
+            print("[TapToPay] ⚠️ Customer: no hay usuario logueado")
+            return
+        }
+        guard let peripheral = connectedPeripheral,
+              let service = peripheral.services?.first(where: { $0.uuid == kServiceUUID }),
+              let char = service.characteristics?.first(where: { $0.uuid == kCharPayVoucher }) else {
+            print("[TapToPay] ⚠️ Customer: peripheral/characteristic no disponible para voucher")
+            return
+        }
+        guard let merchantAmount = receivedAmount else {
+            print("[TapToPay] ⚠️ Customer: monto del merchant no recibido")
+            return
+        }
+
+        let voucher = PaymentVoucher(
+            clientID: user.id,
+            clientName: user.name,
+            merchantID: UUID(), // El merchant real se resuelve en reconciliación
+            amount: merchantAmount,
+            description: receivedDescription ?? ""
+        )
+
+        do {
+            let data = try JSONEncoder().encode(voucher)
+            peripheral.writeValue(data, for: char, type: .withResponse)
+            print("[TapToPay] 💰 Customer: voucher enviado (\(data.count) bytes) — \(voucher.formattedAmount)")
+            DispatchQueue.main.async {
+                self.phase = .processing
+            }
+        } catch {
+            print("[TapToPay] ❌ Customer: error codificando voucher: \(error)")
+        }
     }
 
     // MARK: - Customer: iniciar NI con token del merchant
@@ -289,24 +339,72 @@ extension TapToPayPeerService: CBPeripheralManagerDelegate {
 
     func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
         for request in requests {
-            print("[TapToPay] Merchant: write en \(request.characteristic.uuid) — \(request.value?.count ?? 0) bytes")
-
-            guard request.characteristic.uuid == kCharCToken, let data = request.value else {
+            let charUUID = request.characteristic.uuid
+            guard let data = request.value else {
                 peripheral.respond(to: request, withResult: .attributeNotFound)
                 continue
             }
 
+            print("[TapToPay] Merchant: write en \(charUUID) — \(data.count) bytes")
             peripheral.respond(to: request, withResult: .success)
-            print("[TapToPay] Merchant: token del customer recibido — respondido .success")
 
-            guard let token = try? NSKeyedUnarchiver.unarchivedObject(ofClass: NIDiscoveryToken.self, from: data) else {
-                print("[TapToPay] ⚠️ Merchant: no se pudo deserializar NIDiscoveryToken del customer")
-                continue
+            if charUUID == kCharCToken {
+                // Token NI del customer
+                guard let token = try? NSKeyedUnarchiver.unarchivedObject(ofClass: NIDiscoveryToken.self, from: data) else {
+                    print("[TapToPay] ⚠️ Merchant: no se pudo deserializar NIDiscoveryToken del customer")
+                    continue
+                }
+                let config = NINearbyPeerConfiguration(peerToken: token)
+                niSession?.run(config)
+                print("[TapToPay] Merchant: NISession.run() — UWB midiendo distancia")
+                DispatchQueue.main.async { self.isConnected = true }
+
+            } else if charUUID == kCharPayVoucher {
+                // Voucher de pago del customer
+                do {
+                    let voucher = try JSONDecoder().decode(PaymentVoucher.self, from: data)
+                    print("[TapToPay] 💰 Merchant: VOUCHER recibido de \(voucher.clientName) por \(voucher.formattedAmount)")
+
+                    // Validar: monto coincide y timestamp reciente (<5 min)
+                    let isAmountOK = voucher.amount == (amount ?? 0)
+                    let isTimestampOK = abs(voucher.timestamp.timeIntervalSinceNow) < 300
+
+                    if isAmountOK && isTimestampOK {
+                        DispatchQueue.main.async {
+                            self.receivedVoucher = voucher
+                            self.phase = .approved
+                            self.hasTriggered = true
+                        }
+
+                        // Guardar voucher pendiente de reconciliación
+                        SalesHistoryManager.shared.addPendingVoucher(voucher)
+
+                        // Enviar receipt de confirmación
+                        let receipt = PaymentReceipt(
+                            voucherID: voucher.id,
+                            merchantID: voucher.merchantID,
+                            merchantName: merchantName ?? "Comerciante",
+                            approved: true
+                        )
+                        let receiptData = try JSONEncoder().encode(receipt)
+                        sendConfirmation(approved: true)
+                        print("[TapToPay] 💰 Merchant: Pago APROBADO — receipt enviado")
+
+                        // Disparar callback
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            self.onPaymentTriggered?()
+                        }
+                    } else {
+                        print("[TapToPay] ❌ Voucher rechazado: amount=\(isAmountOK) timestamp=\(isTimestampOK)")
+                        sendConfirmation(approved: false)
+                        DispatchQueue.main.async {
+                            self.phase = .declined("Voucher inválido")
+                        }
+                    }
+                } catch {
+                    print("[TapToPay] ❌ Error decodificando voucher: \(error)")
+                }
             }
-            let config = NINearbyPeerConfiguration(peerToken: token)
-            niSession?.run(config)
-            print("[TapToPay] Merchant: NISession.run() — UWB midiendo distancia")
-            DispatchQueue.main.async { self.isConnected = true }
         }
     }
 
@@ -510,16 +608,21 @@ extension TapToPayPeerService: NISessionDelegate {
         DispatchQueue.main.async {
             self.peerDistance = distance
             guard distance < self.tapThreshold, !self.hasTriggered else { return }
-            print("[TapToPay] 🎯 TAP detectado (\(String(format: "%.1f", distance * 100))cm) — disparando pago")
-            self.hasTriggered = true
-            self.phase = .reading
+            print("[TapToPay] 🎯 TAP detectado (\(String(format: "%.1f", distance * 100))cm)")
             let impact = UIImpactFeedbackGenerator(style: .heavy)
             impact.impactOccurred()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                self.phase = .processing
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    self.onPaymentTriggered?()
+
+            if self.role == .customer {
+                // Customer: enviar voucher de pago al merchant
+                self.phase = .reading
+                print("[TapToPay] 💰 Customer: enviando voucher tras tap...")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                    self.sendPaymentVoucher()
                 }
+            } else {
+                // Merchant: espera el voucher del customer (llega via didReceiveWrite)
+                self.hasTriggered = true
+                self.phase = .reading
             }
         }
     }
