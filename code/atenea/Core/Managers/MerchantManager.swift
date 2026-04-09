@@ -327,9 +327,12 @@ class MerchantManager: ObservableObject {
             print("🏪 [toggleActive] No coincide con currentMerchantProfile")
         }
 
-        // Sync status to Supabase
+        // Sync status + location to Supabase
         Task {
             try? await SupabaseService.shared.updateMerchantStatus(merchantId: merchantId, isActive: despues)
+            if despues, let loc = merchants[index].currentLocation {
+                try? await SupabaseService.shared.updateMerchantLocation(merchantId: merchantId, latitude: loc.latitude, longitude: loc.longitude)
+            }
         }
     }
 

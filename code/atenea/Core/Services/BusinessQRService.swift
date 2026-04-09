@@ -31,9 +31,9 @@ enum BusinessQRService {
         return "\(baseURL)?d=\(base64)"
     }
 
-    /// Genera la imagen QR para el negocio
+    /// Genera la imagen QR para el negocio (usa datos embebidos para que funcione sin Supabase)
     static func generateQR(for merchant: Merchant, size: CGSize = CGSize(width: 280, height: 280)) -> UIImage? {
-        let url = businessURL(for: merchant)
+        let url = businessURLWithData(for: merchant)
         return QRGeneratorService.generateQRCode(from: url, size: size)
     }
 
