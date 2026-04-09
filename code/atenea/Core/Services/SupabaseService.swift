@@ -180,6 +180,34 @@ class SupabaseService {
         print("☁️ Synced \(merchants.count) merchants to Supabase")
     }
 
+    // MARK: - Upload Product Image
+
+    /// Sube una imagen de producto a Supabase Storage y devuelve la URL pública
+    func uploadProductImage(_ imageData: Data, merchantId: String, productId: String) async throws -> String {
+        let fileName = "\(merchantId)/\(productId).jpg"
+        let storageURL = "https://fkkddxibqlmunuqzdrsm.supabase.co/storage/v1/object/products/\(fileName)"
+
+        var request = URLRequest(url: URL(string: storageURL)!)
+        request.httpMethod = "POST"
+        request.httpBody = imageData
+        request.setValue(apiKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("image/jpeg", forHTTPHeaderField: "Content-Type")
+        request.setValue("true", forHTTPHeaderField: "x-upsert")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw SupabaseError.saveFailed("Image upload failed: \(errorBody)")
+        }
+
+        let publicURL = "https://fkkddxibqlmunuqzdrsm.supabase.co/storage/v1/object/public/products/\(fileName)"
+        print("📸 Image uploaded: \(publicURL)")
+        return publicURL
+    }
+
     // MARK: - Payload Conversion
 
     private func merchantToPayload(_ merchant: Merchant) -> [String: Any] {
@@ -212,6 +240,9 @@ class SupabaseService {
             ]
             if let desc = product.description {
                 p["desc"] = desc
+            }
+            if let imageURL = product.imageURL {
+                p["imageURL"] = imageURL
             }
             return p
         }

@@ -1337,3 +1337,14 @@
 "qr.poweredByAtenea" = "Powered by Atenea";
 "qr.linkCopied" = "Link copied";
 "qr.viewMyQR" = "View my QR";
+
+// MARK: - Add Products
+"products.addTitle" = "Add your products";
+"products.addSubtitle" = "Add photos and prices so customers know what you sell";
+"products.addAnother" = "Add another product";
+"products.count" = "%d products";
+"products.uploading" = "Uploading...";
+"products.save" = "Save products";
+"products.skip" = "Skip";
+"products.namePlaceholder" = "Product name";
+"products.addPhoto" = "Add photo";
