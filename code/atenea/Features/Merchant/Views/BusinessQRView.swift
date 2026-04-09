@@ -14,6 +14,7 @@ struct BusinessQRView: View {
     @State private var qrImage: UIImage?
     @State private var showShareSheet = false
     @State private var showCopiedToast = false
+    @State private var isSyncing = true
 
     private var businessURL: String {
         let url = BusinessQRService.businessURL(for: merchant)
@@ -59,11 +60,22 @@ struct BusinessQRView: View {
             }
         }
         .onAppear {
-            print("📱 [BusinessQRView] onAppear — merchant: \(merchant.businessName), id=\(merchant.id.uuidString.prefix(8))")
+            print("📱 [BusinessQRView] onAppear — merchant: \(merchant.businessName), id=\(merchant.id.uuidString)")
             print("📱 [BusinessQRView] merchant.currentLocation: \(merchant.currentLocation != nil ? "lat=\(merchant.currentLocation!.latitude), lng=\(merchant.currentLocation!.longitude)" : "nil")")
             print("📱 [BusinessQRView] merchant.isActive: \(merchant.isActive), isOpen: \(merchant.isCurrentlyOpen)")
-            qrImage = BusinessQRService.generateQR(for: merchant)
-            print("📱 [BusinessQRView] qrImage generado: \(qrImage != nil ? "✅" : "❌")")
+            // Sync merchant a Supabase antes de generar QR (upsert)
+            Task {
+                print("📱 [BusinessQRView] syncing merchant to Supabase...")
+                do {
+                    let supabaseId = try await SupabaseService.shared.saveMerchant(merchant)
+                    print("📱 [BusinessQRView] ✅ merchant synced to Supabase: \(supabaseId)")
+                } catch {
+                    print("📱 [BusinessQRView] ⚠️ sync failed: \(error.localizedDescription)")
+                }
+                isSyncing = false
+                qrImage = BusinessQRService.generateQR(for: merchant)
+                print("📱 [BusinessQRView] qrImage generado: \(qrImage != nil ? "✅" : "❌")")
+            }
         }
     }
 
