@@ -16,9 +16,14 @@ class MerchantManager: ObservableObject {
     @Published var currentMerchantProfile: Merchant?
 
     private init() {
-        DispatchQueue.main.async { [self] in
-            loadMockMerchants()
-        }
+        loadMockMerchants()
+    }
+
+    /// Vincular perfil de merchant para el usuario actual (llamar después de login/restore)
+    func linkCurrentUserProfile() {
+        guard let user = UserManager.shared.currentUser, user.isMerchant else { return }
+        currentMerchantProfile = merchantForUser(user.id)
+        print("🏪 Perfil vinculado: \(currentMerchantProfile?.businessName ?? "nil")")
     }
 
     // MARK: - Queries
@@ -55,10 +60,20 @@ class MerchantManager: ObservableObject {
     // MARK: - Mutations
 
     func toggleActive(merchantId: UUID) {
-        guard let index = merchants.firstIndex(where: { $0.id == merchantId }) else { return }
+        print("🏪 [toggleActive] merchantId=\(merchantId)")
+        guard let index = merchants.firstIndex(where: { $0.id == merchantId }) else {
+            print("🏪 [toggleActive] ERROR: merchant no encontrado en array")
+            return
+        }
+        let antes = merchants[index].isActive
         merchants[index].isActive.toggle()
+        let despues = merchants[index].isActive
+        print("🏪 [toggleActive] isActive: \(antes) → \(despues)")
         if merchants[index].id == currentMerchantProfile?.id {
-            currentMerchantProfile?.isActive = merchants[index].isActive
+            currentMerchantProfile = merchants[index]
+            print("🏪 [toggleActive] currentMerchantProfile actualizado, isActive=\(currentMerchantProfile?.isActive ?? false)")
+        } else {
+            print("🏪 [toggleActive] No coincide con currentMerchantProfile")
         }
     }
 
@@ -66,7 +81,7 @@ class MerchantManager: ObservableObject {
         guard let index = merchants.firstIndex(where: { $0.id == merchantId }) else { return }
         merchants[index].currentLocation = MerchantLocation(latitude: latitude, longitude: longitude)
         if merchants[index].id == currentMerchantProfile?.id {
-            currentMerchantProfile?.currentLocation = merchants[index].currentLocation
+            currentMerchantProfile = merchants[index]
         }
     }
 
@@ -176,6 +191,10 @@ class MerchantManager: ObservableObject {
         // userId del usuario "Don Taco" en UserManager
         let donTacoUserId = UserManager.shared.getAllUsers()
             .first(where: { $0.email == "don.taco@atenea.com" })?.id ?? UUID()
+        let mariaUserId = UserManager.shared.getAllUsers()
+            .first(where: { $0.email == "maria.elotes@atenea.com" })?.id ?? UUID()
+        let pepeUserId = UserManager.shared.getAllUsers()
+            .first(where: { $0.email == "pepe.carnitas@atenea.com" })?.id ?? UUID()
 
         // Expo Santa Fe coordinates: 19.3576, -99.2617
         let expoSantaFe = (lat: 19.3576, lon: -99.2617)
@@ -371,6 +390,51 @@ class MerchantManager: ObservableObject {
                 schedule: MerchantSchedule(openTime: "14:00", closeTime: "22:00", daysOfWeek: [1, 2, 3, 4, 5, 6, 7]),
                 isStatic: false,
                 currentLocation: MerchantLocation(latitude: 19.4204, longitude: -99.1895)
+            ),
+            // Comerciantes vinculados a nuevos usuarios
+            Merchant(
+                userId: mariaUserId,
+                businessName: "Elotes de María",
+                category: .elotes,
+                emoji: "🌽",
+                description: "Elotes y esquites con sazón de abuela. Especialidad: elote con crema de epazote.",
+                products: [
+                    Product(name: "Elote con crema", price: 28, emoji: "🌽"),
+                    Product(name: "Esquites verdes", price: 25, emoji: "🥗"),
+                    Product(name: "Elote con Tajín", price: 28, emoji: "🔴"),
+                    Product(name: "Agua de Horchata", price: 18, emoji: "🥛"),
+                ],
+                schedule: MerchantSchedule(openTime: "15:00", closeTime: "22:00", daysOfWeek: [1, 2, 3, 4, 5, 6, 7]),
+                isStatic: false,
+                currentLocation: MerchantLocation(latitude: 19.3588, longitude: -99.2625),
+                route: MerchantRoute(
+                    merchantId: UUID(),
+                    waypoints: [
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3576, longitude: -99.2617), order: 0, name: "Expo Santa Fe"),
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3588, longitude: -99.2630), order: 1, name: "Parque Central"),
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3600, longitude: -99.2645), order: 2, name: "Zona Corporativa"),
+                    ],
+                    estimatedDuration: 1200,
+                    estimatedDistance: 1500,
+                    isActive: true
+                )
+            ),
+            Merchant(
+                userId: pepeUserId,
+                businessName: "Carnitas Pepe",
+                category: .antojitos,
+                emoji: "🥩",
+                description: "Carnitas estilo Michoacán. Maciza, buche, trompa y surtida. Tortillas hechas a mano.",
+                products: [
+                    Product(name: "Taco de Maciza", price: 24, emoji: "🌮"),
+                    Product(name: "Taco de Buche", price: 26, emoji: "🌮"),
+                    Product(name: "Quesadilla de Carnitas", price: 40, emoji: "🧀"),
+                    Product(name: "Medio kilo para llevar", price: 150, emoji: "📦"),
+                    Product(name: "Agua de Limón", price: 15, emoji: "🍋"),
+                ],
+                schedule: MerchantSchedule(openTime: "09:00", closeTime: "16:00", daysOfWeek: [6, 7]),
+                isStatic: true,
+                currentLocation: MerchantLocation(latitude: 19.3572, longitude: -99.2608)
             ),
         ]
     }

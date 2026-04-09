@@ -34,6 +34,7 @@ struct HomeView: View {
     var body: some View {
         Group {
             if let user = userManager.currentUser {
+                let _ = print("🏠 [HomeView] User: \(user.name) | role: \(user.role.rawValue) | isMerchant: \(user.isMerchant)")
                 if user.isMerchant {
                     MerchantHomeView(selectedTab: $selectedTab, user: user)
                         .environmentObject(languageManager)
@@ -57,13 +58,11 @@ struct MerchantHomeView: View {
 
     @ObservedObject private var merchantManager = MerchantManager.shared
     @ObservedObject private var timbreManager = TimbreManager.shared
-    @ObservedObject private var presenceManager = PresenceManager.shared
     @ObservedObject private var demandManager = DemandZoneManager.shared
     @ObservedObject private var radarService = RadarService.shared
-    @ObservedObject private var streetCredManager = StreetCredManager.shared
-    @ObservedObject private var predictionEngine = PredictionEngine.shared
     @State private var profileViews = 87
     @State private var animateCards = false
+    @State private var isReady = false
     @State private var showTimbreHistory = false
     @State private var showDemandInsights = false
     @State private var showStreetCredDetail = false
@@ -71,15 +70,20 @@ struct MerchantHomeView: View {
     @State private var streetCredScore: StreetCredScore?
     @State private var matchPrediction: MatchPrediction?
 
-    private var isBusinessActive: Binding<Bool> {
-        Binding(
-            get: { merchantManager.currentMerchantProfile?.isActive ?? false },
-            set: { _ in
-                if let id = merchantManager.currentMerchantProfile?.id {
-                    merchantManager.toggleActive(merchantId: id)
-                }
-            }
-        )
+    private var isBusinessActive: Bool {
+        merchantManager.currentMerchantProfile?.isActive ?? false
+    }
+
+    private func toggleBusiness() {
+        guard let id = merchantManager.currentMerchantProfile?.id else {
+            print("🏪 [toggle] ERROR: no hay currentMerchantProfile")
+            return
+        }
+        print("🏪 [toggle] Antes: isActive=\(merchantManager.currentMerchantProfile?.isActive ?? false)")
+        DispatchQueue.main.async {
+            merchantManager.toggleActive(merchantId: id)
+            print("🏪 [toggle] Después: isActive=\(merchantManager.currentMerchantProfile?.isActive ?? false)")
+        }
     }
 
     var body: some View {
@@ -132,6 +136,7 @@ struct MerchantHomeView: View {
 
             // Notificación de timbre
             if let timbre = timbreManager.newTimbreReceived {
+                let _ = print("🔔 [MerchantHome] ⚡ TIMBRE DETECTADO: \(timbre.clientName) → \(timbre.type.displayName)")
                 VStack {
                     TimbreNotificationView(
                         timbre: timbre,
@@ -149,33 +154,41 @@ struct MerchantHomeView: View {
                 .padding(.top, 50)
                 .zIndex(100)
             }
+
         }
         .onAppear {
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.1)) {
-                animateCards = true
-            }
-            // Diferir actualizaciones para evitar "Publishing changes from within view updates"
-            DispatchQueue.main.async {
-                // Centrar zonas de demanda en Expo Santa Fe CDMX (demo)
+            Task { @MainActor in
+                // Cargar datos ANTES de mostrar la UI
+                try? await Task.sleep(nanoseconds: 200_000_000)
+
                 demandManager.refreshMockData(around: (19.3585, -99.2740))
-                // Calcular Street Cred
+
                 if let merchant = merchantManager.currentMerchantProfile {
-                    if streetCredManager.activityLog.filter({ $0.merchantId == merchant.id }).isEmpty {
-                        streetCredManager.generateMockData(for: merchant)
+                    let scm = StreetCredManager.shared
+                    if scm.activityLog.filter({ $0.merchantId == merchant.id }).isEmpty {
+                        scm.generateMockData(for: merchant)
                     }
-                    streetCredScore = streetCredManager.calculateScore(for: merchant)
+                    streetCredScore = scm.calculateScore(for: merchant)
                 }
-                // Predicción del próximo partido
-                matchPrediction = predictionEngine.predictNextMatch()
-            }
-            // Iniciar broadcasting y escaneo diferido
-            DispatchQueue.main.async {
+                matchPrediction = PredictionEngine.shared.predictNextMatch()
+
+                // Mostrar UI
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                    isReady = true
+                    animateCards = true
+                }
+
+                // Radar después de que UI esté estable
+                try? await Task.sleep(nanoseconds: 500_000_000)
+
                 if let merchant = merchantManager.currentMerchantProfile, merchant.isActive {
                     PresenceManager.shared.startBroadcasting(merchant: merchant)
                     RadarService.shared.startAdvertising(merchant: merchant)
                 }
                 RadarService.shared.startScanning()
+                print("🏠 [MerchantHome] ── READY ──")
             }
+            print("🏠 [MerchantHome] ── ON APPEAR END ──")
         }
         .onChange(of: merchantManager.currentMerchantProfile?.isActive) { _, isActive in
             DispatchQueue.main.async {
@@ -244,17 +257,30 @@ struct MerchantHomeView: View {
     private var businessStatusCard: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text(isBusinessActive.wrappedValue ? LocalizedString("home.businessActive") : LocalizedString("home.businessPaused"))
+                Text(isBusinessActive ? LocalizedString("home.businessActive") : LocalizedString("home.businessPaused"))
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
                     .foregroundColor(Color(hex: "#081754"))
-                Text(isBusinessActive.wrappedValue ? LocalizedString("home.businessActiveDesc") : LocalizedString("home.businessPausedDesc"))
+                Text(isBusinessActive ? LocalizedString("home.businessActiveDesc") : LocalizedString("home.businessPausedDesc"))
                     .font(.system(size: 13, weight: .regular, design: .rounded))
                     .foregroundColor(Color(hex: "#4A4A4A"))
             }
             Spacer()
-            Toggle("", isOn: isBusinessActive)
-                .labelsHidden()
-                .tint(Color(hex: "#0ABF4F"))
+            Button {
+                let generator = UIImpactFeedbackGenerator(style: .medium)
+                generator.impactOccurred()
+                toggleBusiness()
+            } label: {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(isBusinessActive ? Color(hex: "#0ABF4F") : Color.gray.opacity(0.3))
+                    .frame(width: 51, height: 31)
+                    .overlay(alignment: isBusinessActive ? .trailing : .leading) {
+                        Circle()
+                            .fill(.white)
+                            .frame(width: 27, height: 27)
+                            .padding(2)
+                    }
+                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isBusinessActive)
+            }
         }
         .padding(16)
         .background(Color(hex: "#FFFFFF"))
@@ -262,13 +288,13 @@ struct MerchantHomeView: View {
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(
-                    isBusinessActive.wrappedValue ? Color(hex: "#0ABF4F").opacity(0.2) : Color(hex: "#FF594D").opacity(0.2),
+                    isBusinessActive ? Color(hex: "#0ABF4F").opacity(0.2) : Color(hex: "#FF594D").opacity(0.2),
                     lineWidth: 1
                 )
         )
         .opacity(animateCards ? 1 : 0)
         .offset(y: animateCards ? 0 : 20)
-        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: isBusinessActive.wrappedValue)
+        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: isBusinessActive)
     }
 
     // MARK: - Metrics Grid
@@ -282,7 +308,7 @@ struct MerchantHomeView: View {
             HStack(spacing: 12) {
                 MetricCard(
                     icon: "person.fill",
-                    value: "\(presenceManager.activeMerchantCount)",
+                    value: "\(PresenceManager.shared.activeMerchantCount)",
                     label: LocalizedString("home.sellers"),
                     color: Color(hex: "#1C42E8")
                 )
@@ -401,8 +427,8 @@ struct CustomerHomeView: View {
     @Binding var pendingMerchantPlace: SearchPlace?
     let user: User
 
-    @ObservedObject private var merchantManager = MerchantManager.shared
-    @ObservedObject private var radarService = RadarService.shared
+    @StateObject private var merchantManager = MerchantManager.shared
+    @StateObject private var radarService = RadarService.shared
     @State private var animateCards = false
     @State private var selectedMerchantForTimbre: Merchant?
     @State private var showRadar = false
@@ -457,8 +483,10 @@ struct CustomerHomeView: View {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.1)) {
                 animateCards = true
             }
-            // Iniciar radar automáticamente
-            RadarService.shared.startScanning()
+            // Iniciar radar automáticamente (diferido para evitar "Publishing changes from within view updates")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                RadarService.shared.startScanning()
+            }
         }
         .fullScreenCover(isPresented: $showRadar) {
             RadarView()

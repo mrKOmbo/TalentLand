@@ -34,40 +34,41 @@ struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
-        GeometryReader { geometry in
+        let _ = print("📱 [ContentView BODY] splash=\(showSplash) onboarding=\(showOnboarding) loggedIn=\(isLoggedIn) welcome=\(showOnboardingWelcome)")
             ZStack {
                 if showSplash {
-                    // Show splash screen
+                    let _ = print("📱 [ContentView] → Showing SPLASH")
                     SplashScreenView(showSplash: $showSplash)
                         .environmentObject(languageManager)
                 } else if showOnboarding {
-                    // Show onboarding after splash
+                    let _ = print("📱 [ContentView] → Showing ONBOARDING")
                     OnboardingView(showOnboarding: $showOnboarding)
                         .environmentObject(languageManager)
                 } else if !isLoggedIn {
-                    // Show welcome/login flow
+                    let _ = print("📱 [ContentView] → Showing LOGIN")
                     LoginView(isLoggedIn: $isLoggedIn)
                         .environmentObject(languageManager)
                         .transition(.move(edge: .bottom))
                         .onChange(of: isLoggedIn) { _, newValue in
+                            print("📱 [ContentView] isLoggedIn changed to \(newValue)")
                             if newValue {
-                                // Usuario acaba de iniciar sesión
-                                // Mostrar pantalla de bienvenida personalizada
                                 showOnboardingWelcome = true
-
-                                // Persistir el estado de login
                                 UserDefaults.standard.set(newValue, forKey: "isUserLoggedIn")
+                                print("📱 [ContentView] showOnboardingWelcome = true")
                             }
                         }
                 } else if showOnboardingWelcome {
-                    // Show personalized welcome screen after login
+                    let _ = print("📱 [ContentView] → Showing WELCOME")
                     OnboardingWelcomeView(userName: currentUserName) {
+                        print("📱 [ContentView] Ingresar pressed")
                         withAnimation(.easeInOut(duration: 0.3)) {
                             showOnboardingWelcome = false
                         }
+                        print("📱 [ContentView] welcome dismissed → main content")
                     }
                     .transition(.opacity)
                 } else {
+                    let _ = print("📱 [ContentView] → Showing MAIN CONTENT")
                     // Main app content with sidebar push menu
                     SidebarPushMenuContainer(languageManager: languageManager) {
                         // Contenido principal con tabs
@@ -110,8 +111,9 @@ struct ContentView: View {
                                 }
                                 .zIndex(10)
                                 .transition(.move(edge: .bottom).combined(with: .opacity))
-                                .offset(y: navigationStateManager.showDirections ? 120 : 0)
+                                .offset(y: navigationStateManager.showDirections && selectedTab == 1 ? 120 : 0)
                                 .animation(.spring(response: 0.4, dampingFraction: 0.8), value: navigationStateManager.showDirections)
+                                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: selectedTab)
                             }
 
                             // LiveTrack Dynamic Island — "Uber al revés"
@@ -174,10 +176,13 @@ struct ContentView: View {
                     .onChange(of: isLoggedIn) { _, newValue in
                         UserDefaults.standard.set(newValue, forKey: "isUserLoggedIn")
                     }
+                    .onChange(of: selectedTab) { _, newTab in
+                        if newTab != 1 && navigationStateManager.showDirections {
+                            navigationStateManager.showDirections = false
+                        }
+                    }
                 }
             }
-            .ignoresSafeArea()
-        }
         .environment(\.layoutDirection, languageManager.layoutDirection)
         .animation(.easeInOut(duration: 0.5), value: showSplash)
         .animation(.easeInOut(duration: 0.5), value: showOnboarding)
@@ -185,12 +190,18 @@ struct ContentView: View {
         .animation(.easeInOut(duration: 0.5), value: languageManager.currentLanguage)
         .animation(.spring(response: 0.4, dampingFraction: 0.7), value: emergencyManager.isEmergencyActive)
         .onAppear {
+            UserManager.shared.ensureMerchantLinked()
             handleAppIntentRequests()
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
-            // Detectar cuando la app regresa al foreground
             if newPhase == .active {
                 handleAppIntentRequests()
+            } else if newPhase == .background {
+                // Limpiar servicios al cerrar la app
+                RadarService.shared.stopAll()
+                PresenceManager.shared.stopBroadcasting()
+                NavigationStateManager.shared.showDirections = false
+                print("🔒 [App] Background: radar, presencia y navegación detenidos")
             }
         }
     }
@@ -218,11 +229,23 @@ struct ContentView: View {
     // MARK: - Handle Logout
 
     private func handleLogout() {
+        // Detener todos los servicios activos
+        RadarService.shared.stopAll()
+        PresenceManager.shared.stopBroadcasting()
+        NavigationStateManager.shared.showDirections = false
+        NavigationStateManager.shared.isNavigationActive = false
+
+        // Limpiar estado del usuario
+        UserManager.shared.logout()
+
+        // Resetear tab y UI
+        selectedTab = 0
+
         withAnimation {
             isLoggedIn = false
         }
         UserDefaults.standard.set(false, forKey: "isUserLoggedIn")
-        print("🔓 Usuario cerró sesión")
+        print("🔓 Logout completo: usuario, radar, presencia, navegación limpiados")
     }
 }
 

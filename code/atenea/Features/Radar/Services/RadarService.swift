@@ -145,12 +145,7 @@ class RadarService: NSObject, ObservableObject {
             self?.pruneAndUpdateSignals()
         }
 
-        // Timer para refrescar UI periódicamente
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
-            DispatchQueue.main.async {
-                self?.objectWillChange.send()
-            }
-        }
+        // UI se refresca automáticamente via @Published properties
 
         DispatchQueue.main.async {
             self.isScanning = true
