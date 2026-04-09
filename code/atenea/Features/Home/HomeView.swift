@@ -91,47 +91,49 @@ struct MerchantHomeView: View {
             Color(hex: "#F5F3F0")
                 .ignoresSafeArea()
 
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 16) {
-                    // Header
-                    merchantHeader
+            VStack(spacing: 0) {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 16) {
+                        // Header
+                        merchantHeader
 
-                    // Status toggle
-                    businessStatusCard
+                        // Status toggle
+                        businessStatusCard
 
-                    // Street Cred Score
-                    if let score = streetCredScore {
-                        StreetCredCardView(score: score) {
-                            showStreetCredDetail = true
+                        // Street Cred Score
+                        if let score = streetCredScore {
+                            StreetCredCardView(score: score) {
+                                showStreetCredDetail = true
+                            }
+                            .opacity(animateCards ? 1 : 0)
+                            .offset(y: animateCards ? 0 : 20)
                         }
-                        .opacity(animateCards ? 1 : 0)
-                        .offset(y: animateCards ? 0 : 20)
+
+                        // Métricas del día
+                        metricsGrid
+
+                        // Acciones rápidas
+                        quickActionsSection
+
+                        // Tip del día
+                        demandTipCard
+
+                        // Predicción del próximo partido
+                        if let prediction = matchPrediction {
+                            PredictionCardView(
+                                prediction: prediction,
+                                merchantCategory: merchantManager.currentMerchantProfile?.category,
+                                onTap: { showPredictionDetail = true }
+                            )
+                            .opacity(animateCards ? 1 : 0)
+                            .offset(y: animateCards ? 0 : 20)
+                        }
+
+                        Spacer(minLength: 100)
                     }
-
-                    // Métricas del día
-                    metricsGrid
-
-                    // Acciones rápidas
-                    quickActionsSection
-
-                    // Tip del día
-                    demandTipCard
-
-                    // Predicción del próximo partido
-                    if let prediction = matchPrediction {
-                        PredictionCardView(
-                            prediction: prediction,
-                            merchantCategory: merchantManager.currentMerchantProfile?.category,
-                            onTap: { showPredictionDetail = true }
-                        )
-                        .opacity(animateCards ? 1 : 0)
-                        .offset(y: animateCards ? 0 : 20)
-                    }
-
-                    Spacer(minLength: 100)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
             }
 
             // Notificación de timbre

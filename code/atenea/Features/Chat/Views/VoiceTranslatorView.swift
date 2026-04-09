@@ -3,8 +3,7 @@
 //  atenea
 //
 //  Interfaz de traducción de voz en tiempo real vendedor↔turista
-//  El vendedor habla en español → el turista escucha en su idioma
-//  El turista habla en su idioma → el vendedor escucha en español
+//  Coppel Brand Toolkit 2024
 //
 
 import SwiftUI
@@ -14,7 +13,7 @@ struct VoiceTranslatorView: View {
     @StateObject private var translator = VoiceTranslationService.shared
     @State private var permissionGranted = false
     @State private var selectedTouristLanguage = "en-US"
-    @State private var isMerchantMode = true // true = vendedor habla, false = turista habla
+    @State private var isMerchantMode = true
     @State private var showLanguagePicker = false
     @State private var pulseAnimation = false
 
@@ -35,25 +34,14 @@ struct VoiceTranslatorView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                LinearGradient(
-                    colors: [Color(hex: "#0A0A1A"), Color(hex: "#0D1B2A")],
-                    startPoint: .top, endPoint: .bottom
-                )
-                .ignoresSafeArea()
+                // Fondo Coppel — blanco limpio
+                Color.white
+                    .ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    // Language pair header
                     languageHeader
-
-                    // Messages
                     messagesArea
-
-                    // Current transcription
-                    if translator.isListening {
-                        listeningIndicator
-                    }
-
-                    // Control area
+                    if translator.isListening { listeningIndicator }
                     controlArea
                 }
             }
@@ -64,18 +52,19 @@ struct VoiceTranslatorView: View {
                     Button { dismiss() } label: {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 22))
-                            .foregroundColor(.white.opacity(0.6))
+                            .foregroundColor(Color(hex: "#4A4A4A"))
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showLanguagePicker = true } label: {
                         Image(systemName: "globe")
-                            .font(.system(size: 18))
-                            .foregroundColor(.cyan)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(Color(hex: "#1C42E8"))
                     }
                 }
             }
-            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+            .toolbarBackground(Color.white, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .sheet(isPresented: $showLanguagePicker) {
                 languagePickerSheet
             }
@@ -97,54 +86,67 @@ struct VoiceTranslatorView: View {
     // MARK: - Language Header
 
     private var languageHeader: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 12) {
             // Vendedor
-            VStack(spacing: 4) {
+            VStack(spacing: 6) {
                 Text("🇲🇽")
-                    .font(.system(size: 28))
+                    .font(.system(size: 32))
                 Text(LocalizedString("translator.spanish"))
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white.opacity(0.7))
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundColor(Color(hex: "#081754"))
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
+            .padding(.vertical, 16)
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(isMerchantMode ? Color.orange.opacity(0.15) : Color.white.opacity(0.03))
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(isMerchantMode ? Color(hex: "#FFAE43").opacity(0.12) : Color(hex: "#EEE8E3").opacity(0.6))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .strokeBorder(isMerchantMode ? Color.orange.opacity(0.3) : Color.clear, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(isMerchantMode ? Color(hex: "#FFAE43").opacity(0.5) : Color.clear, lineWidth: 1.5)
                     )
             )
 
-            // Swap button
-            Image(systemName: "arrow.left.arrow.right")
-                .font(.system(size: 16, weight: .bold))
-                .foregroundColor(.cyan)
+            // Swap
+            Button {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    isMerchantMode.toggle()
+                }
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(Color(hex: "#1C42E8").opacity(0.08))
+                        .frame(width: 40, height: 40)
+
+                    Image(systemName: "arrow.left.arrow.right")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(Color(hex: "#1C42E8"))
+                }
+            }
 
             // Turista
-            VStack(spacing: 4) {
+            VStack(spacing: 6) {
                 let lang = availableLanguages.first { $0.code == selectedTouristLanguage }
                 Text(lang?.flag ?? "🌍")
-                    .font(.system(size: 28))
+                    .font(.system(size: 32))
                 Text(lang?.name ?? "English")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white.opacity(0.7))
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundColor(Color(hex: "#081754"))
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
+            .padding(.vertical, 16)
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(!isMerchantMode ? Color.cyan.opacity(0.15) : Color.white.opacity(0.03))
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(!isMerchantMode ? Color(hex: "#1CA8F7").opacity(0.12) : Color(hex: "#EEE8E3").opacity(0.6))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .strokeBorder(!isMerchantMode ? Color.cyan.opacity(0.3) : Color.clear, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(!isMerchantMode ? Color(hex: "#1CA8F7").opacity(0.5) : Color.clear, lineWidth: 1.5)
                     )
             )
         }
         .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.vertical, 16)
+        .background(Color.white)
     }
 
     // MARK: - Messages Area
@@ -152,19 +154,20 @@ struct VoiceTranslatorView: View {
     private var messagesArea: some View {
         ScrollViewReader { proxy in
             ScrollView(showsIndicators: false) {
-                LazyVStack(spacing: 12) {
+                LazyVStack(spacing: 16) {
                     if translator.messages.isEmpty {
                         emptyState
                     }
 
                     ForEach(translator.messages) { message in
-                        MessageBubble(message: message)
+                        TranslatorMessageBubble(message: message)
                             .id(message.id)
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.vertical, 12)
+                .padding(.vertical, 16)
             }
+            .background(Color(hex: "#EEE8E3").opacity(0.3))
             .onChange(of: translator.messages.count) { _, _ in
                 if let last = translator.messages.last {
                     withAnimation {
@@ -178,61 +181,72 @@ struct VoiceTranslatorView: View {
     private var emptyState: some View {
         VStack(spacing: 16) {
             Spacer()
-                .frame(height: 40)
+                .frame(height: 48)
 
-            Image(systemName: "waveform.and.mic")
-                .font(.system(size: 48))
-                .foregroundColor(.white.opacity(0.15))
+            ZStack {
+                Circle()
+                    .fill(Color(hex: "#1C42E8").opacity(0.06))
+                    .frame(width: 88, height: 88)
+
+                Image(systemName: "waveform.and.mic")
+                    .font(.system(size: 40, weight: .light))
+                    .foregroundColor(Color(hex: "#1C42E8").opacity(0.35))
+            }
 
             Text(LocalizedString("translator.tapMicToSpeak"))
-                .font(.system(size: 15))
-                .foregroundColor(.white.opacity(0.3))
+                .font(.system(size: 16, weight: .medium, design: .rounded))
+                .foregroundColor(Color(hex: "#4A4A4A"))
                 .multilineTextAlignment(.center)
 
             Text(LocalizedString("translator.merchantSpeaksSpanish"))
-                .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.2))
+                .font(.system(size: 13, weight: .regular, design: .rounded))
+                .foregroundColor(Color(hex: "#4A4A4A").opacity(0.6))
                 .multilineTextAlignment(.center)
+                .lineSpacing(4)
         }
     }
 
     // MARK: - Listening Indicator
 
     private var listeningIndicator: some View {
-        HStack(spacing: 10) {
-            // Waveform animation
-            ForEach(0..<5, id: \.self) { i in
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(isMerchantMode ? Color.orange : Color.cyan)
-                    .frame(width: 4, height: CGFloat.random(in: 8...24))
-                    .animation(
-                        .easeInOut(duration: 0.3)
-                            .repeatForever(autoreverses: true)
-                            .delay(Double(i) * 0.1),
-                        value: pulseAnimation
-                    )
+        let activeColor = isMerchantMode ? Color(hex: "#FFAE43") : Color(hex: "#1CA8F7")
+
+        return HStack(spacing: 12) {
+            // Waveform
+            HStack(spacing: 3) {
+                ForEach(0..<5, id: \.self) { i in
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(activeColor)
+                        .frame(width: 4, height: CGFloat.random(in: 8...24))
+                        .animation(
+                            .easeInOut(duration: 0.3)
+                                .repeatForever(autoreverses: true)
+                                .delay(Double(i) * 0.1),
+                            value: pulseAnimation
+                        )
+                }
             }
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(translator.currentTranscription.isEmpty ? LocalizedString("translator.listening") : translator.currentTranscription)
-                    .font(.system(size: 14))
-                    .foregroundColor(.white)
+                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                    .foregroundColor(Color(hex: "#081754"))
                     .lineLimit(2)
 
                 Text(isMerchantMode ? LocalizedString("translator.speakInSpanish") : LocalizedString("translator.speakInYourLanguage"))
-                    .font(.system(size: 11))
-                    .foregroundColor(.white.opacity(0.4))
+                    .font(.system(size: 12, weight: .regular, design: .rounded))
+                    .foregroundColor(Color(hex: "#4A4A4A"))
             }
 
             Spacer()
         }
-        .padding(12)
+        .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.ultraThinMaterial)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(activeColor.opacity(0.08))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill((isMerchantMode ? Color.orange : Color.cyan).opacity(0.08))
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(activeColor.opacity(0.2), lineWidth: 1)
                 )
         )
         .padding(.horizontal, 20)
@@ -242,25 +256,25 @@ struct VoiceTranslatorView: View {
     // MARK: - Control Area
 
     private var controlArea: some View {
-        VStack(spacing: 16) {
-            // Toggle merchant/tourist
+        VStack(spacing: 20) {
+            // Toggle vendedor/turista
             HStack(spacing: 12) {
-                ModeButton(
+                TranslatorModeButton(
                     label: LocalizedString("translator.merchant"),
                     emoji: "🇲🇽",
                     isActive: isMerchantMode,
-                    color: .orange
+                    color: Color(hex: "#FFAE43")
                 ) { isMerchantMode = true }
 
-                ModeButton(
+                TranslatorModeButton(
                     label: LocalizedString("translator.tourist"),
                     emoji: availableLanguages.first { $0.code == selectedTouristLanguage }?.flag ?? "🌍",
                     isActive: !isMerchantMode,
-                    color: .cyan
+                    color: Color(hex: "#1CA8F7")
                 ) { isMerchantMode = false }
             }
 
-            // Big mic button
+            // Botón micrófono grande
             Button {
                 if translator.isListening {
                     translator.stopListening()
@@ -268,44 +282,50 @@ struct VoiceTranslatorView: View {
                     translator.startListening(asMerchant: isMerchantMode)
                 }
             } label: {
-                ZStack {
-                    Circle()
-                        .fill(translator.isListening
-                              ? (isMerchantMode ? Color.orange : Color.cyan)
-                              : Color.white.opacity(0.1))
-                        .frame(width: 72, height: 72)
+                let activeColor = isMerchantMode ? Color(hex: "#FFAE43") : Color(hex: "#1CA8F7")
 
+                ZStack {
+                    // Pulse ring
                     if translator.isListening {
                         Circle()
-                            .fill((isMerchantMode ? Color.orange : Color.cyan).opacity(0.3))
-                            .frame(width: 72, height: 72)
-                            .scaleEffect(CGFloat(pulseAnimation ? 1.4 : 1.0))
+                            .fill(activeColor.opacity(0.15))
+                            .frame(width: 88, height: 88)
+                            .scaleEffect(CGFloat(pulseAnimation ? 1.3 : 1.0))
                     }
+
+                    // Main circle
+                    Circle()
+                        .fill(translator.isListening ? activeColor : Color(hex: "#1C42E8"))
+                        .frame(width: 72, height: 72)
+                        .shadow(
+                            color: (translator.isListening ? activeColor : Color(hex: "#1C42E8")).opacity(0.3),
+                            radius: 16, x: 0, y: 8
+                        )
 
                     Image(systemName: translator.isListening ? "stop.fill" : "mic.fill")
                         .font(.system(size: 28, weight: .medium))
-                        .foregroundColor(translator.isListening ? .white : .white.opacity(0.7))
+                        .foregroundColor(.white)
                 }
             }
+            .accessibilityLabel(translator.isListening ? LocalizedString("translator.stopListening") : LocalizedString("translator.startListening"))
 
+            // Speaking indicator
             if translator.isSpeaking {
-                HStack(spacing: 6) {
+                HStack(spacing: 8) {
                     Image(systemName: "speaker.wave.3.fill")
-                        .font(.system(size: 12))
+                        .font(.system(size: 13, weight: .semibold))
                     Text(LocalizedString("translator.playingTranslation"))
-                        .font(.system(size: 12))
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
                 }
-                .foregroundColor(.green)
+                .foregroundColor(Color(hex: "#0ABF4F"))
                 .transition(.opacity)
             }
         }
-        .padding(20)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 24)
         .background(
-            LinearGradient(
-                colors: [.clear, Color(hex: "#0A0A1A")],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+            Color.white
+                .shadow(color: Color(hex: "#081754").opacity(0.06), radius: 16, x: 0, y: -8)
         )
     }
 
@@ -319,17 +339,23 @@ struct VoiceTranslatorView: View {
                         selectedTouristLanguage = lang.code
                         showLanguagePicker = false
                     } label: {
-                        HStack {
+                        HStack(spacing: 14) {
                             Text(lang.flag)
-                                .font(.system(size: 24))
+                                .font(.system(size: 28))
+
                             Text(lang.name)
-                                .foregroundColor(.primary)
+                                .font(.system(size: 16, weight: .medium, design: .rounded))
+                                .foregroundColor(Color(hex: "#081754"))
+
                             Spacer()
+
                             if selectedTouristLanguage == lang.code {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.cyan)
+                                    .font(.system(size: 20))
+                                    .foregroundColor(Color(hex: "#1C42E8"))
                             }
                         }
+                        .padding(.vertical, 4)
                     }
                 }
             }
@@ -338,6 +364,8 @@ struct VoiceTranslatorView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(LocalizedString("translator.done")) { showLanguagePicker = false }
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundColor(Color(hex: "#1C42E8"))
                 }
             }
         }
@@ -345,54 +373,55 @@ struct VoiceTranslatorView: View {
     }
 }
 
-// MARK: - Message Bubble
+// MARK: - Message Bubble (Coppel style)
 
-private struct MessageBubble: View {
+private struct TranslatorMessageBubble: View {
     let message: TranslationMessage
 
+    private var accentColor: Color {
+        message.isFromMerchant ? Color(hex: "#FFAE43") : Color(hex: "#1CA8F7")
+    }
+
     var body: some View {
-        VStack(alignment: message.isFromMerchant ? .leading : .trailing, spacing: 6) {
-            // Sender label
-            HStack(spacing: 4) {
+        VStack(alignment: message.isFromMerchant ? .leading : .trailing, spacing: 8) {
+            // Sender + time
+            HStack(spacing: 6) {
                 Text(message.isFromMerchant ? "🇲🇽 \(LocalizedString("translator.merchantLabel"))" : "🌍 \(LocalizedString("translator.touristLabel"))")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.4))
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundColor(accentColor)
 
                 Text(message.timestamp, style: .time)
-                    .font(.system(size: 10))
-                    .foregroundColor(.white.opacity(0.3))
+                    .font(.system(size: 11, weight: .regular, design: .monospaced))
+                    .foregroundColor(Color(hex: "#4A4A4A").opacity(0.5))
             }
 
             // Original text
             Text(message.originalText)
-                .font(.system(size: 15))
-                .foregroundColor(.white.opacity(0.6))
-                .padding(10)
+                .font(.system(size: 15, weight: .regular, design: .rounded))
+                .foregroundColor(Color(hex: "#4A4A4A"))
+                .padding(12)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.white.opacity(0.05))
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color(hex: "#EEE8E3").opacity(0.6))
                 )
 
-            // Translated text (highlighted)
-            HStack(spacing: 6) {
+            // Translated text
+            HStack(spacing: 8) {
                 Image(systemName: "arrow.right")
-                    .font(.system(size: 10))
-                    .foregroundColor(message.isFromMerchant ? .cyan : .orange)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(accentColor)
 
                 Text(message.translatedText)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white)
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .foregroundColor(Color(hex: "#081754"))
             }
-            .padding(12)
+            .padding(14)
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill((message.isFromMerchant ? Color.cyan : Color.orange).opacity(0.12))
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(accentColor.opacity(0.08))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .strokeBorder(
-                                (message.isFromMerchant ? Color.cyan : Color.orange).opacity(0.2),
-                                lineWidth: 0.5
-                            )
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(accentColor.opacity(0.2), lineWidth: 1)
                     )
             )
         }
@@ -400,9 +429,9 @@ private struct MessageBubble: View {
     }
 }
 
-// MARK: - Mode Button
+// MARK: - Mode Button (Coppel style)
 
-private struct ModeButton: View {
+private struct TranslatorModeButton: View {
     let label: String
     let emoji: String
     let isActive: Bool
@@ -411,21 +440,21 @@ private struct ModeButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 6) {
+            HStack(spacing: 8) {
                 Text(emoji)
-                    .font(.system(size: 16))
+                    .font(.system(size: 18))
                 Text(label)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(isActive ? .white : .white.opacity(0.5))
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundColor(isActive ? Color(hex: "#081754") : Color(hex: "#4A4A4A"))
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
+            .padding(.vertical, 12)
             .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(isActive ? color.opacity(0.2) : Color.white.opacity(0.03))
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(isActive ? color.opacity(0.12) : Color(hex: "#EEE8E3").opacity(0.5))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .strokeBorder(isActive ? color.opacity(0.4) : Color.clear, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .strokeBorder(isActive ? color.opacity(0.4) : Color.clear, lineWidth: 1.5)
                     )
             )
         }

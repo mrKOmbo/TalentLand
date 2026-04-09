@@ -861,6 +861,8 @@
 "translator.merchantLabel" = "Vendedor";
 "translator.touristLabel" = "Turista";
 "translator.respondedWith" = "Respondiste: %@";
+"translator.stopListening" = "Dejar de escuchar";
+"translator.startListening" = "Empezar a escuchar";
 
 // MARK: - UltraThink
 "ultrathink.title" = "UltraThink";
