@@ -47,6 +47,24 @@ struct ios_navigationApp: App {
                 print("🚨 Modo de emergencia activado desde widget")
             }
 
+        case "merchant":
+            // Abrir ficha de un comerciante por ID
+            let merchantId = url.pathComponents.dropFirst().first ?? ""
+            if let uuid = UUID(uuidString: merchantId),
+               let merchant = MerchantManager.shared.merchant(byId: uuid) {
+                DispatchQueue.main.async {
+                    // Guardar merchant ID para que ContentView lo maneje
+                    UserDefaults.standard.set(merchantId, forKey: "pendingMerchantId")
+
+                    let generator = UIImpactFeedbackGenerator(style: .medium)
+                    generator.impactOccurred()
+
+                    print("🏪 [DEEP LINK] Abriendo merchant: \(merchant.businessName)")
+                }
+            } else {
+                print("⚠️ Merchant no encontrado: \(merchantId)")
+            }
+
         case "navigation":
             // Manejar navegación
             if url.pathComponents.contains("active") {
