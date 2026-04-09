@@ -168,10 +168,11 @@
             </div>
             <div class="flex items-center gap-4 w-full xl:w-auto justify-end">
                 <div class="hidden md:block relative w-full max-w-[280px] lg:max-w-[320px]">
-                    <input class="w-full bg-white text-[#1C42E8] py-2 px-5 pr-12 rounded-full text-sm font-medium focus:ring-2 focus:ring-[#F0D224]/50 border-none placeholder:text-[#1C42E8]/50 shadow-sm" placeholder="&iquest;Qu&eacute; est&aacute;s buscando?" type="text"/>
-                    <button class="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 bg-[#F0D224] text-[#1C42E8] rounded-full flex items-center justify-center hover:scale-105 transition-transform">
+                    <input id="navSearchInput" class="w-full bg-white text-[#1C42E8] py-2 px-5 pr-12 rounded-full text-sm font-medium focus:ring-2 focus:ring-[#F0D224]/50 border-none placeholder:text-[#1C42E8]/50 shadow-sm" placeholder="Buscar negocio..." type="text" autocomplete="off"/>
+                    <button onclick="handleNavSearch()" class="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 bg-[#F0D224] text-[#1C42E8] rounded-full flex items-center justify-center hover:scale-105 transition-transform">
                         <span class="material-symbols-outlined text-[18px]">search</span>
                     </button>
+                    <div id="searchResults" class="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-[#1C42E8]/10 max-h-80 overflow-y-auto z-50 hidden"></div>
                 </div>
                 <button class="xl:hidden p-2 text-white hover:bg-white/10 rounded-lg transition-colors">
                     <span class="material-symbols-outlined">menu</span>
@@ -439,6 +440,69 @@
     function formatPrice(p) { return '$' + Number(p).toFixed(0); }
     function getMapsUrl(lat, lng, name) { return 'https://maps.apple.com/?q=' + encodeURIComponent(name) + '&ll=' + lat + ',' + lng; }
     function escapeHtml(t) { var d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+    // ===== Nav Search =====
+    var searchTimeout = null;
+    var navSearchInput = document.getElementById('navSearchInput');
+    var searchResultsDiv = document.getElementById('searchResults');
+
+    if (navSearchInput) {
+        navSearchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            var q = this.value.trim().toLowerCase();
+            if (q.length < 2) { searchResultsDiv.classList.add('hidden'); return; }
+            searchTimeout = setTimeout(function() { searchMerchants(q); }, 300);
+        });
+
+        navSearchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); handleNavSearch(); }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!navSearchInput.contains(e.target) && !searchResultsDiv.contains(e.target)) {
+                searchResultsDiv.classList.add('hidden');
+            }
+        });
+    }
+
+    function handleNavSearch() {
+        var q = navSearchInput ? navSearchInput.value.trim().toLowerCase() : '';
+        if (q.length < 2) return;
+        searchMerchants(q);
+    }
+
+    async function searchMerchants(query) {
+        try {
+            var res = await fetch(SUPABASE_URL + '/merchants?select=*&is_active=eq.true&or=(business_name.ilike.*' + encodeURIComponent(query) + '*,category.ilike.*' + encodeURIComponent(query) + '*,description.ilike.*' + encodeURIComponent(query) + '*)', {
+                headers: { 'apikey': SUPABASE_KEY }
+            });
+            var results = await res.json();
+
+            if (!results || results.length === 0) {
+                searchResultsDiv.innerHTML = '<div class="p-4 text-center text-sm text-[#1C42E8]/50 font-medium">No se encontraron resultados</div>';
+                searchResultsDiv.classList.remove('hidden');
+                return;
+            }
+
+            var html = '';
+            results.forEach(function(m) {
+                var cat = categories[m.category] || categories.otro;
+                html += '<a href="/biz?id=' + m.id + '" class="flex items-center gap-3 px-4 py-3 hover:bg-[#1C42E8]/5 transition-colors border-b border-[#1C42E8]/5 last:border-0">' +
+                    '<span class="text-2xl">' + (m.emoji || '🏪') + '</span>' +
+                    '<div class="flex-1 min-w-0">' +
+                    '<div class="text-sm font-bold text-[#1C42E8] truncate">' + escapeHtml(m.business_name) + '</div>' +
+                    '<div class="text-xs text-[#1C42E8]/50 font-medium">' + cat.name + '</div>' +
+                    '</div>' +
+                    '<span class="material-symbols-outlined text-[#1C42E8]/30 text-base">arrow_forward</span>' +
+                    '</a>';
+            });
+
+            searchResultsDiv.innerHTML = html;
+            searchResultsDiv.classList.remove('hidden');
+        } catch(e) {
+            console.error('Search error:', e);
+        }
+    }
 
     function openAteneaApp() {
         var start = Date.now();
