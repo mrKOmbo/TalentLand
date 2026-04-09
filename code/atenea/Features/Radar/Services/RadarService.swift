@@ -2,35 +2,50 @@
 //  RadarService.swift
 //  atenea
 //
-//  Servicio de radar P2P usando MultipeerConnectivity.
-//  Merchants se anuncian, clientes descubren — sin internet, sin conectar.
-//
-//  Inspirado en bitchat BLEService (public domain) pero simplificado:
-//  - No requiere conexión (solo discovery via MPC browser/advertiser)
-//  - discoveryInfo lleva nombre, categoría, emoji directamente
-//  - Funciona con WiFi y Bluetooth simultáneamente
+//  Servicio de radar BLE dual-role inspirado en bitchat.
+//  Merchants se anuncian via CBPeripheralManager, clientes descubren via CBCentralManager.
+//  Data exchange (timbres) via GATT characteristic write + notify.
+//  Funciona en background con bluetooth-central/peripheral modes.
 //
 
 import Foundation
 internal import Combine
-import MultipeerConnectivity
+import CoreBluetooth
 import SwiftUI
-// MARK: - Discovered Peer
+
+// MARK: - BLE UUIDs (Atenea)
+
+struct AteneaBLE {
+    static let serviceUUID = CBUUID(string: "A1E2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D")
+    static let timbreCharUUID = CBUUID(string: "B2F3D4E5-F6A7-5B6C-9D0E-1F2A3B4C5D6E")
+
+    static let centralRestoreKey = "com.atenea.ble.central"
+    static let peripheralRestoreKey = "com.atenea.ble.peripheral"
+
+    // Duty cycling
+    static let scanOnDuration: TimeInterval = 5.0
+    static let scanOffDuration: TimeInterval = 10.0
+    static let pruneInterval: TimeInterval = 10.0
+    static let staleTimeout: TimeInterval = 90.0
+}
+
+// MARK: - Discovered Peer (BLE)
 
 struct RadarPeer: Identifiable, Equatable {
-    let id: String // MCPeerID.displayName
-    let peerID: MCPeerID
+    let id: String                     // peripheral.identifier.uuidString
+    var peripheral: CBPeripheral?      // referencia para conexión y write
     let businessName: String
     let category: String
     let emoji: String
     let isStatic: Bool
     var lastSeen: Date
     var signalStrength: SignalStrength
+    var rssi: Int                      // RSSI real del BLE scan
 
     enum SignalStrength: String {
-        case strong = "strong"   // Descubierto recientemente
-        case medium = "medium"   // Hace 30s+
-        case weak = "weak"       // Hace 60s+, a punto de perderse
+        case strong = "strong"
+        case medium = "medium"
+        case weak = "weak"
 
         var color: SwiftUI.Color {
             switch self {
@@ -39,10 +54,16 @@ struct RadarPeer: Identifiable, Equatable {
             case .weak: return .orange
             }
         }
+
+        static func from(rssi: Int) -> SignalStrength {
+            if rssi > -60 { return .strong }
+            if rssi > -80 { return .medium }
+            return .weak
+        }
     }
 
     var isStale: Bool {
-        Date().timeIntervalSince(lastSeen) > 90
+        Date().timeIntervalSince(lastSeen) > AteneaBLE.staleTimeout
     }
 
     static func == (lhs: RadarPeer, rhs: RadarPeer) -> Bool {
@@ -50,75 +71,94 @@ struct RadarPeer: Identifiable, Equatable {
     }
 }
 
-// MARK: - Radar Service
+// MARK: - Radar Service (CoreBluetooth dual-role)
 
 class RadarService: NSObject, ObservableObject {
     static let shared = RadarService()
 
-    // MARK: - Published State
+    // MARK: - Published State (misma API pública — consumidores no cambian)
 
     @Published var discoveredMerchants: [RadarPeer] = []
-    @Published var connectedPeers: [MCPeerID] = []
     @Published var isScanning = false
     @Published var isAdvertising = false
     @Published var radarStatus: String = "Inactivo"
 
-    // MARK: - MPC
+    // Mapeo peerID string → nombre para rutear respuestas
+    var peerMerchantMap: [String: String] = [:]
 
-    private let serviceType = "atenea-rdr"
-    private var myPeerID: MCPeerID
-    private var advertiser: MCNearbyServiceAdvertiser?
-    private var browser: MCNearbyServiceBrowser?
-    private var session: MCSession?
+    // MARK: - CoreBluetooth Managers
+
+    private var centralManager: CBCentralManager!
+    private var peripheralManager: CBPeripheralManager!
+    private let bleQueue = DispatchQueue(label: "com.atenea.ble.queue", qos: .userInitiated)
+
+    // Peripheral state (merchant)
+    private var timbreCharacteristic: CBMutableCharacteristic?
+    private var timbreService: CBMutableService?
+    private var subscribedCentrals: [CBCentral] = []
+    private var currentMerchantInfo: String?
+
+    // Central state (client)
+    private var discoveredPeripherals: [UUID: CBPeripheral] = [:]
+    private var connectedPeripheral: CBPeripheral?
+    private var remoteTimbreCharacteristic: CBCharacteristic?
+
+    // Timers
+    private var scanDutyTimer: Timer?
     private var pruneTimer: Timer?
-    private var refreshTimer: Timer?
+    private var isScanDutyOn = true
 
-    // Mapeo peerID → nombre para rutear respuestas
-    var peerMerchantMap: [MCPeerID: String] = [:]
+    // Pending operations
+    private var pendingTimbreToSend: (data: Data, peripheral: CBPeripheral)?
+    private var pendingScanStart = false
+    private var pendingAdvertiseInfo: String?
 
     // MARK: - Init
 
     private override init() {
-        self.myPeerID = MCPeerID(displayName: UIDevice.current.name)
         super.init()
+        centralManager = CBCentralManager(
+            delegate: self,
+            queue: bleQueue,
+            options: [CBCentralManagerOptionRestoreIdentifierKey: AteneaBLE.centralRestoreKey]
+        )
+        peripheralManager = CBPeripheralManager(
+            delegate: self,
+            queue: bleQueue,
+            options: [CBPeripheralManagerOptionRestoreIdentifierKey: AteneaBLE.peripheralRestoreKey]
+        )
+        print("📡 [BLE] RadarService inicializado con CoreBluetooth dual-role")
     }
 
-    // MARK: - Merchant: Anunciarse
+    // MARK: - Merchant: Anunciarse via BLE Peripheral
 
-    /// El merchant se anuncia para que clientes cercanos lo descubran.
-    /// discoveryInfo se transmite en el beacon — no requiere conexión.
     func startAdvertising(merchant: Merchant) {
         stopAdvertising()
 
-        let discoveryInfo: [String: String] = [
-            "name": String(merchant.businessName.prefix(30)),
-            "cat": merchant.category.rawValue,
-            "emoji": merchant.emoji,
-            "static": merchant.isStatic ? "1" : "0"
-        ]
+        let name = String(merchant.businessName.prefix(20))
+        let info = "\(merchant.emoji)|\(name)|\(merchant.category.rawValue)|\(merchant.isStatic ? "1" : "0")"
+        currentMerchantInfo = info
 
-        session = MCSession(peer: myPeerID, securityIdentity: nil, encryptionPreference: .none)
-        session?.delegate = self
-
-        advertiser = MCNearbyServiceAdvertiser(
-            peer: myPeerID,
-            discoveryInfo: discoveryInfo,
-            serviceType: serviceType
-        )
-        advertiser?.delegate = self
-        advertiser?.startAdvertisingPeer()
-
-        DispatchQueue.main.async {
-            self.isAdvertising = true
-            self.radarStatus = "Anunciando: \(merchant.businessName)"
+        guard peripheralManager.state == .poweredOn else {
+            pendingAdvertiseInfo = info
+            print("📡 [BLE Periph] ⏳ Esperando poweredOn para anunciar: \(name)")
+            return
         }
 
-        print("📡 [Radar] Merchant anunciándose: \(merchant.businessName)")
+        setupPeripheralService()
+        startPeripheralAdvertising(info: info)
     }
 
     func stopAdvertising() {
-        advertiser?.stopAdvertisingPeer()
-        advertiser = nil
+        peripheralManager.stopAdvertising()
+        if let service = timbreService {
+            peripheralManager.remove(service)
+        }
+        timbreService = nil
+        timbreCharacteristic = nil
+        subscribedCentrals.removeAll()
+        currentMerchantInfo = nil
+        pendingAdvertiseInfo = nil
 
         DispatchQueue.main.async {
             self.isAdvertising = false
@@ -126,46 +166,107 @@ class RadarService: NSObject, ObservableObject {
                 self.radarStatus = "Inactivo"
             }
         }
-
-        print("📡 [Radar] Dejó de anunciarse")
+        print("📡 [BLE Periph] Dejó de anunciarse")
     }
 
-    // MARK: - Client: Escanear
+    private func setupPeripheralService() {
+        let characteristic = CBMutableCharacteristic(
+            type: AteneaBLE.timbreCharUUID,
+            properties: [.write, .writeWithoutResponse, .notify],
+            value: nil,
+            permissions: [.writeable]
+        )
+        timbreCharacteristic = characteristic
 
-    /// El cliente escanea para descubrir merchants cercanos.
-    /// foundPeer da peerID + discoveryInfo sin necesidad de conectar.
+        let service = CBMutableService(type: AteneaBLE.serviceUUID, primary: true)
+        service.characteristics = [characteristic]
+        timbreService = service
+
+        peripheralManager.add(service)
+        print("📡 [BLE Periph] GATT service agregado")
+    }
+
+    private func startPeripheralAdvertising(info: String) {
+        peripheralManager.startAdvertising([
+            CBAdvertisementDataServiceUUIDsKey: [AteneaBLE.serviceUUID],
+            CBAdvertisementDataLocalNameKey: info
+        ])
+        DispatchQueue.main.async {
+            self.isAdvertising = true
+            let name = info.components(separatedBy: "|").dropFirst().first ?? "merchant"
+            self.radarStatus = "Anunciando: \(name)"
+        }
+        print("📡 [BLE Periph] Anunciando: \(info)")
+    }
+
+    // MARK: - Client: Escanear via BLE Central
+
     func startScanning() {
         stopScanning()
 
-        session = MCSession(peer: myPeerID, securityIdentity: nil, encryptionPreference: .none)
-        session?.delegate = self
+        guard centralManager.state == .poweredOn else {
+            pendingScanStart = true
+            print("🔍 [BLE Central] ⏳ Esperando poweredOn para escanear")
+            return
+        }
 
-        browser = MCNearbyServiceBrowser(peer: myPeerID, serviceType: serviceType)
-        browser?.delegate = self
-        browser?.startBrowsingForPeers()
+        beginScan()
+    }
 
-        // Timer para actualizar signal strength y limpiar stale peers
-        pruneTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { [weak self] _ in
+    private func beginScan() {
+        centralManager.scanForPeripherals(
+            withServices: [AteneaBLE.serviceUUID],
+            options: [CBCentralManagerScanOptionAllowDuplicatesKey: true]
+        )
+
+        scanDutyTimer?.invalidate()
+        scanDutyTimer = Timer.scheduledTimer(withTimeInterval: AteneaBLE.scanOnDuration, repeats: false) { [weak self] _ in
+            self?.dutyCyclePause()
+        }
+
+        pruneTimer?.invalidate()
+        pruneTimer = Timer.scheduledTimer(withTimeInterval: AteneaBLE.pruneInterval, repeats: true) { [weak self] _ in
             self?.pruneAndUpdateSignals()
         }
 
-        // UI se refresca automáticamente via @Published properties
-
+        isScanDutyOn = true
         DispatchQueue.main.async {
             self.isScanning = true
             self.radarStatus = "Escaneando..."
         }
+        print("🔍 [BLE Central] Escaneando merchants...")
+    }
 
-        print("🔍 [Radar] Escaneando merchants cercanos...")
+    private func dutyCyclePause() {
+        guard isScanning else { return }
+        centralManager.stopScan()
+        isScanDutyOn = false
+
+        scanDutyTimer = Timer.scheduledTimer(withTimeInterval: AteneaBLE.scanOffDuration, repeats: false) { [weak self] _ in
+            self?.dutyCycleResume()
+        }
+    }
+
+    private func dutyCycleResume() {
+        guard isScanning else { return }
+        centralManager.scanForPeripherals(
+            withServices: [AteneaBLE.serviceUUID],
+            options: [CBCentralManagerScanOptionAllowDuplicatesKey: true]
+        )
+        isScanDutyOn = true
+
+        scanDutyTimer = Timer.scheduledTimer(withTimeInterval: AteneaBLE.scanOnDuration, repeats: false) { [weak self] _ in
+            self?.dutyCyclePause()
+        }
     }
 
     func stopScanning() {
-        browser?.stopBrowsingForPeers()
-        browser = nil
+        centralManager.stopScan()
+        scanDutyTimer?.invalidate()
+        scanDutyTimer = nil
         pruneTimer?.invalidate()
         pruneTimer = nil
-        refreshTimer?.invalidate()
-        refreshTimer = nil
+        pendingScanStart = false
 
         DispatchQueue.main.async {
             self.isScanning = false
@@ -173,8 +274,29 @@ class RadarService: NSObject, ObservableObject {
                 self.radarStatus = "Inactivo"
             }
         }
+        print("🔍 [BLE Central] Dejó de escanear")
+    }
 
-        print("🔍 [Radar] Dejó de escanear")
+    // MARK: - Stop All
+
+    func stopAll() {
+        stopAdvertising()
+        stopScanning()
+
+        for (_, peripheral) in discoveredPeripherals {
+            if peripheral.state == .connected || peripheral.state == .connecting {
+                centralManager.cancelPeripheralConnection(peripheral)
+            }
+        }
+        discoveredPeripherals.removeAll()
+        connectedPeripheral = nil
+        remoteTimbreCharacteristic = nil
+
+        DispatchQueue.main.async {
+            self.discoveredMerchants.removeAll()
+            self.peerMerchantMap.removeAll()
+            self.radarStatus = "Inactivo"
+        }
     }
 
     // MARK: - Queries
@@ -187,132 +309,112 @@ class RadarService: NSObject, ObservableObject {
         discoveredMerchants.filter { !$0.isStale }.map(\.businessName)
     }
 
-    // MARK: - Stop All
+    // MARK: - P2P Timbre via GATT
 
-    func stopAll() {
-        stopAdvertising()
-        stopScanning()
-        DispatchQueue.main.async {
-            self.discoveredMerchants.removeAll()
-            self.connectedPeers.removeAll()
-            self.peerMerchantMap.removeAll()
-            self.radarStatus = "Inactivo"
-        }
-    }
-
-    // MARK: - P2P Timbre (envío de datos reales entre dispositivos)
-
-    /// Cliente invita a un merchant para enviarle un timbre
-    func connectToPeer(_ peer: RadarPeer) {
-        guard let browser = browser, let session = session else {
-            print("📡 [Radar P2P] ❌ No hay browser/session activo")
-            return
-        }
-        browser.invitePeer(peer.peerID, to: session, withContext: "timbre".data(using: .utf8), timeout: 10)
-        peerMerchantMap[peer.peerID] = peer.businessName
-        print("📡 [Radar P2P] 📤 Invitación enviada a \(peer.businessName)")
-    }
-
-    /// Envía un mensaje P2P a un peer conectado
-    func sendP2P(_ message: TimbreP2PMessage, to peerID: MCPeerID) {
-        guard let session = session else {
-            print("📡 [Radar P2P] ❌ No hay session")
-            return
-        }
-        do {
-            let data = try JSONEncoder().encode(message)
-            try session.send(data, toPeers: [peerID], with: .reliable)
-            print("📡 [Radar P2P] ✅ Mensaje enviado (\(data.count) bytes) a \(peerID.displayName)")
-        } catch {
-            print("📡 [Radar P2P] ❌ Error enviando: \(error.localizedDescription)")
-        }
-    }
-
-    /// Envía timbre al merchant — conecta si no está conectado, luego envía
+    /// Cliente envía timbre al merchant via BLE write
     func sendTimbreP2P(_ timbre: TimbreEvent, to peer: RadarPeer) {
-        let peerID = peer.peerID
+        guard let peripheral = peer.peripheral else {
+            print("📡 [BLE P2P] ❌ No hay peripheral para \(peer.businessName)")
+            return
+        }
 
-        if connectedPeers.contains(peerID) {
-            // Ya conectado, enviar directo
-            sendP2P(.timbreEvent(timbre), to: peerID)
-        } else {
-            // Conectar primero, luego enviar cuando la conexión se establezca
-            connectToPeer(peer)
-            // Guardar el timbre para enviarlo cuando se conecte
-            pendingTimbreToSend = (timbre, peerID)
-            print("📡 [Radar P2P] ⏳ Conectando a \(peer.businessName) — timbre en cola")
+        do {
+            let message = TimbreP2PMessage.timbreEvent(timbre)
+            let data = try JSONEncoder().encode(message)
+
+            if peripheral.state == .connected, let char = remoteTimbreCharacteristic {
+                peripheral.writeValue(data, for: char, type: .withResponse)
+                print("📡 [BLE P2P] ✅ Timbre enviado a \(peer.businessName) (\(data.count) bytes)")
+            } else {
+                pendingTimbreToSend = (data, peripheral)
+                centralManager.connect(peripheral, options: nil)
+                print("📡 [BLE P2P] ⏳ Conectando a \(peer.businessName) para enviar timbre...")
+            }
+        } catch {
+            print("📡 [BLE P2P] ❌ Error codificando timbre: \(error)")
         }
     }
 
-    /// Timbre pendiente de envío (esperando conexión)
-    private var pendingTimbreToSend: (timbre: TimbreEvent, peer: MCPeerID)?
+    /// Merchant envía respuesta al cliente via BLE notify
+    func sendResponseP2P(_ response: TimbreResponse, to peerID: String) {
+        guard let char = timbreCharacteristic else {
+            print("📡 [BLE P2P] ❌ No hay characteristic para responder")
+            return
+        }
 
-    /// Envía respuesta de timbre al cliente
-    func sendResponseP2P(_ response: TimbreResponse, to peerID: MCPeerID) {
-        sendP2P(.timbreResponse(response), to: peerID)
-    }
+        do {
+            let message = TimbreP2PMessage.timbreResponse(response)
+            let data = try JSONEncoder().encode(message)
 
-    /// Busca el peerID de un merchant por nombre
-    func peerForMerchant(named name: String) -> MCPeerID? {
-        peerMerchantMap.first(where: { $0.value == name })?.key
+            let sent = peripheralManager.updateValue(data, for: char, onSubscribedCentrals: nil)
+            print("📡 [BLE P2P] \(sent ? "✅" : "⏳") Respuesta \(sent ? "enviada" : "en cola") (\(data.count) bytes)")
+        } catch {
+            print("📡 [BLE P2P] ❌ Error codificando respuesta: \(error)")
+        }
     }
 
     // MARK: - Internal
 
     private func pruneAndUpdateSignals() {
         DispatchQueue.main.async {
-            let now = Date()
-
-            // Remover stale (>90s sin ver)
             self.discoveredMerchants.removeAll { $0.isStale }
-
-            // Actualizar signal strength
-            for i in self.discoveredMerchants.indices {
-                let elapsed = now.timeIntervalSince(self.discoveredMerchants[i].lastSeen)
-                if elapsed < 15 {
-                    self.discoveredMerchants[i].signalStrength = .strong
-                } else if elapsed < 45 {
-                    self.discoveredMerchants[i].signalStrength = .medium
-                } else {
-                    self.discoveredMerchants[i].signalStrength = .weak
-                }
-            }
+            self.objectWillChange.send()
         }
+    }
+
+    private func parseAdvertisementName(_ localName: String) -> (emoji: String, name: String, category: String, isStatic: Bool)? {
+        let parts = localName.components(separatedBy: "|")
+        guard parts.count >= 4 else { return nil }
+        return (emoji: parts[0], name: parts[1], category: parts[2], isStatic: parts[3] == "1")
     }
 }
 
-// MARK: - MCNearbyServiceBrowserDelegate (Client descubre merchants)
+// MARK: - CBCentralManagerDelegate (Cliente descubre merchants)
 
-extension RadarService: MCNearbyServiceBrowserDelegate {
+extension RadarService: CBCentralManagerDelegate {
 
-    func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String: String]?) {
-        let name = info?["name"] ?? peerID.displayName
-        let category = info?["cat"] ?? "otro"
-        let emoji = info?["emoji"] ?? "🛒"
-        let isStatic = info?["static"] == "1"
+    func centralManagerDidUpdateState(_ central: CBCentralManager) {
+        print("🔍 [BLE Central] Estado: \(central.state.rawValue)")
+        if central.state == .poweredOn && pendingScanStart {
+            pendingScanStart = false
+            beginScan()
+        }
+    }
 
-        print("📍 [Radar] Descubierto: \(emoji) \(name) (\(category))")
+    func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
+        let rssiValue = RSSI.intValue
+        guard rssiValue != 127, rssiValue < 0 else { return }
+
+        let localName = advertisementData[CBAdvertisementDataLocalNameKey] as? String ?? ""
+        guard let info = parseAdvertisementName(localName) else { return }
+
+        let peerId = peripheral.identifier.uuidString
 
         DispatchQueue.main.async {
-            // Si ya existe, actualizar lastSeen
-            if let index = self.discoveredMerchants.firstIndex(where: { $0.peerID == peerID }) {
+            self.discoveredPeripherals[peripheral.identifier] = peripheral
+
+            if let index = self.discoveredMerchants.firstIndex(where: { $0.id == peerId }) {
                 self.discoveredMerchants[index].lastSeen = Date()
-                self.discoveredMerchants[index].signalStrength = .strong
+                self.discoveredMerchants[index].rssi = rssiValue
+                self.discoveredMerchants[index].signalStrength = RadarPeer.SignalStrength.from(rssi: rssiValue)
+                self.discoveredMerchants[index].peripheral = peripheral
             } else {
-                // Nuevo merchant descubierto
                 let peer = RadarPeer(
-                    id: peerID.displayName,
-                    peerID: peerID,
-                    businessName: name,
-                    category: category,
-                    emoji: emoji,
-                    isStatic: isStatic,
+                    id: peerId,
+                    peripheral: peripheral,
+                    businessName: info.name,
+                    category: info.category,
+                    emoji: info.emoji,
+                    isStatic: info.isStatic,
                     lastSeen: Date(),
-                    signalStrength: .strong
+                    signalStrength: RadarPeer.SignalStrength.from(rssi: rssiValue),
+                    rssi: rssiValue
                 )
                 self.discoveredMerchants.append(peer)
+                self.peerMerchantMap[peerId] = info.name
 
-                // Haptic feedback al descubrir nuevo
+                print("📍 [BLE] Descubierto: \(info.emoji) \(info.name) (\(info.category)) RSSI: \(rssiValue)")
+
                 let generator = UIImpactFeedbackGenerator(style: .light)
                 generator.impactOccurred()
             }
@@ -321,100 +423,156 @@ extension RadarService: MCNearbyServiceBrowserDelegate {
         }
     }
 
-    func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
-        print("👋 [Radar] Perdido: \(peerID.displayName)")
+    func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
+        print("📡 [BLE] 🤝 Conectado a \(peripheral.name ?? peripheral.identifier.uuidString)")
+        peripheral.delegate = self
+        peripheral.discoverServices([AteneaBLE.serviceUUID])
+        connectedPeripheral = peripheral
+    }
 
-        DispatchQueue.main.async {
-            // No remover inmediatamente — marcar como weak y dejar que prune lo limpie
-            if let index = self.discoveredMerchants.firstIndex(where: { $0.peerID == peerID }) {
-                self.discoveredMerchants[index].signalStrength = .weak
+    func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
+        print("📡 [BLE] ❌ Falló conexión: \(error?.localizedDescription ?? "unknown")")
+        pendingTimbreToSend = nil
+    }
+
+    func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
+        if connectedPeripheral?.identifier == peripheral.identifier {
+            connectedPeripheral = nil
+            remoteTimbreCharacteristic = nil
+        }
+    }
+
+    func centralManager(_ central: CBCentralManager, willRestoreState dict: [String: Any]) {
+        print("📡 [BLE Central] 🔄 Background restore")
+        if let peripherals = dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral] {
+            for p in peripherals {
+                discoveredPeripherals[p.identifier] = p
+                p.delegate = self
             }
         }
     }
 }
 
-// MARK: - MCNearbyServiceAdvertiserDelegate (Merchant recibe invitaciones)
+// MARK: - CBPeripheralDelegate (Cliente descubre services del merchant)
 
-extension RadarService: MCNearbyServiceAdvertiserDelegate {
+extension RadarService: CBPeripheralDelegate {
 
-    func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
-        // Aceptar invitaciones de timbre
-        let contextStr = context.flatMap { String(data: $0, encoding: .utf8) } ?? ""
-        if contextStr == "timbre" {
-            print("📡 [Radar P2P] 📥 Invitación de timbre aceptada de \(peerID.displayName)")
-            invitationHandler(true, self.session)
-        } else {
-            // Aceptar todas las demás también (para flexibilidad)
-            print("📡 [Radar P2P] 📥 Invitación aceptada de \(peerID.displayName) (contexto: \(contextStr))")
-            invitationHandler(true, self.session)
+    func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
+        guard let services = peripheral.services else { return }
+        for service in services where service.uuid == AteneaBLE.serviceUUID {
+            peripheral.discoverCharacteristics([AteneaBLE.timbreCharUUID], for: service)
         }
     }
 
-    func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
-        print("❌ [Radar] Error al anunciar: \(error.localizedDescription)")
-        DispatchQueue.main.async {
-            self.radarStatus = "Error: \(error.localizedDescription)"
-            self.isAdvertising = false
-        }
-    }
-}
+    func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
+        guard let chars = service.characteristics else { return }
+        for char in chars where char.uuid == AteneaBLE.timbreCharUUID {
+            remoteTimbreCharacteristic = char
+            peripheral.setNotifyValue(true, for: char)
 
-// MARK: - MCSessionDelegate (P2P data exchange)
-
-extension RadarService: MCSessionDelegate {
-
-    func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
-        DispatchQueue.main.async {
-            switch state {
-            case .connected:
-                if !self.connectedPeers.contains(peerID) {
-                    self.connectedPeers.append(peerID)
-                }
-                print("📡 [Radar P2P] 🤝 Conectado con \(peerID.displayName)")
-
-                // Si hay un timbre pendiente de envío, enviarlo ahora
-                if let pending = self.pendingTimbreToSend, pending.peer == peerID {
-                    self.sendP2P(.timbreEvent(pending.timbre), to: peerID)
-                    self.pendingTimbreToSend = nil
-                }
-
-            case .notConnected:
-                self.connectedPeers.removeAll { $0 == peerID }
-                print("📡 [Radar P2P] 👋 Desconectado de \(peerID.displayName)")
-
-            case .connecting:
-                print("📡 [Radar P2P] ⏳ Conectando con \(peerID.displayName)...")
-
-            @unknown default:
-                break
+            // Enviar timbre pendiente
+            if let pending = pendingTimbreToSend, pending.peripheral.identifier == peripheral.identifier {
+                peripheral.writeValue(pending.data, for: char, type: .withResponse)
+                print("📡 [BLE] ✅ Timbre pendiente enviado (\(pending.data.count) bytes)")
+                pendingTimbreToSend = nil
             }
         }
     }
 
-    func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
+    func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
+        if let error = error {
+            print("📡 [BLE] ❌ Write error: \(error.localizedDescription)")
+        }
+    }
+
+    func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
+        guard let data = characteristic.value else { return }
         do {
             let message = try JSONDecoder().decode(TimbreP2PMessage.self, from: data)
-            print("📡 [Radar P2P] 📨 Mensaje recibido de \(peerID.displayName) (\(data.count) bytes)")
-
             DispatchQueue.main.async {
-                switch message {
-                case .timbreEvent(let timbre):
-                    // Soy merchant, recibí un timbre de un cliente
-                    TimbreManager.shared.receiveTimbre(timbre)
-                    // Guardar mapping para poder responder
-                    self.peerMerchantMap[peerID] = timbre.clientName
-
-                case .timbreResponse(let response):
-                    // Soy cliente, recibí respuesta del merchant
+                if case .timbreResponse(let response) = message {
                     TimbreManager.shared.receiveResponse(response)
+                    print("📡 [BLE] 📨 Respuesta recibida del merchant")
                 }
             }
         } catch {
-            print("📡 [Radar P2P] ❌ Error decodificando mensaje: \(error.localizedDescription)")
+            print("📡 [BLE] ❌ Error decodificando notify: \(error)")
+        }
+    }
+}
+
+// MARK: - CBPeripheralManagerDelegate (Merchant anuncia y recibe timbres)
+
+extension RadarService: CBPeripheralManagerDelegate {
+
+    func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
+        print("📡 [BLE Periph] Estado: \(peripheral.state.rawValue)")
+        if peripheral.state == .poweredOn, let info = pendingAdvertiseInfo {
+            pendingAdvertiseInfo = nil
+            setupPeripheralService()
+            startPeripheralAdvertising(info: info)
         }
     }
 
-    func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {}
-    func session(_ session: MCSession, didStartReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, with progress: Progress) {}
-    func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?) {}
+    func peripheralManager(_ peripheral: CBPeripheralManager, didAdd service: CBService, error: Error?) {
+        if let error = error {
+            print("📡 [BLE Periph] ❌ Error service: \(error.localizedDescription)")
+        }
+    }
+
+    func peripheralManagerDidStartAdvertising(_ peripheral: CBPeripheralManager, error: Error?) {
+        if let error = error {
+            print("📡 [BLE Periph] ❌ Error advertising: \(error.localizedDescription)")
+            DispatchQueue.main.async { self.isAdvertising = false }
+        }
+    }
+
+    func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
+        for request in requests {
+            guard request.characteristic.uuid == AteneaBLE.timbreCharUUID,
+                  let data = request.value else {
+                peripheral.respond(to: request, withResult: .unlikelyError)
+                continue
+            }
+
+            peripheral.respond(to: request, withResult: .success)
+
+            do {
+                let message = try JSONDecoder().decode(TimbreP2PMessage.self, from: data)
+                DispatchQueue.main.async {
+                    if case .timbreEvent(let timbre) = message {
+                        TimbreManager.shared.receiveTimbre(timbre)
+                        self.peerMerchantMap[request.central.identifier.uuidString] = timbre.clientName
+                        print("🔔 [BLE] ⚡ TIMBRE de \(timbre.clientName): \(timbre.type.displayName)")
+                    }
+                }
+            } catch {
+                print("📡 [BLE Periph] ❌ Error decodificando: \(error)")
+            }
+        }
+    }
+
+    func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didSubscribeTo characteristic: CBCharacteristic) {
+        if !subscribedCentrals.contains(where: { $0.identifier == central.identifier }) {
+            subscribedCentrals.append(central)
+        }
+    }
+
+    func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didUnsubscribeFrom characteristic: CBCharacteristic) {
+        subscribedCentrals.removeAll { $0.identifier == central.identifier }
+    }
+
+    func peripheralManagerIsReady(toUpdateSubscribers peripheral: CBPeripheralManager) {
+        // Retry de notify si la cola estaba llena
+    }
+
+    func peripheralManager(_ peripheral: CBPeripheralManager, willRestoreState dict: [String: Any]) {
+        print("📡 [BLE Periph] 🔄 Background restore")
+        if let services = dict[CBPeripheralManagerRestoredStateServicesKey] as? [CBMutableService] {
+            for service in services {
+                timbreService = service
+                timbreCharacteristic = service.characteristics?.first as? CBMutableCharacteristic
+            }
+        }
+    }
 }

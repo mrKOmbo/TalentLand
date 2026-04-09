@@ -109,15 +109,16 @@ class TimbreManager: ObservableObject {
 
         lastResponse = response
 
-        // Enviar respuesta por P2P al cliente
+        // Enviar respuesta por BLE notify al cliente
         if let timbre = pendingTimbres.first(where: { $0.id == timbreId }) {
-            // Buscar el peer del cliente que envió este timbre
-            let clientPeerID = RadarService.shared.connectedPeers.first { peer in
-                RadarService.shared.peerMerchantMap[peer] == timbre.clientName
-            }
-            if let clientPeer = clientPeerID {
-                RadarService.shared.sendResponseP2P(response, to: clientPeer)
-                print("🔔 [Timbre P2P] 📤 Respuesta enviada al cliente \(timbre.clientName)")
+            let clientPeerID = RadarService.shared.peerMerchantMap.first(where: { $0.value == timbre.clientName })?.key
+            if let peerID = clientPeerID {
+                RadarService.shared.sendResponseP2P(response, to: peerID)
+                print("🔔 [Timbre BLE] 📤 Respuesta enviada al cliente \(timbre.clientName)")
+            } else {
+                // Fallback: notify a todos los suscritos
+                RadarService.shared.sendResponseP2P(response, to: "")
+                print("🔔 [Timbre BLE] 📤 Respuesta broadcast a todos los suscritos")
             }
         }
 

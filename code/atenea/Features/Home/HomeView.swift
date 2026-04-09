@@ -87,18 +87,16 @@ struct MerchantHomeView: View {
     }
 
     var body: some View {
-        GeometryReader { geo in
-            let topInset = geo.safeAreaInsets.top
-            ZStack {
+        ZStack {
+            Color(hex: "#F5F3F0")
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                // Spacer para safe area top (leído desde window)
                 Color(hex: "#F5F3F0")
-                    .ignoresSafeArea()
+                    .frame(height: (UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first?.windows.first?.safeAreaInsets.top ?? 54) + 8)
 
-                VStack(spacing: 0) {
-                    // Spacer dinámico que empuja contenido debajo del safe area
-                    Color(hex: "#F5F3F0")
-                        .frame(height: topInset)
-
-                    ScrollView(showsIndicators: false) {
+                ScrollView(showsIndicators: false) {
                         VStack(spacing: 16) {
                             // Header
                             merchantHeader
@@ -163,8 +161,7 @@ struct MerchantHomeView: View {
                 .zIndex(100)
             }
 
-            } // ZStack
-        } // GeometryReader
+        } // ZStack
         .onAppear {
             Task { @MainActor in
                 // Cargar datos ANTES de mostrar la UI
@@ -450,20 +447,18 @@ struct CustomerHomeView: View {
     }
 
     var body: some View {
-        GeometryReader { geo in
-            let topInset = geo.safeAreaInsets.top
-            ZStack {
+        ZStack {
+            Color(hex: "#F5F3F0")
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
                 Color(hex: "#F5F3F0")
-                    .ignoresSafeArea()
+                    .frame(height: (UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first?.windows.first?.safeAreaInsets.top ?? 54) + 8)
 
-                VStack(spacing: 0) {
-                    Color(hex: "#F5F3F0")
-                        .frame(height: topInset)
-
-                    ScrollView(showsIndicators: false) {
-                        VStack(spacing: 16) {
-                            // Header
-                            customerHeader
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 16) {
+                        // Header
+                        customerHeader
 
                     // Radar P2P — merchants detectados en vivo
                     radarSection
@@ -489,9 +484,8 @@ struct CustomerHomeView: View {
                 .padding(.top, 16)
                 .padding(.bottom, 16)
             }
-                } // VStack
-            } // ZStack
-        } // GeometryReader
+            } // VStack
+        } // ZStack
         .onAppear {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.1)) {
                 animateCards = true

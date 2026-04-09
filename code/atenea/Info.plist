@@ -22,6 +22,8 @@
 	<array>
 		<string>audio</string>
 		<string>location</string>
+		<string>bluetooth-central</string>
+		<string>bluetooth-peripheral</string>
 	</array>
 	<key>NSLocationTemporaryUsageDescriptionDictionary</key>
 	<dict>
@@ -43,15 +45,13 @@
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>Atenea usa Bluetooth para pagos de proximidad entre dispositivos, sin necesidad de internet ni WiFi.</string>
+	<string>Atenea usa Bluetooth para descubrir comerciantes cercanos, enviar timbres virtuales y pagos de proximidad — todo sin internet.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Atenea uses local network to discover nearby merchants and connect staff with users in emergency situations.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_atenea-sos._tcp</string>
 		<string>_atenea-sos._udp</string>
-		<string>_atenea-rdr._tcp</string>
-		<string>_atenea-rdr._udp</string>
 		<string>_atenea-pay._tcp</string>
 		<string>_atenea-pay._udp</string>
 	</array>

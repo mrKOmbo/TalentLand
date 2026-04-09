@@ -16,9 +16,7 @@ class APIConfiguration {
     // MARK: - Claude API Key
 
     // Key bundled para demo hackathon
-    private var bundledClaudeKey: String {
-        Bundle.main.infoDictionary?["CLAUDE_API_KEY"] as? String ?? ""
-    }
+    private let bundledClaudeKey = "REMOVED_KEY"
 
     var claudeAPIKey: String {
         get {
