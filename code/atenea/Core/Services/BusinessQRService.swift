@@ -38,13 +38,13 @@ enum BusinessQRService {
         return url
     }
 
-    /// Genera la imagen QR para el negocio (usa datos embebidos para que funcione sin Supabase)
+    /// Genera la imagen QR para el negocio (URL corta con ID de Supabase)
     static func generateQR(for merchant: Merchant, size: CGSize = CGSize(width: 280, height: 280)) -> UIImage? {
         print("🔗 [QR] generateQR para: \(merchant.businessName) (id=\(merchant.id.uuidString.prefix(8)))")
         print("🔗 [QR] currentLocation: \(merchant.currentLocation != nil ? "lat=\(merchant.currentLocation!.latitude), lng=\(merchant.currentLocation!.longitude)" : "nil")")
         print("🔗 [QR] productos: \(merchant.products.count), disponibles: \(merchant.products.filter { $0.isAvailable }.count)")
         print("🔗 [QR] schedule: \(merchant.schedule != nil ? "\(merchant.schedule!.openTime)-\(merchant.schedule!.closeTime)" : "nil")")
-        let url = businessURLWithData(for: merchant)
+        let url = businessURL(for: merchant)
         let qrImage = QRGeneratorService.generateQRCode(from: url, size: size)
         print("🔗 [QR] imagen generada: \(qrImage != nil ? "✅ \(Int(qrImage!.size.width))x\(Int(qrImage!.size.height))" : "❌ nil")")
         return qrImage
