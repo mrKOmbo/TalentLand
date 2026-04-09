@@ -1325,3 +1325,17 @@
 // MARK: - Demand Insights Extra
 "demand.zonePrefix" = "Zona %@...";
 "demand.searchesAndIntensity" = "%d búsquedas · %@";
+
+// MARK: - Business QR
+"qr.myBusinessQR" = "Mi QR de negocio";
+"qr.showToCustomers" = "Muéstralo a tus clientes para que vean tu info";
+"qr.scanToSeeInfo" = "Escanea para ver la info del negocio";
+"qr.whatCustomersSee" = "Lo que verán tus clientes";
+"qr.productsWithPrices" = "%d productos con precios";
+"qr.locationOnMap" = "Ubicación en mapa";
+"qr.schedule" = "Horario";
+"qr.shareQR" = "Compartir QR";
+"qr.copyLink" = "Copiar enlace";
+"qr.poweredByAtenea" = "Impulsado por Atenea";
+"qr.linkCopied" = "Enlace copiado";
+"qr.viewMyQR" = "Ver mi QR";

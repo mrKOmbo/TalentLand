@@ -67,6 +67,7 @@ struct MerchantHomeView: View {
     @State private var showDemandInsights = false
     @State private var showStreetCredDetail = false
     @State private var showPredictionDetail = false
+    @State private var showBusinessQR = false
     @State private var streetCredScore: StreetCredScore?
     @State private var matchPrediction: MatchPrediction?
 
@@ -365,6 +366,15 @@ struct MerchantHomeView: View {
                 ) {
                     showDemandInsights = true
                 }
+
+                MerchantActionRow(
+                    icon: "qrcode",
+                    title: LocalizedString("qr.viewMyQR"),
+                    subtitle: LocalizedString("qr.showToCustomers"),
+                    color: Color(hex: "#FFAE43")
+                ) {
+                    showBusinessQR = true
+                }
             }
         }
         .padding(16)
@@ -372,6 +382,11 @@ struct MerchantHomeView: View {
         .cornerRadius(12)
         .opacity(animateCards ? 1 : 0)
         .offset(y: animateCards ? 0 : 20)
+        .sheet(isPresented: $showBusinessQR) {
+            if let merchant = merchantManager.currentMerchantProfile {
+                BusinessQRView(merchant: merchant)
+            }
+        }
     }
 
     // MARK: - Demand Tip
