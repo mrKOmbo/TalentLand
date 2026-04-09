@@ -41,7 +41,7 @@ class RouteTrackingManager: ObservableObject {
     // MARK: - Config
 
     /// Distancia máxima para considerar que el comerciante está "cerca" de su ruta (metros)
-    private let nearRouteThreshold: Double = 150
+    private let nearRouteThreshold: Double = 2000
 
     /// Distancia para considerar que llegó a un waypoint (metros)
     private let waypointArrivalThreshold: Double = 50
@@ -55,10 +55,13 @@ class RouteTrackingManager: ObservableObject {
 
     /// Comienza a observar la ubicación para detectar cercanía a la ruta
     func startMonitoring(location: AnyPublisher<CLLocationCoordinate2D?, Never>) {
-        guard let merchant = MerchantManager.shared.currentMerchantProfile,
+        let profile = MerchantManager.shared.currentMerchantProfile
+        print("🔍 [RouteTracking] startMonitoring — perfil: \(profile?.businessName ?? "nil"), isStatic: \(profile?.isStatic.description ?? "?"), waypoints: \(profile?.route?.waypoints.count ?? 0)")
+        guard let merchant = profile,
               !merchant.isStatic,
               let route = merchant.route,
               route.waypoints.count >= 2 else {
+            print("⚠️ [RouteTracking] Guard falló — monitoring no iniciado")
             return
         }
 
@@ -89,6 +92,7 @@ class RouteTrackingManager: ObservableObject {
         currentWaypointIndex = 0
         routeProgress = 0.0
         print("🚀 [RouteTracking] Ruta iniciada")
+        syncRouteStatus(isOnRoute: true)
     }
 
     /// El comerciante termina su ruta
@@ -97,6 +101,17 @@ class RouteTrackingManager: ObservableObject {
         routeProgress = 0.0
         currentWaypointIndex = 0
         print("🏁 [RouteTracking] Ruta terminada")
+        syncRouteStatus(isOnRoute: false)
+    }
+
+    private func syncRouteStatus(isOnRoute: Bool) {
+        guard let merchantId = MerchantManager.shared.currentMerchantProfile?.id else { return }
+        Task {
+            try? await SupabaseService.shared.updateMerchantRouteStatus(
+                merchantId: merchantId,
+                isOnRoute: isOnRoute
+            )
+        }
     }
 
     /// El comerciante descarta el prompt de "¿Iniciar ruta?"
@@ -110,10 +125,12 @@ class RouteTrackingManager: ObservableObject {
     private func updatePosition(_ coordinate: CLLocationCoordinate2D) {
         guard let route = activeRoute else { return }
         let waypoints = route.sortedWaypoints
+        print("🗺️ [RouteTracking] updatePosition — lat:\(String(format: "%.5f", coordinate.latitude)) lon:\(String(format: "%.5f", coordinate.longitude)) | isOnRoute:\(isOnRoute) | isNearRoute:\(isNearRoute)")
 
         // Calcular distancia al waypoint más cercano de la ruta
         let (nearestIndex, nearestDistance) = findNearestWaypoint(to: coordinate, in: waypoints)
         distanceToRoute = nearestDistance
+        print("📏 [RouteTracking] Distancia al waypoint \(nearestIndex): \(Int(nearestDistance))m | threshold: \(Int(nearRouteThreshold))m")
 
         if isOnRoute {
             // Actualizar progreso

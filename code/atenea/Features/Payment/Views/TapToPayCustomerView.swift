@@ -88,6 +88,19 @@ struct TapToPayCustomerView: View {
                 let notification = UINotificationFeedbackGenerator()
                 notification.notificationOccurred(.success)
 
+                // Registrar pago del lado del cliente
+                if let amount = peerService.receivedAmount {
+                    let sale = SaleRecord(
+                        amount: amount,
+                        currency: "MXN",
+                        description: peerService.receivedDescription ?? "Tap to Pay",
+                        status: .completed,
+                        paymentLinkId: "customer-tap-\(UUID().uuidString)",
+                        merchantId: nil
+                    )
+                    SalesHistoryManager.shared.addSale(sale)
+                }
+
                 DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                     peerService.stop()
                     dismiss()

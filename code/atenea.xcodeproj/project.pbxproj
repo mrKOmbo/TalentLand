@@ -73,6 +73,7 @@
 		2640EF3D2EB69D9C0015FAA7 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = /System/Library/Frameworks/WidgetKit.framework; sourceTree = "<absolute>"; };
 		2640EF3F2EB69D9C0015FAA7 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = /System/Library/Frameworks/SwiftUI.framework; sourceTree = "<absolute>"; };
 		26FE60A62EAD9B62003960DC /* atenea.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = atenea.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		26AA00012EF7000000000001 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Secrets.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -702,6 +703,7 @@
 		};
 		26FE60AF2EAD9B62003960DC /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 26AA00012EF7000000000001 /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -766,6 +768,7 @@
 		};
 		26FE60B02EAD9B62003960DC /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 26AA00012EF7000000000001 /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -856,6 +859,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				STRIPE_SECRET_KEY = sk_test_51T8Tg3GjXvm4xCpRLnNqVXIXePLUTzw8N4oUmAZ15LHTv6REUKmaafY3KBz8zBk09lbRuJswXRLcHWBKOjjjT4FV00fEDnxcDk;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
@@ -899,6 +903,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				STRIPE_SECRET_KEY = sk_test_51T8Tg3GjXvm4xCpRLnNqVXIXePLUTzw8N4oUmAZ15LHTv6REUKmaafY3KBz8zBk09lbRuJswXRLcHWBKOjjjT4FV00fEDnxcDk;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;

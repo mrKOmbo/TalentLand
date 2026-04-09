@@ -382,6 +382,72 @@ class ClaudeAPIService: ObservableObject {
         return (responseType, message, minutes)
     }
 
+    /// Genera una ruta inteligente hacia un comerciante cercano usando Claude AI
+    func generateRouteToMerchant(
+        userLocation: CLLocationCoordinate2D,
+        merchants: [MerchantRouteCandidate]
+    ) async throws -> AIRouteRecommendation {
+        guard let url = URL(string: apiURL) else { throw ClaudeAPIError.invalidURL }
+
+        let merchantList = merchants.map { m in
+            "- \(m.emoji) \(m.name) (\(m.category)) a \(m.distanceMeters)m | Productos: \(m.products) | Lat: \(m.latitude), Lon: \(m.longitude)"
+        }.joined(separator: "\n")
+
+        let prompt = """
+        Eres el asistente de navegación de Atenea, app de comercio ambulante en CDMX.
+        El usuario está en Lat: \(userLocation.latitude), Lon: \(userLocation.longitude).
+
+        Comerciantes cercanos:
+        \(merchantList)
+
+        Elige el MEJOR comerciante para recomendar y genera una ruta caminando con 3-4 waypoints intermedios por calles reales cercanas.
+        Explica brevemente por qué lo recomiendas.
+
+        Responde SOLO con JSON válido:
+        {
+          "merchantName": "nombre del comerciante elegido",
+          "reason": "razón breve de la recomendación (máx 2 líneas)",
+          "walkingMinutes": 5,
+          "waypoints": [
+            {"lat": 19.xxx, "lon": -99.xxx, "label": "nombre de calle o referencia"},
+            {"lat": 19.xxx, "lon": -99.xxx, "label": "nombre"},
+            {"lat": 19.xxx, "lon": -99.xxx, "label": "llegada"}
+          ]
+        }
+        Los waypoints deben empezar cerca del usuario y terminar en el comerciante.
+        Usa coordenadas realistas de calles en la zona.
+        """
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.setValue("application/json", forHTTPHeaderField: "content-type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: [
+            "model": model,
+            "max_tokens": 512,
+            "messages": [["role": "user", "content": prompt]],
+            "system": "Eres un asistente de navegación urbana. Respondes SOLO con JSON válido, sin texto adicional."
+        ])
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            throw ClaudeAPIError.httpError((response as? HTTPURLResponse)?.statusCode ?? 0)
+        }
+
+        let apiResponse = try JSONDecoder().decode(ClaudeAPIResponse.self, from: data)
+        guard let text = apiResponse.content.first(where: { $0.type == "text" })?.text else {
+            throw ClaudeAPIError.noTextInResponse
+        }
+
+        let jsonStr = extractJSON(from: text)
+        guard let jsonData = jsonStr.data(using: .utf8) else {
+            throw ClaudeAPIError.invalidResponse
+        }
+
+        return try JSONDecoder().decode(AIRouteRecommendation.self, from: jsonData)
+    }
+
     /// Extrae JSON de una respuesta que puede contener markdown
     private func extractJSON(from text: String) -> String {
         // Buscar JSON entre bloques de código markdown
@@ -494,4 +560,29 @@ struct ChatMessage: Identifiable {
     let id = UUID()
     let text: String
     let isUser: Bool
+}
+
+// MARK: - AI Route Models
+
+struct MerchantRouteCandidate {
+    let name: String
+    let emoji: String
+    let category: String
+    let products: String
+    let latitude: Double
+    let longitude: Double
+    let distanceMeters: Int
+}
+
+struct AIRouteRecommendation: Codable {
+    let merchantName: String
+    let reason: String
+    let walkingMinutes: Int
+    let waypoints: [AIRouteWaypoint]
+}
+
+struct AIRouteWaypoint: Codable {
+    let lat: Double
+    let lon: Double
+    let label: String
 }

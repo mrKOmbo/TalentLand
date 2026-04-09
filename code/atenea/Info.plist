@@ -48,6 +48,8 @@
 	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Atenea usa Bluetooth para descubrir comerciantes cercanos, enviar timbres virtuales y pagos de proximidad — todo sin internet.</string>
+	<key>NSNearbyInteractionUsageDescription</key>
+	<string>Atenea usa UWB para medir la distancia exacta al comerciante y confirmar pagos de proximidad de forma segura.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Atenea uses local network to discover nearby merchants and connect staff with users in emergency situations.</string>
 	<key>NSBonjourServices</key>

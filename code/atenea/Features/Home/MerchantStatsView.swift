@@ -206,8 +206,8 @@ struct MerchantStatsView: View {
                             RoundedRectangle(cornerRadius: 5)
                                 .fill(
                                     isBest
-                                    ? LinearGradient(colors: [.orange, .yellow], startPoint: .top, endPoint: .bottom)
-                                    : LinearGradient(colors: [.white.opacity(0.25), .white.opacity(0.1)], startPoint: .top, endPoint: .bottom)
+                                    ? LinearGradient(colors: [Color(hex: "#F0D224"), .yellow], startPoint: .top, endPoint: .bottom)
+                                    : LinearGradient(colors: [Color(hex: "#1C42E8").opacity(0.4), Color(hex: "#1C42E8").opacity(0.15)], startPoint: .top, endPoint: .bottom)
                                 )
                                 .frame(
                                     width: (geo.size.width - CGFloat(currentData.count - 1) * 6) / CGFloat(currentData.count),

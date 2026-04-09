@@ -23,6 +23,7 @@ struct MainMapView: View {
     // @ObservedObject private var demandManager = DemandZoneManager.shared
     @ObservedObject private var userManager = UserManager.shared
     @ObservedObject private var merchantManager = MerchantManager.shared
+    @ObservedObject private var timbreManager = TimbreManager.shared
     @ObservedObject private var routeTracker = RouteTrackingManager.shared
     @Binding var selectedTab: Int
     @Binding var isLoggedIn: Bool
@@ -64,8 +65,20 @@ struct MainMapView: View {
     @State private var selectedChipId: String? = nil // ID del chip seleccionado
     @State private var showScheduleModal = false // Modal de reservaciones
     @State private var showEmergencyModal = false // Modal de emergencia
-    @State private var selectedMerchant: Merchant? = nil // Comerciante seleccionado para detalle
     @State private var showNearbyPanel = true // Panel de comerciantes cercanos
+    @State private var merchantOnRouteAlert: Merchant? = nil // Banner in-app para clientes
+
+    // Simulación IA de ruta a comerciante
+    @State private var isSimulatingRoute = false
+    @State private var simulationStatus: String = ""
+    @State private var aiRouteRecommendation: AIRouteRecommendation? = nil
+    @State private var showAIRouteConfirmation = false
+    @State private var pendingAIRouteMerchant: Merchant? = nil
+    @State private var pendingAIRouteMarker: SearchPlace? = nil
+    @State private var simulatedUserLocation: CLLocationCoordinate2D? = nil
+    @State private var showRouteConfigurator = false
+    @State private var configRouteWaypoints: [RouteWaypoint]? = nil
+    @State private var configBusinessLocation: BusinessLocation? = nil
 
     // Chat con Claude states
     @State private var showChatSearch = false
@@ -116,6 +129,13 @@ struct MainMapView: View {
                 handleAppIntentRequests()
                 loadUserRouteOnMap()
                 startMerchantRouteMonitoring()
+                UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
+            }
+            .onChange(of: locationManager.currentLocation) { _, loc in
+                guard let loc else { return }
+                MerchantManager.shared.updateUserLocation(loc)
+                // Dibujar rutas de merchants en ruta (cliente)
+                updateMerchantRoutePolylines()
             }
             .onAppear {
                 if let place = pendingMerchantPlace {
@@ -164,6 +184,19 @@ struct MainMapView: View {
             .onChange(of: showDirections) { oldValue, newValue in
                 // Sincronizar el estado local con el manager global
                 navigationStateManager.showDirections = newValue
+            }
+            .onChange(of: merchantManager.merchants) { _, _ in
+                updateMerchantRoutePolylines()
+            }
+            .onChange(of: merchantManager.currentMerchantProfile) { _, profile in
+                guard profile != nil, !routeTracker.isOnRoute else { return }
+                startMerchantRouteMonitoring()
+            }
+            .onChange(of: merchantManager.merchantJustStartedRoute) { _, merchant in
+                guard let merchant, !(userManager.currentUser?.isMerchant ?? false) else { return }
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    merchantOnRouteAlert = merchant
+                }
             }
             .onChange(of: routeTracker.isOnRoute) { _, isOnRoute in
                 if isOnRoute {
@@ -227,6 +260,22 @@ struct MainMapView: View {
                         }
                     }
                 )
+            }
+            .alert("Ruta recomendada por IA", isPresented: $showAIRouteConfirmation) {
+                Button("Cancelar", role: .cancel) {
+                    // Limpiar estado
+                    pendingAIRouteMerchant = nil
+                    pendingAIRouteMarker = nil
+                    searchMarkers = []
+                    withAnimation { simulationStatus = "" }
+                }
+                Button("Aceptar e Iniciar") {
+                    acceptAIRoute()
+                }
+            } message: {
+                if let rec = aiRouteRecommendation, let merchant = pendingAIRouteMerchant {
+                    Text("\(merchant.emoji) \(merchant.businessName)\n\n\(rec.reason)\n\n~\(rec.walkingMinutes) min caminando\n\nSe activará tu ruta y los clientes podrán verte en el mapa.")
+                }
             }
             .modifier(FullScreenCoversModifier(
                 preparedNavigation: $preparedNavigation,
@@ -346,6 +395,19 @@ struct MainMapView: View {
                         confettiSize: 20,
                         rainHeight: 600,
                         radius: 400)
+        .fullScreenCover(isPresented: $showRouteConfigurator) {
+            NavigationStack {
+                BusinessLocationMapView(
+                    selectedLocation: $configBusinessLocation,
+                    isMobileBusinesse: true,
+                    routeWaypoints: $configRouteWaypoints
+                )
+            }
+        }
+        .onChange(of: configRouteWaypoints) { _, newWaypoints in
+            guard let waypoints = newWaypoints, waypoints.count >= 2 else { return }
+            saveMerchantRoute(waypoints: waypoints)
+        }
     }
 
 
@@ -354,12 +416,12 @@ struct MainMapView: View {
             mainContentView
 
             // Panel de direcciones cuando se selecciona un marcador (NO mostrar si el modal de sede está abierto, y ocultar en emergencia)
-            if showDirections && !showVenueDetailModal && !emergencyManager.isEmergencyActive, let marker = selectedMarker, let markerCoord = marker.coordinate, let userLocation = locationManager.currentLocation {
+            if showDirections && !showVenueDetailModal && !emergencyManager.isEmergencyActive, let marker = selectedMarker, let markerCoord = marker.coordinate, let userLocation = locationManager.currentLocation ?? simulatedUserLocation {
                 DirectionsView(
                     isPresented: $showDirections,
                     origin: userLocation,
                     destination: markerCoord,
-                    destinationName: marker.name,
+                    destinationName: marker.subtitle.isEmpty ? marker.name : "\(marker.name)\n\(marker.subtitle)",
                     routePolylines: $routePolylines,
                     selectedRouteIndex: $selectedDirectionsRouteIndex,
                     selectedTransportMode: $selectedTransportMode,
@@ -386,6 +448,7 @@ struct MainMapView: View {
             if showMerchantDetailModal && !emergencyManager.isEmergencyActive, let merchant = selectedMerchant {
                 MerchantDetailCard(
                     merchant: merchant,
+                    userLocation: locationManager.currentLocation,
                     onDismiss: {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                             showMerchantDetailModal = false
@@ -431,73 +494,15 @@ struct MainMapView: View {
                 .zIndex(101)
             }
 
-            // Panel de comerciantes cercanos (ocultar en emergencia y cuando hay direcciones activas)
+            // Panel inferior contextual por rol
             if !emergencyManager.isEmergencyActive && !showDirections && !showVenueDetailModal {
-                VStack(spacing: 0) {
-                    Spacer()
-
-                    // Handle para abrir/cerrar el panel
-                    Button {
-                        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                            showNearbyPanel.toggle()
-                        }
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: showNearbyPanel ? "chevron.down" : "storefront.fill")
-                                .font(.system(size: showNearbyPanel ? 12 : 13, weight: .semibold))
-                                .foregroundColor(showNearbyPanel ? .secondary : .blue)
-
-                            if !showNearbyPanel {
-                                Text("\(merchantManager.merchants.filter { $0.isActive }.count) cerca")
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .foregroundColor(.blue)
-                            }
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(
-                            Capsule()
-                                .fill(.ultraThickMaterial)
-                                .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
-                        )
-                        .overlay(
-                            Capsule()
-                                .strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5)
-                        )
-                    }
-                    .padding(.bottom, 8)
-
-                    if showNearbyPanel {
-                        NearbyMerchantsPanel(
-                            merchants: merchantManager.merchants,
-                            userLocation: locationManager.currentLocation,
-                            onMerchantTap: { merchant in
-                                guard let loc = merchant.currentLocation else { return }
-                                let marker = SearchPlace(
-                                    id: merchant.id.uuidString,
-                                    name: merchant.businessName,
-                                    subtitle: merchant.category.displayName,
-                                    fullAddress: merchant.description,
-                                    category: merchant.category.displayName,
-                                    icon: "storefront.fill",
-                                    coordinate: loc.coordinate,
-                                    isRecommended: false
-                                )
-                                handleMarkerTap(marker)
-                                withAnimation(.easeInOut(duration: 1.0)) {
-                                    cameraCenter = loc.coordinate
-                                    cameraZoom = 16.0
-                                }
-                            }
-                        )
-                        .padding(.horizontal, 12)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                    }
+                if let user = userManager.currentUser, user.isMerchant, !timbreManager.pendingTimbres.isEmpty {
+                    // MERCHANT: panel de timbres recibidos
+                    merchantTimbresBottomPanel
+                } else if !(userManager.currentUser?.isMerchant ?? false), !nearbyMerchantsForPanel.isEmpty {
+                    // CLIENTE: panel de comerciantes cercanos
+                    customerMerchantsBottomPanel
                 }
-                .padding(.bottom, 160)
-                .animation(.spring(response: 0.35, dampingFraction: 0.8), value: showNearbyPanel)
-                .zIndex(50)
             }
 
             // Botones flotantes (ubicación y emergencia)
@@ -538,7 +543,7 @@ struct MainMapView: View {
 
                 // Botones normales (ocultar en modo emergencia)
                 if !emergencyManager.isEmergencyActive {
-                    HStack(spacing: 12) {
+                    HStack(spacing: 16) {
                         // Botón de emergencia
                         Button(action: {
                             showEmergencyModal = true
@@ -554,46 +559,20 @@ struct MainMapView: View {
                                     .foregroundColor(.white)
                             }
                         }
-                        .padding(.leading, 20)
                         .transition(.move(edge: .leading).combined(with: .opacity))
-
-                        /* // Botón de heatmap
-                        Button(action: {
-                                let generator = UIImpactFeedbackGenerator(style: .medium)
-                                generator.impactOccurred()
-                                demandManager.showHeatMap.toggle()
-                            }) {
-                                ZStack {
-                                    Circle()
-                                        .fill(demandManager.showHeatMap ? Color.orange : Color.white)
-                                        .frame(width: 50, height: 50)
-                                        .shadow(color: (demandManager.showHeatMap ? Color.orange : Color.black).opacity(0.3), radius: 8, x: 0, y: 4)
-
-                                    Image(systemName: demandManager.showHeatMap ? "flame.fill" : "flame")
-                                        .font(.system(size: CGFloat(22)))
-                                        .foregroundColor(demandManager.showHeatMap ? .white : .orange)
-                                }
-                            }
-                        .transition(.scale.combined(with: .opacity))
-                        */
-
-                    Spacer()
 
                     // Botón de ubicación
                     Button(action: {
-                        // Centrar el mapa en la ubicación actual y reactivar seguimiento
                         if let userLocation = locationManager.currentLocation {
-                            // Desactivar modo de navegación AR
                             isARNavigationMode = false
                             shouldFollowUser = true
-                            searchMarkers = []  // Limpiar marcadores de categorías
-                            cameraCenter = nil  // Limpiar centro de cámara
-                            selectedChipId = nil  // Deseleccionar chip
+                            searchMarkers = []
+                            cameraCenter = nil
+                            selectedChipId = nil
                             centerOnLocation.toggle()
                             print("📍 Centrando mapa en ubicación actual y activando seguimiento")
                             print("🔓 Modo navegación AR desactivado")
 
-                            // Mostrar banner de ubicación
                             currentLocationText = getLocationName(for: userLocation)
                             showLocationBanner = true
                             print("📍 Banner de ubicación mostrado: \(currentLocationText)")
@@ -610,11 +589,74 @@ struct MainMapView: View {
                                 .foregroundColor(.blue)
                         }
                     }
-                    .padding(.trailing, 20)
+
+                    // Botón de configurar ruta (solo comerciantes)
+                    if let user = userManager.currentUser, user.isMerchant {
+                        Button(action: {
+                            if let profile = merchantManager.currentMerchantProfile,
+                               let route = profile.route {
+                                configRouteWaypoints = route.sortedWaypoints
+                            } else {
+                                configRouteWaypoints = nil
+                            }
+                            configBusinessLocation = nil
+                            showRouteConfigurator = true
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.blue)
+                                    .frame(width: 50, height: 50)
+                                    .shadow(color: Color.blue.opacity(0.4), radius: 8, x: 0, y: 4)
+
+                                Image(systemName: "point.topleft.down.to.point.bottomright.curvepath.fill")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                    }
+
                 }
+                .frame(maxWidth: .infinity)
                 .padding(.bottom, locationButtonOffset)
                 .animation(.spring(response: 0.35, dampingFraction: 0.8), value: menuState.showMenu)
                 }
+            }
+
+            // Banner de estado de simulación IA
+            if !simulationStatus.isEmpty {
+                VStack {
+                    HStack(spacing: 10) {
+                        if isSimulatingRoute {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(CGSize(width: 0.7, height: 0.7))
+                        } else {
+                            Image(systemName: "brain.head.profile.fill")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white)
+                        }
+
+                        Text(simulationStatus)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.white)
+                            .lineLimit(2)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(
+                                LinearGradient(colors: [.purple.opacity(0.9), .blue.opacity(0.9)], startPoint: .leading, endPoint: .trailing)
+                            )
+                            .shadow(color: .purple.opacity(0.3), radius: 12, y: 4)
+                    )
+                    .padding(.horizontal, 16)
+                    .padding(.top, 100)
+
+                    Spacer()
+                }
+                .zIndex(300)
+                .transition(.move(edge: .top).combined(with: .opacity))
             }
 
 
@@ -649,6 +691,26 @@ struct MainMapView: View {
                 RouteActiveIndicator()
                     .zIndex(250)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+
+            // Banner in-app para cliente: comerciante cercano inició su ruta
+            if !emergencyManager.isEmergencyActive, let alertMerchant = merchantOnRouteAlert {
+                VStack {
+                    Spacer()
+                    MerchantOnRouteAlertView(
+                        merchant: alertMerchant,
+                        onNavigate: {
+                            withAnimation { merchantOnRouteAlert = nil }
+                            navigateToNearestRoutePoint(of: alertMerchant)
+                        },
+                        onDismiss: {
+                            withAnimation { merchantOnRouteAlert = nil }
+                        }
+                    )
+                    .padding(.bottom, 120)
+                }
+                .zIndex(260)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
         // Vista principal estática - no se mueve cuando el menú está abierto
@@ -968,12 +1030,159 @@ struct MainMapView: View {
 
     // MARK: - Computed Properties for Map
 
+    private var nearbyMerchantsForPanel: [Merchant] {
+        guard let userLoc = locationManager.currentLocation else { return [] }
+        return merchantManager.merchants.filter { merchant in
+            guard merchant.isActive, let loc = merchant.currentLocation else { return false }
+            return MerchantManager.haversineDistance(
+                lat1: userLoc.latitude, lon1: userLoc.longitude,
+                lat2: loc.latitude, lon2: loc.longitude
+            ) <= 5000
+        }
+    }
+
     private var allMapMarkers: [SearchPlace] {
         var markers = searchMarkers
         if let tempMarker = temporaryMarker {
             markers.append(tempMarker)
         }
         return markers
+    }
+
+    // MARK: - Bottom Panel: Merchant Timbres
+
+    private var merchantTimbresBottomPanel: some View {
+        let timbres = timbreManager.pendingTimbres
+        let merchantLoc = merchantManager.currentMerchantProfile?.currentLocation?.coordinate
+
+        return VStack(spacing: 0) {
+            Spacer()
+
+            Button {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                    showNearbyPanel.toggle()
+                }
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: showNearbyPanel ? "chevron.down" : "bell.fill")
+                        .font(.system(size: showNearbyPanel ? 12 : 13, weight: .semibold))
+                        .foregroundColor(showNearbyPanel ? .secondary : .orange)
+
+                    if !showNearbyPanel {
+                        if timbres.isEmpty {
+                            Text(LocalizedString("merchant.noTimbres"))
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.secondary)
+                        } else {
+                            Text("\(timbres.count) \(LocalizedString("merchant.timbresCount"))")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.orange)
+                        }
+                    }
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .fill(.ultraThickMaterial)
+                        .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
+                )
+                .overlay(
+                    Capsule()
+                        .strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5)
+                )
+            }
+            .padding(.bottom, 8)
+
+            if showNearbyPanel {
+                MerchantTimbresPanel(
+                    timbres: timbres,
+                    merchantLocation: merchantLoc,
+                    onTimbreTap: { timbre in
+                        timbreManager.markAsRead(timbre.id)
+                        withAnimation(.easeInOut(duration: 1.0)) {
+                            cameraCenter = timbre.clientCoordinate
+                            cameraZoom = 16.0
+                        }
+                    }
+                )
+                .padding(.horizontal, 12)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .padding(.bottom, 160)
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: showNearbyPanel)
+        .zIndex(50)
+    }
+
+    // MARK: - Bottom Panel: Customer Merchants
+
+    private var customerMerchantsBottomPanel: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            Button {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                    showNearbyPanel.toggle()
+                }
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: showNearbyPanel ? "chevron.down" : "storefront.fill")
+                        .font(.system(size: showNearbyPanel ? 12 : 13, weight: .semibold))
+                        .foregroundColor(showNearbyPanel ? .secondary : .blue)
+
+                    if !showNearbyPanel {
+                        Text("\(nearbyMerchantsForPanel.count) cerca")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.blue)
+                    }
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .fill(.ultraThickMaterial)
+                        .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
+                )
+                .overlay(
+                    Capsule()
+                        .strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5)
+                )
+            }
+            .padding(.bottom, 8)
+
+            if showNearbyPanel {
+                NearbyMerchantsPanel(
+                    merchants: nearbyMerchantsForPanel,
+                    userLocation: locationManager.currentLocation,
+                    onMerchantTap: { merchant in
+                        guard let loc = merchant.currentLocation else { return }
+                        let marker = SearchPlace(
+                            id: merchant.id.uuidString,
+                            name: merchant.businessName,
+                            subtitle: merchant.category.displayName,
+                            fullAddress: merchant.description,
+                            category: merchant.category.displayName,
+                            icon: "storefront.fill",
+                            coordinate: loc.coordinate,
+                            isRecommended: false
+                        )
+                        handleMarkerTap(marker)
+                        withAnimation(.easeInOut(duration: 1.0)) {
+                            cameraCenter = loc.coordinate
+                            cameraZoom = 16.0
+                        }
+                    }
+                )
+                .padding(.horizontal, 12)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .padding(.bottom, 160)
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: showNearbyPanel)
+        .zIndex(50)
     }
 
     private var mainContentView: some View {
@@ -985,7 +1194,10 @@ struct MainMapView: View {
                 centerOnLocation: $centerOnLocation,
                 searchMarkers: allMapMarkers,
                 venueMarkers: showVenueMarkers ? WorldCupVenue.allVenues : [],
-                merchantMarkers: merchantManager.merchants.filter { $0.isActive && $0.currentLocation != nil },
+                merchantMarkers: merchantManager.merchants.filter { merchant in
+                    guard merchant.isActive, let loc = merchant.currentLocation, let userLoc = locationManager.currentLocation else { return false }
+                    return MerchantManager.haversineDistance(lat1: userLoc.latitude, lon1: userLoc.longitude, lat2: loc.latitude, lon2: loc.longitude) <= 5000
+                },
                 routePolylines: routePolylines,
                 selectedRouteIndex: selectedDirectionsRouteIndex,
                 selectedTransportMode: selectedTransportMode,
@@ -1040,17 +1252,17 @@ struct MainMapView: View {
                 isWorldCupToday: $isWorldCupToday
             )
 
-            // Filtro de categorías desplegable (solo visible cuando el buscador NO está expandido)
-            if !isSearchBarExpanded && !isSearchFocused {
-                CategoryFilterScrollView(
-                    selectedCategory: $selectedCategory,
-                    isExpanded: $isCategoryFilterExpanded,
-                    onCategorySelected: { category in
-                        handleCategorySelection(category)
-                    }
-                )
-                .transition(.opacity.combined(with: .move(edge: .top)))
-            }
+            // Filtro de categorías deshabilitado — se usa el de abajo del mapa
+            // if !isSearchBarExpanded && !isSearchFocused {
+            //     CategoryFilterScrollView(
+            //         selectedCategory: $selectedCategory,
+            //         isExpanded: $isCategoryFilterExpanded,
+            //         onCategorySelected: { category in
+            //             handleCategorySelection(category)
+            //         }
+            //     )
+            //     .transition(.opacity.combined(with: .move(edge: .top)))
+            // }
 
             Spacer()
         }
@@ -1630,10 +1842,375 @@ struct MainMapView: View {
 
     private func startMerchantRouteMonitoring() {
         guard let user = userManager.currentUser, user.isMerchant else { return }
-
-        // Crear publisher de ubicación desde el locationManager
         let locationPublisher = locationManager.$currentLocation.eraseToAnyPublisher()
         routeTracker.startMonitoring(location: locationPublisher)
+    }
+
+    // MARK: - Merchant Route Polylines (cliente)
+
+    /// Dibuja en el mapa las rutas de los merchants que están activamente en ruta.
+    func updateMerchantRoutePolylines() {
+        // Quitar polylines previas de merchants
+        routePolylines = routePolylines.filter { !($0.title == "merchantRoute") }
+
+        let onRoute = merchantManager.merchants.filter { $0.isOnRoute && $0.route != nil }
+        for merchant in onRoute {
+            guard let route = merchant.route, route.waypoints.count >= 2 else { continue }
+
+            // Calcular ruta real por calles usando Mapbox Directions
+            MapboxRoutingService.shared.calculateRoute(waypoints: route.sortedWaypoints, profile: .walking) { result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let response):
+                        guard let mapboxRoute = response.routes.first else { return }
+                        var coords = mapboxRoute.geometry.coordinates.map {
+                            CLLocationCoordinate2D(latitude: $0[1], longitude: $0[0])
+                        }
+                        guard !coords.isEmpty else { return }
+                        let polyline = MKPolyline(coordinates: &coords, count: coords.count)
+                        polyline.title = "merchantRoute"
+                        self.routePolylines.append(polyline)
+                        print("🗺️ Ruta de \(merchant.businessName) dibujada (\(coords.count) puntos por calles)")
+
+                    case .failure:
+                        // Fallback: líneas rectas entre waypoints
+                        var coords = route.sortedWaypoints.map { $0.coordinate }
+                        let polyline = MKPolyline(coordinates: &coords, count: coords.count)
+                        polyline.title = "merchantRoute"
+                        self.routePolylines.append(polyline)
+                    }
+                }
+            }
+        }
+
+        if !onRoute.isEmpty {
+            print("🗺️ Calculando \(onRoute.count) ruta(s) de merchant por calles...")
+        }
+    }
+
+    // MARK: - Guardar Ruta Configurada por Comerciante
+
+    private func saveMerchantRoute(waypoints: [RouteWaypoint]) {
+        guard let profile = merchantManager.currentMerchantProfile else { return }
+
+        let newRoute = MerchantRoute(
+            merchantId: profile.id,
+            waypoints: waypoints,
+            isActive: true
+        )
+
+        // Actualizar merchant local
+        if let idx = merchantManager.merchants.firstIndex(where: { $0.id == profile.id }) {
+            let updated = Merchant(
+                id: profile.id,
+                userId: profile.userId,
+                businessName: profile.businessName,
+                category: profile.category,
+                emoji: profile.emoji,
+                description: profile.description,
+                products: profile.products,
+                schedule: profile.schedule,
+                isActive: true,
+                isStatic: false,
+                currentLocation: profile.currentLocation ?? MerchantLocation(
+                    latitude: waypoints.first!.latitude,
+                    longitude: waypoints.first!.longitude
+                ),
+                route: newRoute,
+                isOnRoute: false,
+                createdAt: profile.createdAt,
+                isVerified: profile.isVerified,
+                trustLevel: profile.trustLevel
+            )
+            merchantManager.merchants[idx] = updated
+            merchantManager.currentMerchantProfile = updated
+        }
+
+        // Dibujar la nueva ruta siguiendo calles reales
+        let sortedWaypoints = waypoints.sorted(by: { $0.order < $1.order })
+        routePolylines = routePolylines.filter { $0.title != "merchantRoute" }
+
+        MapboxRoutingService.shared.calculateRoute(waypoints: sortedWaypoints, profile: .walking) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let response):
+                    guard let mapboxRoute = response.routes.first else { return }
+                    var coords = mapboxRoute.geometry.coordinates.map {
+                        CLLocationCoordinate2D(latitude: $0[1], longitude: $0[0])
+                    }
+                    guard !coords.isEmpty else { return }
+                    let polyline = MKPolyline(coordinates: &coords, count: coords.count)
+                    polyline.title = "merchantRoute"
+                    self.routePolylines.append(polyline)
+
+                    // Centrar cámara en la ruta
+                    if let first = coords.first {
+                        withAnimation(.easeInOut(duration: 1.0)) {
+                            self.cameraCenter = first
+                            self.cameraZoom = 14.5
+                        }
+                    }
+                    print("✅ Ruta dibujada por calles: \(coords.count) puntos")
+
+                case .failure:
+                    // Fallback: líneas rectas
+                    var coords = sortedWaypoints.map { $0.coordinate }
+                    let polyline = MKPolyline(coordinates: &coords, count: coords.count)
+                    polyline.title = "merchantRoute"
+                    self.routePolylines.append(polyline)
+
+                    if let first = coords.first {
+                        withAnimation(.easeInOut(duration: 1.0)) {
+                            self.cameraCenter = first
+                            self.cameraZoom = 14.5
+                        }
+                    }
+                }
+            }
+        }
+
+        // Subir a Supabase
+        Task {
+            do {
+                _ = try await SupabaseService.shared.saveMerchant(
+                    merchantManager.currentMerchantProfile!
+                )
+                print("☁️ Ruta actualizada en Supabase: \(waypoints.count) waypoints")
+            } catch {
+                print("⚠️ Error subiendo ruta a Supabase: \(error.localizedDescription)")
+            }
+        }
+
+        // Reiniciar monitoreo con la nueva ruta
+        routeTracker.stopMonitoring()
+        startMerchantRouteMonitoring()
+
+        print("✅ Ruta configurada: \(waypoints.count) puntos")
+    }
+
+    // MARK: - Navegar al punto más cercano de la ruta de un comerciante
+
+    private func navigateToNearestRoutePoint(of merchant: Merchant) {
+        guard let userLocation = locationManager.currentLocation else { return }
+
+        let target: CLLocationCoordinate2D
+        if let route = merchant.route, !route.sortedWaypoints.isEmpty {
+            let userLoc = CLLocation(latitude: userLocation.latitude, longitude: userLocation.longitude)
+            let nearest = route.sortedWaypoints.min(by: {
+                CLLocation(latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude).distance(from: userLoc)
+                < CLLocation(latitude: $1.coordinate.latitude, longitude: $1.coordinate.longitude).distance(from: userLoc)
+            })
+            guard let nearestCoord = nearest?.coordinate else { return }
+            target = nearestCoord
+        } else if let loc = merchant.currentLocation {
+            target = loc.coordinate
+        } else {
+            return
+        }
+
+        Task {
+            if let nav = try? await NavigationLoader.shared.loadNavigation(from: userLocation, to: target) {
+                await MainActor.run { preparedNavigation = nav }
+            }
+        }
+    }
+
+    // MARK: - Aceptar Ruta IA
+
+    private func acceptAIRoute() {
+        guard let merchant = pendingAIRouteMerchant,
+              let marker = pendingAIRouteMarker,
+              let coord = marker.coordinate else { return }
+
+        let userLoc = locationManager.currentLocation ?? simulatedUserLocation ?? CLLocationCoordinate2D(latitude: 19.3545, longitude: -99.2580)
+
+        // 1. Activar merchant como "en ruta" localmente
+        if let idx = merchantManager.merchants.firstIndex(where: { $0.id == merchant.id }) {
+            merchantManager.merchants[idx].isOnRoute = true
+            merchantManager.merchants[idx].isActive = true
+        }
+
+        // 2. Subir estado a Supabase (isOnRoute = true)
+        Task {
+            do {
+                try await SupabaseService.shared.updateMerchantRouteStatus(
+                    merchantId: merchant.id,
+                    isOnRoute: true
+                )
+                try await SupabaseService.shared.updateMerchantStatus(
+                    merchantId: merchant.id,
+                    isActive: true
+                )
+                print("☁️ Ruta IA aceptada → merchant \(merchant.businessName) en ruta (Supabase)")
+            } catch {
+                print("⚠️ Error sync Supabase: \(error.localizedDescription)")
+            }
+        }
+
+        // 3. Limpiar estado de direcciones previo
+        showDirections = false
+        selectedMarker = nil
+        temporaryMarker = nil
+        routePolylines = []
+        selectedDirectionsRouteIndex = 0
+
+        // 4. Dibujar rutas de merchants en ruta (para que clientes vean)
+        updateMerchantRoutePolylines()
+
+        // 5. Mostrar alerta de comerciante en ruta
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            merchantOnRouteAlert = merchant
+        }
+
+        // 6. Abrir DirectionsView con ruta real y botón "Iniciar"
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                selectedMarker = marker
+                showDirections = true
+            }
+            calculateEstimatedTravelTime(from: userLoc, to: coord)
+        }
+
+        // 7. Actualizar banner
+        withAnimation {
+            simulationStatus = "Ruta activa · Los clientes pueden verte en el mapa"
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 8) {
+            withAnimation { simulationStatus = "" }
+        }
+
+        // Limpiar pendientes
+        pendingAIRouteMerchant = nil
+        pendingAIRouteMarker = nil
+    }
+
+    // MARK: - Simulación IA de Ruta a Comerciante
+
+    private func startAIRouteSimulation() {
+        // Ubicación simulada: sobre Av. Santa Fe ~400m al sureste de Expo (o la ubicación real si existe)
+        let fallbackLoc = CLLocationCoordinate2D(latitude: 19.3545, longitude: -99.2580)
+        let userLoc = locationManager.currentLocation ?? fallbackLoc
+        // Guardar ubicación simulada para que DirectionsView pueda usarla como origin
+        simulatedUserLocation = userLoc
+
+        // Buscar merchants cercanos
+        let nearbyMerchants = merchantManager.merchantsNear(
+            latitude: userLoc.latitude,
+            longitude: userLoc.longitude,
+            radiusMeters: 3000
+        )
+
+        guard !nearbyMerchants.isEmpty else {
+            withAnimation { simulationStatus = "No hay comerciantes cercanos" }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                withAnimation { simulationStatus = "" }
+            }
+            return
+        }
+
+        isSimulatingRoute = true
+        withAnimation { simulationStatus = "Claude IA analizando comerciantes cercanos..." }
+
+        // Centrar cámara en la ubicación del usuario
+        withAnimation(.easeInOut(duration: 1.0)) {
+            cameraCenter = userLoc
+            cameraZoom = 15
+        }
+
+        // Preparar candidatos para Claude
+        let candidates = nearbyMerchants.prefix(6).map { merchant -> MerchantRouteCandidate in
+            let dist = MerchantManager.haversineDistance(
+                lat1: userLoc.latitude, lon1: userLoc.longitude,
+                lat2: merchant.currentLocation?.latitude ?? 0,
+                lon2: merchant.currentLocation?.longitude ?? 0
+            )
+            let productNames = merchant.products.prefix(3).map { $0.name }.joined(separator: ", ")
+            return MerchantRouteCandidate(
+                name: merchant.businessName,
+                emoji: merchant.emoji,
+                category: merchant.category.displayName,
+                products: productNames,
+                latitude: merchant.currentLocation?.latitude ?? 0,
+                longitude: merchant.currentLocation?.longitude ?? 0,
+                distanceMeters: Int(dist)
+            )
+        }
+
+        let claudeService = ClaudeAPIService(apiKey: APIConfiguration.shared.claudeAPIKey)
+
+        Task {
+            do {
+                let recommendation = try await claudeService.generateRouteToMerchant(
+                    userLocation: userLoc,
+                    merchants: candidates
+                )
+
+                await MainActor.run {
+                    aiRouteRecommendation = recommendation
+                    withAnimation { simulationStatus = "💡 \(recommendation.reason)" }
+
+                    // Encontrar el merchant correspondiente
+                    let matchedMerchant = nearbyMerchants.first(where: {
+                        $0.businessName.lowercased().contains(recommendation.merchantName.lowercased()) ||
+                        recommendation.merchantName.lowercased().contains($0.businessName.lowercased())
+                    }) ?? nearbyMerchants.first
+
+                    guard let merchant = matchedMerchant else {
+                        isSimulatingRoute = false
+                        withAnimation { simulationStatus = "" }
+                        return
+                    }
+
+                    // Usar la ubicación real del merchant como destino
+                    let destCoord = merchant.currentLocation?.coordinate
+                        ?? recommendation.waypoints.last.map {
+                            CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lon)
+                        }
+
+                    guard let coord = destCoord else {
+                        isSimulatingRoute = false
+                        withAnimation { simulationStatus = "" }
+                        return
+                    }
+
+                    // Crear marcador del comerciante como destino
+                    let marker = SearchPlace(
+                        name: merchant.businessName,
+                        subtitle: "\(merchant.emoji) \(merchant.category.displayName) · Recomendado por IA",
+                        category: merchant.category.displayName,
+                        icon: "mappin.circle.fill",
+                        coordinate: coord
+                    )
+                    searchMarkers = [marker]
+
+                    // Centrar cámara para ver el merchant
+                    withAnimation(.easeInOut(duration: 1.2)) {
+                        let midLat = (userLoc.latitude + coord.latitude) / 2
+                        let midLon = (userLoc.longitude + coord.longitude) / 2
+                        cameraCenter = CLLocationCoordinate2D(latitude: midLat, longitude: midLon)
+                        cameraZoom = 15
+                    }
+
+                    isSimulatingRoute = false
+
+                    // Guardar datos pendientes y mostrar popup de confirmación
+                    pendingAIRouteMerchant = merchant
+                    pendingAIRouteMarker = marker
+
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        showAIRouteConfirmation = true
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    isSimulatingRoute = false
+                    withAnimation { simulationStatus = "Error: \(error.localizedDescription)" }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                        withAnimation { simulationStatus = "" }
+                    }
+                }
+            }
+        }
     }
 
     // MARK: - App Intent Request Handler
@@ -2282,9 +2859,10 @@ struct MapboxMainMapView: UIViewRepresentable {
         mapView.ornaments.options.logo.margins = CGPoint(x: -1000, y: -1000)
         mapView.ornaments.options.attributionButton.margins = CGPoint(x: -1000, y: -1000)
 
-        // Agregar tap gesture recognizer para detectar taps en el mapa
-        let tapGesture = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleMapTap(_:)))
-        mapView.addGestureRecognizer(tapGesture)
+        // Agregar long press gesture recognizer para colocar pin en el mapa (mantener presionado)
+        let longPressGesture = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleMapLongPress(_:)))
+        longPressGesture.minimumPressDuration = 0.5
+        mapView.addGestureRecognizer(longPressGesture)
 
         // Agregar pan gesture recognizer para detectar cuando el usuario mueve el mapa manualmente
         let panGesture = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleMapPan(_:)))
@@ -2499,13 +3077,13 @@ struct MapboxMainMapView: UIViewRepresentable {
             super.init()
         }
 
-        @objc func handleMapTap(_ gesture: UITapGestureRecognizer) {
-            guard let mapView = mapView else { return }
+        @objc func handleMapLongPress(_ gesture: UILongPressGestureRecognizer) {
+            guard gesture.state == .began, let mapView = mapView else { return }
 
             let point = gesture.location(in: mapView)
             let coordinate = mapView.mapboxMap.coordinate(for: point)
 
-            // Llamar al callback con las coordenadas del tap
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             onMapTapped?(coordinate)
         }
 
@@ -4848,8 +5426,25 @@ struct RainbowBorderRounded: View {
 
 struct MerchantDetailCard: View {
     let merchant: Merchant
+    let userLocation: CLLocationCoordinate2D?
     let onDismiss: () -> Void
     let onTimbre: () -> Void
+
+    // ETA en minutos desde la ubicación del merchant hasta el usuario (caminando ~4.5 km/h)
+    private var etaMinutes: Int? {
+        guard merchant.isOnRoute,
+              let merchantLoc = merchant.currentLocation,
+              let userLoc = userLocation else { return nil }
+        let dist = CLLocation(latitude: merchantLoc.latitude, longitude: merchantLoc.longitude)
+            .distance(from: CLLocation(latitude: userLoc.latitude, longitude: userLoc.longitude))
+        return max(1, Int(dist / 75))   // 75 m/min ≈ 4.5 km/h
+    }
+
+    // Paradas restantes en la ruta
+    private var remainingStops: Int? {
+        guard merchant.isOnRoute, let route = merchant.route else { return nil }
+        return route.waypoints.count
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -4887,6 +5482,38 @@ struct MerchantDetailCard: View {
                                         .font(.system(size: 12, weight: .medium))
                                         .foregroundColor(merchant.isCurrentlyOpen ? Color(hex: "#0ABF4F") : .gray)
                                 }
+                                // Badge "En ruta" en tiempo real
+                                if merchant.isOnRoute {
+                                    HStack(spacing: 3) {
+                                        Image(systemName: "figure.walk")
+                                            .font(.system(size: 10, weight: .bold))
+                                        Text("En ruta")
+                                            .font(.system(size: 11, weight: .bold))
+                                    }
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 7)
+                                    .padding(.vertical, 3)
+                                    .background(Color(hex: "#0ABF4F"))
+                                    .cornerRadius(8)
+                                    .transition(.scale.combined(with: .opacity))
+                                }
+                            }
+
+                            // ETA cuando está en ruta
+                            if merchant.isOnRoute, let eta = etaMinutes, let stops = remainingStops {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "clock.fill")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(Color(hex: "#FFAE43"))
+                                    Text("Llega a tu zona en ~\(eta) min · \(stops) paradas")
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundColor(.white.opacity(0.85))
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color.white.opacity(0.08))
+                                .cornerRadius(10)
+                                .transition(.move(edge: .top).combined(with: .opacity))
                             }
                         }
 

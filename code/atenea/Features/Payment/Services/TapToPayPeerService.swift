@@ -44,6 +44,7 @@ class TapToPayPeerService: NSObject, ObservableObject {
 
     private let tapThreshold: Float = 0.30  // 30 cm
     private var hasTriggered = false
+    private var hasProcessedConfirmation = false
     private var isActive = false
 
     var onPaymentTriggered: (() -> Void)?
@@ -100,13 +101,20 @@ class TapToPayPeerService: NSObject, ObservableObject {
         print("[TapToPay] ⏹ stop() role=\(role.rawValue) isActive=\(isActive)")
         isActive = false
         hasTriggered = false
+        hasProcessedConfirmation = false
 
         niSession?.invalidate()
         niSession = nil
 
         peripheralManager?.stopAdvertising()
+        // Delay deallocation 0.3s para que la cola XPC de CoreBluetooth drene antes
+        // de que CBPeripheralManager sea liberado (evita "XPC connection invalid" en logs)
+        let retainedPM = peripheralManager
         peripheralManager = nil
         charConfirmMutable = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            retainedPM?.stopAdvertising() // no-op si ya se detuvo; mantiene la referencia viva
+        }
 
         if let p = connectedPeripheral {
             centralManager?.cancelPeripheralConnection(p)
@@ -499,7 +507,7 @@ extension TapToPayPeerService: CBPeripheralDelegate {
             return
         }
         print("[TapToPay] Customer: servicio GATT encontrado — descubriendo características")
-        peripheral.discoverCharacteristics([kCharMToken, kCharCToken, kCharPayInfo, kCharConfirm], for: service)
+        peripheral.discoverCharacteristics([kCharMToken, kCharCToken, kCharPayInfo, kCharConfirm, kCharPayVoucher], for: service)
     }
 
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
@@ -560,10 +568,10 @@ extension TapToPayPeerService: CBPeripheralDelegate {
             // Confirmación del merchant (notify)
             if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
                 let approved = json["approved"] as? Bool ?? false
-                print("[TapToPay] Customer: 🔔 confirmación recibida — approved=\(approved) hasTriggered=\(self.hasTriggered)")
+                print("[TapToPay] Customer: 🔔 confirmación recibida — approved=\(approved) processed=\(self.hasProcessedConfirmation)")
                 DispatchQueue.main.async {
-                    if approved && !self.hasTriggered {
-                        self.hasTriggered = true
+                    if approved && !self.hasProcessedConfirmation {
+                        self.hasProcessedConfirmation = true
                         self.phase = .processing
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                             print("[TapToPay] Customer: llamando onPaymentTriggered")
@@ -614,6 +622,7 @@ extension TapToPayPeerService: NISessionDelegate {
 
             if self.role == .customer {
                 // Customer: enviar voucher de pago al merchant
+                self.hasTriggered = true
                 self.phase = .reading
                 print("[TapToPay] 💰 Customer: enviando voucher tras tap...")
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {

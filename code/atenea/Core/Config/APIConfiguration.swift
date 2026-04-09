@@ -43,7 +43,8 @@ class APIConfiguration {
             if let savedKey = UserDefaults.standard.string(forKey: "stripeSecretKey"), !savedKey.isEmpty {
                 return savedKey
             }
-            if let key = Bundle.main.object(forInfoDictionaryKey: "STRIPE_SECRET_KEY") as? String, !key.isEmpty {
+            if let key = Bundle.main.object(forInfoDictionaryKey: "STRIPE_SECRET_KEY") as? String,
+               !key.isEmpty, !key.hasPrefix("$(") {
                 return key
             }
             return ""

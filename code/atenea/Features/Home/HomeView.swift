@@ -26,6 +26,8 @@ struct NearbyMerchant: Identifiable {
 let mockUserLatitude = 19.3580
 let mockUserLongitude = -99.2620
 
+// MARK: - HomeView Router
+
 struct HomeView: View {
     @Binding var selectedTab: Int
     @Binding var pendingMerchantPlace: SearchPlace?
@@ -59,7 +61,6 @@ struct MerchantHomeView: View {
 
     @ObservedObject private var merchantManager = MerchantManager.shared
     @ObservedObject private var timbreManager = TimbreManager.shared
-    // @ObservedObject private var demandManager = DemandZoneManager.shared
     @ObservedObject private var radarService = RadarService.shared
     @State private var profileViews = 87
     @State private var animateCards = false
@@ -67,12 +68,9 @@ struct MerchantHomeView: View {
     @State private var showTimbreHistory = false
     @State private var shownTimbreId: UUID? = nil
     @State private var merchantChatTimbre: TimbreEvent? = nil
-    // @State private var showDemandInsights = false
     @State private var showStreetCredDetail = false
-    // @State private var showPredictionDetail = false
     @State private var showBusinessQR = false
     @State private var streetCredScore: StreetCredScore?
-    // @State private var matchPrediction: MatchPrediction?
 
     private var isBusinessActive: Bool {
         merchantManager.currentMerchantProfile?.isActive ?? false
@@ -83,69 +81,39 @@ struct MerchantHomeView: View {
             print("🏪 [toggle] ERROR: no hay currentMerchantProfile")
             return
         }
-        print("🏪 [toggle] Antes: isActive=\(merchantManager.currentMerchantProfile?.isActive ?? false)")
         DispatchQueue.main.async {
             merchantManager.toggleActive(merchantId: id)
-            print("🏪 [toggle] Después: isActive=\(merchantManager.currentMerchantProfile?.isActive ?? false)")
         }
     }
 
     var body: some View {
         ZStack {
-            Color(hex: "#F5F3F0")
-                .ignoresSafeArea()
+            Color(hex: "#F5F3F0").ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Spacer para safe area top (leído desde window)
-                Color(hex: "#F5F3F0")
-                    .frame(height: (UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first?.windows.first?.safeAreaInsets.top ?? 54) + 8)
-
                 ScrollView(showsIndicators: false) {
-                        VStack(spacing: 16) {
-                            // Header
-                            merchantHeader
-
-                        // Status toggle
+                    VStack(spacing: 16) {
+                        merchantHeroHeader
                         businessStatusCard
-
-                        // Street Cred Score
                         if let score = streetCredScore {
                             StreetCredCardView(score: score) {
                                 showStreetCredDetail = true
                             }
                             .opacity(animateCards ? 1 : 0)
                             .offset(y: animateCards ? 0 : 20)
+                            .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.1), value: animateCards)
                         }
-
-                        // Métricas del día
                         metricsGrid
-
-                        // Acciones rápidas
                         quickActionsSection
-
-                        // // Tip del día
-                        // demandTipCard
-
-                        /* // Predicción del próximo partido
-                        if let prediction = matchPrediction {
-                            PredictionCardView(
-                                prediction: prediction,
-                                merchantCategory: merchantManager.currentMerchantProfile?.category,
-                                onTap: { showPredictionDetail = true }
-                            )
-                            .opacity(animateCards ? 1 : 0)
-                            .offset(y: animateCards ? 0 : 20)
-                        }
-                        */
-
                         Spacer(minLength: 100)
                     }
                     .padding(.horizontal, 16)
-                    .padding(.top, 16)
+                    .padding(.top, 0)
+                    .padding(.bottom, 16)
                 }
             }
 
-            // Notificación de timbre
+            // Timbre overlay
             if let timbre = timbreManager.newTimbreReceived {
                 VStack {
                     TimbreNotificationView(
@@ -154,9 +122,7 @@ struct MerchantHomeView: View {
                             timbreManager.respond(to: timbre.id, with: responseType)
                             timbreManager.newTimbreReceived = nil
                         },
-                        onDismiss: {
-                            timbreManager.newTimbreReceived = nil
-                        },
+                        onDismiss: { timbreManager.newTimbreReceived = nil },
                         onChat: {
                             merchantChatTimbre = timbre
                             timbreManager.newTimbreReceived = nil
@@ -168,22 +134,17 @@ struct MerchantHomeView: View {
                 .padding(.top, 50)
                 .zIndex(100)
             }
-
-        } // ZStack
+        }
         .onChange(of: timbreManager.newTimbreReceived?.id) { timbreId in
             guard let id = timbreId, id != shownTimbreId else { return }
             shownTimbreId = id
             if let timbre = timbreManager.newTimbreReceived {
-                print("🔔 [MerchantHome] ⚡ TIMBRE DETECTADO: \(timbre.clientName) → \(timbre.type.displayName)")
+                print("🔔 [MerchantHome] ⚡ TIMBRE: \(timbre.clientName) → \(timbre.type.displayName)")
             }
         }
         .onAppear {
             Task { @MainActor in
-                // Cargar datos ANTES de mostrar la UI
                 try? await Task.sleep(nanoseconds: 200_000_000)
-
-                // demandManager.refreshMockData(around: (19.3585, -99.2740))
-
                 if let merchant = merchantManager.currentMerchantProfile {
                     let scm = StreetCredManager.shared
                     if scm.activityLog.filter({ $0.merchantId == merchant.id }).isEmpty {
@@ -191,30 +152,20 @@ struct MerchantHomeView: View {
                     }
                     streetCredScore = scm.calculateScore(for: merchant)
                 }
-                // matchPrediction = PredictionEngine.shared.predictNextMatch()
-
-                // Mostrar UI
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                     isReady = true
                     animateCards = true
                 }
-
-                // Radar después de que UI esté estable
                 try? await Task.sleep(nanoseconds: 500_000_000)
-
                 if let merchant = merchantManager.currentMerchantProfile {
-                    print("🏠 [MerchantHome] merchant=\(merchant.businessName) isActive=\(merchant.isActive) loc=\(merchant.currentLocation?.latitude ?? 0),\(merchant.currentLocation?.longitude ?? 0)")
-                    if merchant.isActive {
-                        PresenceManager.shared.startBroadcasting(merchant: merchant)
-                    }
+                    if merchant.isActive { PresenceManager.shared.startBroadcasting(merchant: merchant) }
                     RadarService.shared.startAdvertising(merchant: merchant)
                 } else {
                     print("🏠 [MerchantHome] ⚠️ No hay currentMerchantProfile")
                 }
                 RadarService.shared.startScanning()
-                print("🏠 [MerchantHome] ── READY — discoveredMerchants=\(RadarService.shared.discoveredMerchants.count) ──")
+                print("🏠 [MerchantHome] ── READY ──")
             }
-            print("🏠 [MerchantHome] ── ON APPEAR END ──")
         }
         .onChange(of: merchantManager.currentMerchantProfile?.isActive) { _, isActive in
             DispatchQueue.main.async {
@@ -227,104 +178,140 @@ struct MerchantHomeView: View {
                 }
             }
         }
-        .sheet(isPresented: $showTimbreHistory) {
-            TimbreHistoryView()
-        }
-        .sheet(item: $merchantChatTimbre) { timbre in
-            MerchantTimbreChatView(timbre: timbre)
-        }
+        .sheet(isPresented: $showTimbreHistory) { TimbreHistoryView() }
+        .sheet(item: $merchantChatTimbre) { timbre in MerchantTimbreChatView(timbre: timbre) }
         .sheet(isPresented: $showStreetCredDetail) {
-            if let score = streetCredScore {
-                StreetCredDetailView(score: score)
-            }
+            if let score = streetCredScore { StreetCredDetailView(score: score) }
         }
-        /* .sheet(isPresented: $showPredictionDetail) {
-            if let prediction = matchPrediction {
-                PredictionDetailView(prediction: prediction, selectedTab: $selectedTab)
-            }
-        }
-        */
     }
 
-    // MARK: - Header
+    // MARK: - Merchant Hero Header
 
-    private var merchantHeader: some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(String(format: LocalizedString("home.hello"), user.name))
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundColor(Color(hex: "#081754"))
-                Text(LocalizedString("home.yourBusinessToday"))
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
-                    .foregroundColor(Color(hex: "#4A4A4A"))
-            }
-            Spacer()
-            Button(action: {
-                MenuStateManager.shared.toggleMenu()
-                let generator = UIImpactFeedbackGenerator(style: .medium)
-                generator.impactOccurred()
-            }) {
-                ZStack {
-                    Circle()
-                        .fill(Color(hex: "#FFAE43"))
-                        .frame(width: 48, height: 48)
-                    Text(String(user.name.prefix(1)).uppercased())
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+    private var merchantHeroHeader: some View {
+        ZStack(alignment: .bottomLeading) {
+            LinearGradient(
+                colors: [Color(hex: "#1C42E8"), Color(hex: "#081754")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+
+            // Decorative orbs
+            Circle()
+                .fill(Color.white.opacity(0.06))
+                .frame(width: 200, height: 200)
+                .offset(x: 160, y: -40)
+            Circle()
+                .fill(Color(hex: "#1C42E8").opacity(0.35))
+                .frame(width: 100, height: 100)
+                .offset(x: -60, y: 50)
+
+            // Safe area top padding
+            let topInset = (UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .first?.windows.first?.safeAreaInsets.top ?? 54)
+
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(LocalizedString("home.yourBusinessToday"))
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.72))
+                    Text(String(format: LocalizedString("home.hello"), user.name))
+                        .font(.system(size: 26, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
+                    if let biz = merchantManager.currentMerchantProfile {
+                        HStack(spacing: 6) {
+                            Text(biz.emoji).font(.system(size: 14))
+                            Text(biz.businessName)
+                                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                .foregroundColor(.white.opacity(0.88))
+                        }
+                    }
+                }
+                Spacer()
+                Button(action: {
+                    MenuStateManager.shared.toggleMenu()
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                }) {
+                    ZStack {
+                        Circle()
+                            .fill(Color(hex: "#F0D224"))
+                            .frame(width: 50, height: 50)
+                        Text(String(user.name.prefix(1)).uppercased())
+                            .font(.system(size: 20, weight: .black, design: .rounded))
+                            .foregroundColor(Color(hex: "#081754"))
+                    }
                 }
             }
+            .padding(.horizontal, 20)
+            .padding(.top, topInset + 12)
+            .padding(.bottom, 24)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color(hex: "#FFFFFF"))
-        .cornerRadius(12)
+        .frame(maxWidth: .infinity)
+        .cornerRadius(20)
         .opacity(animateCards ? 1 : 0)
-        .offset(y: animateCards ? 0 : -10)
+        .offset(y: animateCards ? 0 : -20)
+        .animation(.spring(response: 0.65, dampingFraction: 0.85), value: animateCards)
     }
 
     // MARK: - Business Status
 
     private var businessStatusCard: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(spacing: 14) {
+            ZStack {
+                Circle()
+                    .fill(isBusinessActive ? Color(hex: "#1C42E8").opacity(0.12) : Color.gray.opacity(0.1))
+                    .frame(width: 50, height: 50)
+                Image(systemName: isBusinessActive ? "antenna.radiowaves.left.and.right" : "moon.zzz.fill")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(isBusinessActive ? Color(hex: "#1C42E8") : Color(hex: "#4A4A4A"))
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
                 Text(isBusinessActive ? LocalizedString("home.businessActive") : LocalizedString("home.businessPaused"))
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
                     .foregroundColor(Color(hex: "#081754"))
                 Text(isBusinessActive ? LocalizedString("home.businessActiveDesc") : LocalizedString("home.businessPausedDesc"))
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                    .font(.system(size: 13, design: .rounded))
                     .foregroundColor(Color(hex: "#4A4A4A"))
             }
+
             Spacer()
+
             Button {
-                let generator = UIImpactFeedbackGenerator(style: .medium)
-                generator.impactOccurred()
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                 toggleBusiness()
             } label: {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(isBusinessActive ? Color(hex: "#0ABF4F") : Color.gray.opacity(0.3))
-                    .frame(width: 51, height: 31)
-                    .overlay(alignment: isBusinessActive ? .trailing : .leading) {
-                        Circle()
-                            .fill(.white)
-                            .frame(width: 27, height: 27)
-                            .padding(2)
-                    }
-                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isBusinessActive)
+                ZStack(alignment: isBusinessActive ? .trailing : .leading) {
+                    Capsule()
+                        .fill(isBusinessActive ? Color(hex: "#1C42E8") : Color.gray.opacity(0.28))
+                        .frame(width: 54, height: 32)
+                    Circle()
+                        .fill(.white)
+                        .frame(width: 28, height: 28)
+                        .padding(2)
+                        .shadow(color: .black.opacity(0.12), radius: 2, x: 0, y: 1)
+                }
+                .animation(.spring(response: 0.32, dampingFraction: 0.7), value: isBusinessActive)
             }
         }
         .padding(16)
-        .background(Color(hex: "#FFFFFF"))
-        .cornerRadius(12)
+        .background(Color.white)
+        .cornerRadius(18)
+        .shadow(
+            color: isBusinessActive ? Color(hex: "#1C42E8").opacity(0.12) : .black.opacity(0.04),
+            radius: 12, x: 0, y: 4
+        )
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(
-                    isBusinessActive ? Color(hex: "#0ABF4F").opacity(0.2) : Color(hex: "#FF594D").opacity(0.2),
-                    lineWidth: 1
+            RoundedRectangle(cornerRadius: 18)
+                .strokeBorder(
+                    isBusinessActive ? Color(hex: "#1C42E8").opacity(0.22) : Color.clear,
+                    lineWidth: 1.5
                 )
         )
         .opacity(animateCards ? 1 : 0)
         .offset(y: animateCards ? 0 : 20)
-        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: isBusinessActive)
+        .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.05), value: animateCards)
+        .animation(.spring(response: 0.32, dampingFraction: 0.7), value: isBusinessActive)
     }
 
     // MARK: - Metrics Grid
@@ -332,12 +319,14 @@ struct MerchantHomeView: View {
     private var metricsGrid: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(LocalizedString("home.today"))
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundColor(Color(hex: "#081754"))
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .foregroundColor(Color(hex: "#1C42E8"))
+                .kerning(1.0)
+                .textCase(.uppercase)
 
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 MetricCard(
-                    icon: "person.fill",
+                    icon: "person.2.fill",
                     value: "\(PresenceManager.shared.activeMerchantCount)",
                     label: LocalizedString("home.sellers"),
                     color: Color(hex: "#1C42E8")
@@ -346,24 +335,26 @@ struct MerchantHomeView: View {
                     icon: "eye.fill",
                     value: "\(profileViews)",
                     label: LocalizedString("home.views"),
-                    color: Color(hex: "#7D42FF")
+                    color: Color(hex: "#1C42E8")
                 )
                 Button(action: { showTimbreHistory = true }) {
                     MetricCard(
                         icon: "bell.fill",
                         value: "\(timbreManager.unreadCount)",
                         label: LocalizedString("home.timbres"),
-                        color: timbreManager.unreadCount > 0 ? Color(hex: "#FFAE43") : Color(hex: "#4A4A4A")
+                        color: timbreManager.unreadCount > 0 ? Color(hex: "#F0D224") : Color(hex: "#4A4A4A")
                     )
                 }
                 .buttonStyle(.plain)
             }
         }
         .padding(16)
-        .background(Color(hex: "#FFFFFF"))
-        .cornerRadius(12)
+        .background(Color.white)
+        .cornerRadius(18)
+        .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
         .opacity(animateCards ? 1 : 0)
         .offset(y: animateCards ? 0 : 20)
+        .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.12), value: animateCards)
     }
 
     // MARK: - Quick Actions
@@ -371,8 +362,10 @@ struct MerchantHomeView: View {
     private var quickActionsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(LocalizedString("home.quickActions"))
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundColor(Color(hex: "#081754"))
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .foregroundColor(Color(hex: "#1C42E8"))
+                .kerning(1.0)
+                .textCase(.uppercase)
 
             VStack(spacing: 10) {
                 MerchantActionRow(
@@ -385,85 +378,29 @@ struct MerchantHomeView: View {
                     selectedTab = 1
                 }
 
-                /* MerchantActionRow(
-                    icon: "map.fill",
-                    title: LocalizedString("home.viewDemandZones"),
-                    subtitle: String(format: LocalizedString("home.searchesThisHour"), demandManager.totalDemandLastHour()),
-                    color: Color(hex: "#0ABF4F")
-                ) {
-                    showDemandInsights = true
-                }
-                */
-
                 MerchantActionRow(
                     icon: "qrcode",
                     title: LocalizedString("qr.viewMyQR"),
                     subtitle: LocalizedString("qr.showToCustomers"),
-                    color: Color(hex: "#FFAE43")
+                    color: Color(hex: "#F0D224")
                 ) {
                     showBusinessQR = true
                 }
             }
         }
         .padding(16)
-        .background(Color(hex: "#FFFFFF"))
-        .cornerRadius(12)
+        .background(Color.white)
+        .cornerRadius(18)
+        .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
         .opacity(animateCards ? 1 : 0)
         .offset(y: animateCards ? 0 : 20)
+        .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.18), value: animateCards)
         .sheet(isPresented: $showBusinessQR) {
             if let merchant = merchantManager.currentMerchantProfile {
                 BusinessQRView(merchant: merchant)
             }
         }
     }
-
-    /* // MARK: - Demand Tip
-
-    private var demandTipCard: some View {
-        let topZone = demandManager.topZones(limit: 1).first
-        let tipTitle = topZone != nil
-            ? "Demanda \(topZone!.intensity.displayName.lowercased()) de \(topZone!.topCategory?.displayName ?? "comida")"
-            : LocalizedString("home.noDataYet")
-        let tipSubtitle = topZone != nil
-            ? "\(topZone!.demandScore) búsquedas en zona"
-            : LocalizedString("home.dataWillAppear")
-
-        return Button(action: { showDemandInsights = true }) {
-            HStack(spacing: 12) {
-                Image(systemName: "chart.line.uptrend.xyaxis")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(Color(hex: "#FFAE43"))
-                    .frame(width: 44, height: 44)
-                    .background(Color(hex: "#FFAE43").opacity(0.12))
-                    .cornerRadius(12)
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(tipTitle)
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
-                        .foregroundColor(Color(hex: "#081754"))
-                    Text(tipSubtitle)
-                        .font(.system(size: 13, weight: .regular, design: .rounded))
-                        .foregroundColor(Color(hex: "#4A4A4A"))
-                        .lineLimit(2)
-                }
-
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(Color(hex: "#FFAE43"))
-            }
-            .padding(14)
-            .background(Color(hex: "#FFFFFF"))
-            .cornerRadius(12)
-        }
-        .buttonStyle(PressButtonStyle())
-        .opacity(animateCards ? 1 : 0)
-        .offset(y: animateCards ? 0 : 20)
-        .sheet(isPresented: $showDemandInsights) {
-            DemandInsightsView(selectedTab: $selectedTab)
-        }
-    }
-    */
 }
 
 // MARK: - Customer Home
@@ -479,6 +416,7 @@ struct CustomerHomeView: View {
     @StateObject private var locationManager = LocationManager()
     @ObservedObject private var timbreManager = TimbreManager.shared
     @State private var animateCards = false
+    @State private var heroAppeared = false
     @State private var selectedMerchantForTimbre: Merchant?
     @State private var selectedCategoryFilter: MerchantCategory? = nil
     @State private var showRadar = false
@@ -487,7 +425,6 @@ struct CustomerHomeView: View {
     @State private var showVoiceTranslator = false
     @State private var showAIChat = false
     @State private var aiChatPrefill: String = ""
-    @State private var insightTransition = false
     @State private var showTimbreChat = false
     @State private var chatMerchantName: String = ""
     @State private var chatMerchantEmoji: String = ""
@@ -499,28 +436,27 @@ struct CustomerHomeView: View {
 
     private var filteredMerchants: [Merchant] {
         let active = merchantManager.merchants.filter { $0.isActive && $0.currentLocation != nil }
-        let filtered: [Merchant]
-        if let cat = selectedCategoryFilter {
-            filtered = active.filter { $0.category == cat }
-        } else {
-            filtered = active
-        }
+        let filtered = selectedCategoryFilter == nil ? active : active.filter { $0.category == selectedCategoryFilter }
         return filtered.sorted { a, b in
-            let distA = MerchantManager.haversineDistance(
+            let dA = MerchantManager.haversineDistance(
                 lat1: userCoordinate.latitude, lon1: userCoordinate.longitude,
                 lat2: a.currentLocation!.latitude, lon2: a.currentLocation!.longitude
             )
-            let distB = MerchantManager.haversineDistance(
+            let dB = MerchantManager.haversineDistance(
                 lat1: userCoordinate.latitude, lon1: userCoordinate.longitude,
                 lat2: b.currentLocation!.latitude, lon2: b.currentLocation!.longitude
             )
-            return distA < distB
+            return dA < dB
         }
     }
 
     private var activeCategories: [MerchantCategory] {
         let cats = Set(merchantManager.merchants.filter { $0.isActive }.map { $0.category })
         return MerchantCategory.allCases.filter { cats.contains($0) }
+    }
+
+    private var merchantsOnRoute: [Merchant] {
+        merchantManager.merchants.filter { $0.isOnRoute && $0.currentLocation != nil }
     }
 
     private func distanceToMerchant(_ merchant: Merchant) -> Double {
@@ -532,115 +468,83 @@ struct CustomerHomeView: View {
     }
 
     private func formatDistance(_ meters: Double) -> String {
-        if meters < 1000 {
-            return "\(Int(meters))m"
-        } else {
-            return String(format: "%.1fkm", meters / 1000)
-        }
+        meters < 1000 ? "\(Int(meters))m" : String(format: "%.1fkm", meters / 1000)
     }
+
+    // MARK: - Body
 
     var body: some View {
         ZStack {
-            Color(hex: "#F5F3F0")
-                .ignoresSafeArea()
+            Color(hex: "#F5F3F0").ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                Color(hex: "#F5F3F0")
-                    .frame(height: (UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first?.windows.first?.safeAreaInsets.top ?? 54) + 8)
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 0) {
+                    // 1. HERO — full-width gradient
+                    customerHeroSection
 
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 16) {
-                        // Header
-                        customerHeader
+                    // 2. Content sections
+                    VStack(spacing: 14) {
+                        // Atenea insight (activado)
+                        ateneaInsightSection
 
-                    // Detectar comerciantes por Radar P2P
-                    radarSection
+                        // Story bubbles de merchants
+                        merchantStoriesSection
 
-                    // Comerciantes en ruta ahora (Realtime)
-                    merchantsOnRouteSection
+                        // Radar P2P compacto
+                        radarCompactSection
 
-                    // Comerciantes activos cerca
-                    nearbyMerchantsSection
+                        // Grid 2×2 de acciones
+                        customerActionsGrid
 
+                        // Mundial
+                        worldCupEventCard
 
-                    // Traductor de voz
-                    voiceTranslatorCard
-
-                    // Acciones rápidas
-                    customerQuickActions
-
-                    // Evento Mundial
-                    worldCupEventCard
-
-                    Spacer(minLength: 100)
+                        Spacer(minLength: 100)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 18)
+                    .padding(.bottom, 16)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
-                .padding(.bottom, 16)
             }
-            } // VStack
-        } // ZStack
+        }
         .onAppear {
-            print("🏠 [CustomerHome] onAppear — user=\(user.name) mockLocation=(\(mockUserLatitude),\(mockUserLongitude))")
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.1)) {
+            print("🏠 [CustomerHome] onAppear — user=\(user.name)")
+            withAnimation(.spring(response: 0.7, dampingFraction: 0.85).delay(0.05)) {
+                heroAppeared = true
                 animateCards = true
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 RadarService.shared.startScanning()
-                print("🏠 [CustomerHome] scanning started — discoveredMerchants=\(RadarService.shared.discoveredMerchants.count)")
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 contextEngine.evaluate()
             }
         }
-        .fullScreenCover(isPresented: $showRadar) {
-            RadarView()
-        }
-        .fullScreenCover(isPresented: $showTapToPay) {
-            TapToPayCustomerView()
-        }
+        .fullScreenCover(isPresented: $showRadar) { RadarView() }
+        .fullScreenCover(isPresented: $showTapToPay) { TapToPayCustomerView() }
         .fullScreenCover(isPresented: $showARStreetMenu) {
-            ARStreetMenuView()
-                .environmentObject(LanguageManager.shared)
+            ARStreetMenuView().environmentObject(LanguageManager.shared)
         }
         .fullScreenCover(isPresented: $showAIChat) {
             AISearchView(
                 isPresented: $showAIChat,
-                onNavigateToLocation: { coord, name, zoom in
-                    showAIChat = false
-                    selectedTab = 1
-                },
-                onShowDirections: { coord, name in
-                    showAIChat = false
-                    selectedTab = 1
-                }
+                onNavigateToLocation: { _, _, _ in showAIChat = false; selectedTab = 1 },
+                onShowDirections: { _, _ in showAIChat = false; selectedTab = 1 }
             )
         }
-        .sheet(isPresented: $showVoiceTranslator) {
-            VoiceTranslatorView()
-        }
+        .sheet(isPresented: $showVoiceTranslator) { VoiceTranslatorView() }
         .sheet(item: $selectedMerchantForTimbre) { merchant in
-            TimbreChatView(
-                merchantName: merchant.businessName,
-                merchantEmoji: merchant.emoji,
-                merchant: merchant
-            )
+            TimbreChatView(merchantName: merchant.businessName, merchantEmoji: merchant.emoji, merchant: merchant)
         }
         .sheet(isPresented: $showTimbreChat) {
-            TimbreChatView(
-                merchantName: chatMerchantName,
-                merchantEmoji: chatMerchantEmoji,
-                merchant: chatMerchant
-            )
+            TimbreChatView(merchantName: chatMerchantName, merchantEmoji: chatMerchantEmoji, merchant: chatMerchant)
         }
         .onChange(of: timbreManager.lastResponse) { _, response in
             guard let response = response else { return }
-            // Si el chat ya está abierto, no hacer nada — la UI se actualiza sola vía @Published
             guard selectedMerchantForTimbre == nil && !showTimbreChat else {
                 timbreManager.lastResponse = nil
                 return
             }
-            // Abrir el chat solo si no estaba abierto
             if let timbre = timbreManager.sentTimbres.first(where: { $0.id == response.timbreId }) {
                 let merchant = merchantManager.merchants.first(where: { $0.id == response.merchantId })
                 chatMerchantName = timbre.merchantName
@@ -652,370 +556,187 @@ struct CustomerHomeView: View {
         }
     }
 
-    // MARK: - Header
+    // MARK: - Hero Section
 
-    // MARK: - Radar P2P Section
+    private var customerHeroSection: some View {
+        ZStack(alignment: .bottom) {
+            // Gradient hero — colores Atenea
+            LinearGradient(
+                colors: [Color(hex: "#F0D224"), Color(hex: "#1C42E8"), Color(hex: "#081754")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
 
-    private var radarSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                HStack(spacing: 6) {
-                    Image(systemName: "antenna.radiowaves.left.and.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(radarService.isScanning ? Color(hex: "#0ABF4F") : Color(hex: "#4A4A4A"))
-                    Text(LocalizedString("home.detectMerchants"))
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .foregroundColor(Color(hex: "#081754"))
-                }
-                Spacer()
-                if radarService.activeMerchantCount > 0 {
-                    Text(String(format: LocalizedString("home.nearby"), radarService.activeMerchantCount))
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .foregroundColor(Color(hex: "#0ABF4F"))
-                }
-                Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        showRadar = true
-                    }
-                }) {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(Color(hex: "#1C42E8"))
-                }
-                .frame(width: 44, height: 44)
-                .contentShape(Rectangle())
-            }
+            // Decorative orbs
+            Circle()
+                .fill(Color.white.opacity(0.07))
+                .frame(width: 240, height: 240)
+                .offset(x: 120, y: -70)
+            Circle()
+                .fill(Color(hex: "#1C42E8").opacity(0.18))
+                .frame(width: 130, height: 130)
+                .offset(x: -130, y: 50)
+            Circle()
+                .fill(Color(hex: "#F0D224").opacity(0.18))
+                .frame(width: 80, height: 80)
+                .offset(x: 130, y: 70)
 
-            if radarService.discoveredMerchants.isEmpty {
-                HStack(spacing: 10) {
-                    ProgressView()
-                        .tint(Color(hex: "#0ABF4F"))
-                        .scaleEffect(CGFloat(0.8))
-                    Text(LocalizedString("home.searchingMerchants"))
-                        .font(.system(size: 13, weight: .regular, design: .rounded))
-                        .foregroundColor(Color(hex: "#4A4A4A"))
-                }
-                .padding(12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(hex: "#EEE8E3"))
-                .cornerRadius(12)
-            } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(radarService.discoveredMerchants.filter { !$0.isStale }) { peer in
-                            ZStack(alignment: .topTrailing) {
-                                InteractivePeerButton(
-                                    emoji: peer.emoji,
-                                    name: peer.businessName,
-                                    signalColor: peer.signalStrength.color,
-                                    action: {
-                                        if let merchant = MerchantManager.shared.merchants.first(where: { $0.businessName == peer.businessName }) {
-                                            selectedMerchantForTimbre = merchant
-                                        }
-                                    }
-                                )
-                                if peer.isOnRoute {
-                                    Text("En ruta")
-                                        .font(.system(size: 9, weight: .bold, design: .rounded))
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 5)
-                                        .padding(.vertical, 2)
-                                        .background(Color(hex: "#0ABF4F"))
-                                        .clipShape(Capsule())
-                                        .offset(x: 4, y: -4)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        .padding(16)
-        .background(Color(hex: "#FFFFFF"))
-        .cornerRadius(12)
-        .opacity(animateCards ? 1 : 0)
-        .offset(y: animateCards ? 0 : 20)
-    }
-
-    private var customerHeader: some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(String(format: LocalizedString("home.hello"), user.name))
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundColor(Color(hex: "#081754"))
-                Text(LocalizedString("home.whatDoYouCrave"))
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
-                    .foregroundColor(Color(hex: "#4A4A4A"))
-            }
-            Spacer()
-            Button(action: {
-                MenuStateManager.shared.toggleMenu()
-                let generator = UIImpactFeedbackGenerator(style: .medium)
-                generator.impactOccurred()
-            }) {
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color(hex: "#1C42E8"), Color(hex: "#0ABF4F")],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 48, height: 48)
-                    Text(String(user.name.prefix(1)).uppercased())
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                }
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color(hex: "#FFFFFF"))
-        .cornerRadius(12)
-        .opacity(animateCards ? 1 : 0)
-        .offset(y: animateCards ? 0 : -10)
-    }
-
-    // MARK: - Merchants En Ruta Ahora (Realtime)
-
-    private var merchantsOnRoute: [Merchant] {
-        merchantManager.merchants.filter { $0.isOnRoute && $0.currentLocation != nil }
-    }
-
-    private var merchantsOnRouteSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(merchantsOnRoute.isEmpty ? Color.gray : Color(hex: "#0ABF4F"))
-                        .frame(width: 8, height: 8)
-                        .opacity(merchantsOnRoute.isEmpty ? 0.4 : 1)
-
-                    Text("En ruta ahora")
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .foregroundColor(Color(hex: "#081754"))
-                }
-                Spacer()
-                if !merchantsOnRoute.isEmpty {
-                    Text("\(merchantsOnRoute.count) activo\(merchantsOnRoute.count == 1 ? "" : "s")")
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .foregroundColor(Color(hex: "#0ABF4F"))
-                }
-                Button(action: { selectedTab = 1 }) {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(Color(hex: "#1C42E8"))
-                }
-                .frame(width: 44, height: 44)
-                .contentShape(Rectangle())
-            }
-
-            if merchantsOnRoute.isEmpty {
-                HStack(spacing: 10) {
-                    Image(systemName: "figure.walk")
-                        .font(.system(size: 16))
-                        .foregroundColor(Color(hex: "#4A4A4A").opacity(0.4))
-                    Text("Ningún comerciante en ruta en este momento")
-                        .font(.system(size: 13, design: .rounded))
-                        .foregroundColor(Color(hex: "#4A4A4A").opacity(0.6))
-                }
-                .padding(12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(hex: "#F5F3F0"))
-                .cornerRadius(12)
-            } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(merchantsOnRoute) { merchant in
-                            Button(action: {
-                                guard let loc = merchant.currentLocation else { return }
-                                pendingMerchantPlace = SearchPlace(
-                                    name: merchant.businessName,
-                                    subtitle: "\(merchant.category.displayName) · En ruta",
-                                    category: merchant.category.displayName,
-                                    icon: "figure.walk",
-                                    coordinate: loc.coordinate
-                                )
-                                selectedTab = 1
-                            }) {
-                                OnRouteCard(merchant: merchant, distance: distanceToMerchant(merchant))
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
-            }
-        }
-        .padding(16)
-        .background(Color(hex: "#FFFFFF"))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(
-                    merchantsOnRoute.isEmpty ? Color.clear : Color(hex: "#0ABF4F").opacity(0.2),
-                    lineWidth: 1
+            // Content
+            VStack(alignment: .leading, spacing: 0) {
+                // Safe area
+                Color.clear.frame(
+                    height: (UIApplication.shared.connectedScenes
+                        .compactMap { $0 as? UIWindowScene }
+                        .first?.windows.first?.safeAreaInsets.top ?? 54) + 6
                 )
-        )
-        .opacity(animateCards ? 1 : 0)
-        .offset(y: animateCards ? 0 : 20)
-    }
 
-    // MARK: - Nearby Merchants
+                // Top row
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(timeGreeting)
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.75))
+                            .opacity(heroAppeared ? 1 : 0)
+                            .animation(.easeOut(duration: 0.4).delay(0.08), value: heroAppeared)
 
-    private var nearbyMerchantsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text(LocalizedString("home.merchantsNearby"))
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .foregroundColor(Color(hex: "#081754"))
-                Spacer()
-                Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        selectedTab = 1
+                        Text(user.name)
+                            .font(.system(size: 30, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .opacity(heroAppeared ? 1 : 0)
+                            .offset(y: heroAppeared ? 0 : 12)
+                            .animation(.spring(response: 0.55, dampingFraction: 0.78).delay(0.1), value: heroAppeared)
                     }
-                }) {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(Color(hex: "#1C42E8"))
-                }
-                .frame(width: 44, height: 44)
-                .contentShape(Rectangle())
-            }
-
-            // Chips de categoría
-            if !activeCategories.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        Button {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                selectedCategoryFilter = nil
-                            }
-                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "square.grid.2x2.fill")
-                                    .font(.system(size: 11))
-                                Text(LocalizedString("home.filter.all"))
-                                    .font(.system(size: 12, weight: .semibold))
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(
-                                Capsule().fill(selectedCategoryFilter == nil ? Color(hex: "#1C42E8") : Color(hex: "#F5F3F0"))
-                            )
-                            .foregroundColor(selectedCategoryFilter == nil ? .white : Color(hex: "#4A4A4A"))
-                        }
-                        .buttonStyle(.plain)
-
-                        ForEach(activeCategories, id: \.self) { cat in
-                            Button {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                    selectedCategoryFilter = selectedCategoryFilter == cat ? nil : cat
-                                }
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                            } label: {
-                                HStack(spacing: 4) {
-                                    Text(cat.emoji)
-                                        .font(.system(size: 13))
-                                    Text(cat.displayName)
-                                        .font(.system(size: 12, weight: .semibold))
-                                }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(
-                                    Capsule().fill(selectedCategoryFilter == cat ? Color(hex: "#FFAE43") : Color(hex: "#F5F3F0"))
-                                )
-                                .foregroundColor(selectedCategoryFilter == cat ? .white : Color(hex: "#4A4A4A"))
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
-            }
-
-            // Tarjetas de merchants
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(filteredMerchants) { merchant in
-                        Button(action: {
-                            guard let loc = merchant.currentLocation else { return }
-                            pendingMerchantPlace = SearchPlace(
-                                name: merchant.businessName,
-                                subtitle: "\(merchant.category.displayName) · \(formatDistance(distanceToMerchant(merchant)))",
-                                category: merchant.category.displayName,
-                                icon: "mappin.circle.fill",
-                                coordinate: loc.coordinate
-                            )
-                            selectedTab = 1
-                        }) {
-                            HomeMerchantCard(
-                                merchant: merchant,
-                                distance: distanceToMerchant(merchant)
-                            )
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-        }
-        .padding(16)
-        .background(Color(hex: "#FFFFFF"))
-        .cornerRadius(12)
-        .opacity(animateCards ? 1 : 0)
-        .offset(y: animateCards ? 0 : 20)
-    }
-
-    // MARK: - AI Recommendation (Atenea Knows)
-
-    private var aiRecommendationCard: some View {
-        VStack(spacing: 12) {
-            // Tarjeta principal contextual
-            if let insight = contextEngine.currentInsight {
-                Button(action: {
-                    handleInsightAction(insight.action)
-                }) {
-                    HStack(spacing: 12) {
+                    Spacer()
+                    Button(action: {
+                        MenuStateManager.shared.toggleMenu()
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    }) {
                         ZStack {
                             Circle()
                                 .fill(
                                     LinearGradient(
-                                        colors: [Color(hex: insight.accentColor), Color(hex: insight.accentColor).opacity(0.6)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
+                                        colors: [Color(hex: "#1C42E8"), Color(hex: "#081754")],
+                                        startPoint: .topLeading, endPoint: .bottomTrailing
                                     )
                                 )
-                                .frame(width: 48, height: 48)
+                                .frame(width: 50, height: 50)
+                                .overlay(Circle().strokeBorder(.white.opacity(0.3), lineWidth: 1.5))
+                            Text(String(user.name.prefix(1)).uppercased())
+                                .font(.system(size: 20, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                        }
+                    }
+                }
+                .padding(.horizontal, 20)
 
+                Spacer().frame(height: 14)
+
+                // Live merchant count
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(Color(hex: "#1C42E8"))
+                        .frame(width: 7, height: 7)
+                    let activeCount = merchantManager.merchants.filter { $0.isActive }.count
+                    Text("\(activeCount) vendedores activos cerca")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white.opacity(0.9))
+                }
+                .padding(.horizontal, 20)
+                .opacity(heroAppeared ? 1 : 0)
+                .offset(x: heroAppeared ? 0 : -16)
+                .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.17), value: heroAppeared)
+
+                Spacer().frame(height: 16)
+
+                // AI Search bar
+                Button(action: {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    showAIChat = true
+                }) {
+                    HStack(spacing: 10) {
+                        ZStack {
+                            Circle()
+                                .fill(Color(hex: "#1C42E8").opacity(0.12))
+                                .frame(width: 34, height: 34)
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(Color(hex: "#1C42E8"))
+                        }
+                        Text(LocalizedString("home.whatDoYouCrave"))
+                            .font(.system(size: 15, weight: .medium, design: .rounded))
+                            .foregroundColor(Color(hex: "#4A4A4A"))
+                        Spacer()
+                        Image(systemName: "arrow.right.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundColor(Color(hex: "#1C42E8"))
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 13)
+                    .background(Color.white)
+                    .cornerRadius(16)
+                    .shadow(color: .black.opacity(0.1), radius: 14, x: 0, y: 5)
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 16)
+                .opacity(heroAppeared ? 1 : 0)
+                .offset(y: heroAppeared ? 0 : 22)
+                .animation(.spring(response: 0.55, dampingFraction: 0.8).delay(0.22), value: heroAppeared)
+
+                Spacer().frame(height: 30)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .clipped()
+    }
+
+    private var timeGreeting: String {
+        let h = Calendar.current.component(.hour, from: Date())
+        if h < 12 { return "Buenos días" }
+        if h < 19 { return "Buenas tardes" }
+        return "Buenas noches"
+    }
+
+    // MARK: - Atenea Insight (activado)
+
+    private var ateneaInsightSection: some View {
+        VStack(spacing: 10) {
+            if let insight = contextEngine.currentInsight {
+                Button(action: { handleInsightAction(insight.action) }) {
+                    HStack(spacing: 14) {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color(hex: insight.accentColor), Color(hex: insight.accentColor).opacity(0.55)],
+                                        startPoint: .topLeading, endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 54, height: 54)
                             Image(systemName: insight.icon)
-                                .font(.system(size: 20, weight: .semibold))
+                                .font(.system(size: 22, weight: .semibold))
                                 .foregroundColor(.white)
                         }
 
                         VStack(alignment: .leading, spacing: 4) {
-                            HStack(spacing: 6) {
+                            HStack(spacing: 5) {
                                 Text("Atenea")
-                                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                                    .font(.system(size: 10, weight: .black, design: .rounded))
                                     .foregroundColor(Color(hex: insight.accentColor))
-                                    .kerning(1.2)
+                                    .kerning(1.5)
                                     .textCase(.uppercase)
-
                                 Circle()
-                                    .fill(Color(hex: "#0ABF4F"))
-                                    .frame(width: 6, height: 6)
-
+                                    .fill(Color(hex: "#1C42E8"))
+                                    .frame(width: 5, height: 5)
                                 Text(LocalizedString("home.atenea.live"))
                                     .font(.system(size: 10, weight: .semibold, design: .rounded))
-                                    .foregroundColor(Color(hex: "#0ABF4F"))
+                                    .foregroundColor(Color(hex: "#1C42E8"))
                             }
-
                             Text(insight.title)
-                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                .font(.system(size: 15, weight: .bold, design: .rounded))
                                 .foregroundColor(Color(hex: "#081754"))
                                 .lineLimit(1)
-
                             Text(insight.subtitle)
-                                .font(.system(size: 13, weight: .regular, design: .rounded))
+                                .font(.system(size: 13, design: .rounded))
                                 .foregroundColor(Color(hex: "#4A4A4A"))
                                 .lineLimit(2)
                         }
@@ -1023,61 +744,66 @@ struct CustomerHomeView: View {
                         Spacer()
 
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(Color(hex: insight.accentColor))
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(Color(hex: insight.accentColor).opacity(0.6))
                     }
-                    .padding(14)
-                    .background(Color(hex: "#FFFFFF"))
-                    .cornerRadius(12)
+                    .padding(16)
+                    .background(Color.white)
+                    .cornerRadius(20)
+                    .shadow(color: Color(hex: insight.accentColor).opacity(0.14), radius: 14, x: 0, y: 4)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color(hex: insight.accentColor).opacity(0.15), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 20)
+                            .strokeBorder(Color(hex: insight.accentColor).opacity(0.2), lineWidth: 1.5)
                     )
                 }
                 .buttonStyle(PressButtonStyle())
                 .id(insight.title)
                 .transition(.asymmetric(
-                    insertion: .opacity.combined(with: .move(edge: .trailing)),
-                    removal: .opacity.combined(with: .move(edge: .leading))
+                    insertion: .opacity.combined(with: .offset(x: 24)),
+                    removal: .opacity.combined(with: .offset(x: -24))
                 ))
             }
 
-            // Smart Chips
+            // Smart chips
             if !contextEngine.chips.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
-                        ForEach(contextEngine.chips) { chip in
+                        ForEach(Array(contextEngine.chips.enumerated()), id: \.element.id) { idx, chip in
                             Button(action: {
                                 aiChatPrefill = chip.query
                                 showAIChat = true
                             }) {
                                 HStack(spacing: 6) {
-                                    Text(chip.emoji)
-                                        .font(.system(size: 14))
+                                    Text(chip.emoji).font(.system(size: 14))
                                     Text(chip.label)
-                                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                                        .font(.system(size: 13, weight: .semibold, design: .rounded))
                                         .foregroundColor(Color(hex: "#081754"))
-                                        .lineLimit(1)
                                 }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
-                                .background(Color(hex: "#F5F3F0"))
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 9)
+                                .background(Color.white)
                                 .cornerRadius(20)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 20)
-                                        .stroke(Color(hex: "#E0DCD7"), lineWidth: 1)
+                                        .strokeBorder(Color(hex: "#E0DCD7"), lineWidth: 1)
                                 )
+                                .shadow(color: .black.opacity(0.03), radius: 4, x: 0, y: 2)
                             }
                             .buttonStyle(.plain)
+                            .opacity(animateCards ? 1 : 0)
+                            .offset(y: animateCards ? 0 : 10)
+                            .animation(.spring(response: 0.45, dampingFraction: 0.8).delay(Double(idx) * 0.04 + 0.08), value: animateCards)
                         }
                     }
+                    .padding(.horizontal, 1)
                 }
             }
         }
         .opacity(animateCards ? 1 : 0)
-        .offset(y: animateCards ? 0 : 20)
+        .offset(y: animateCards ? 0 : 14)
+        .animation(.spring(response: 0.5, dampingFraction: 0.85).delay(0.06), value: animateCards)
         .onReceive(Timer.publish(every: 6, on: .main, in: .common).autoconnect()) { _ in
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
                 contextEngine.nextInsight()
             }
         }
@@ -1086,9 +812,7 @@ struct CustomerHomeView: View {
     private func handleInsightAction(_ action: ContextAction) {
         switch action {
         case .openMap:
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                selectedTab = 1
-            }
+            withAnimation { selectedTab = 1 }
         case .openChat(let prefill):
             aiChatPrefill = prefill
             showAIChat = true
@@ -1103,62 +827,237 @@ struct CustomerHomeView: View {
         }
     }
 
-    // MARK: - Voice Translator
+    // MARK: - Merchant Stories
 
-    private var voiceTranslatorCard: some View {
-        Button(action: {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                showVoiceTranslator = true
-            }
-        }) {
-            HStack(spacing: 12) {
-                Image(systemName: "waveform.and.mic")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(Color(hex: "#7D42FF"))
-                    .frame(width: 44, height: 44)
-                    .background(Color(hex: "#7D42FF").opacity(0.12))
-                    .cornerRadius(12)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(LocalizedString("home.voiceTranslator"))
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+    private var merchantStoriesSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(LocalizedString("home.merchantsNearby"))
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
                         .foregroundColor(Color(hex: "#081754"))
-                    Text(LocalizedString("home.voiceTranslatorDesc"))
-                        .font(.system(size: 13, weight: .regular, design: .rounded))
-                        .foregroundColor(Color(hex: "#4A4A4A"))
-                        .lineLimit(2)
+                    let onRoute = merchantsOnRoute.count
+                    if onRoute > 0 {
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(Color(hex: "#1C42E8"))
+                                .frame(width: 6, height: 6)
+                            Text("\(onRoute) en ruta ahora")
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .foregroundColor(Color(hex: "#1C42E8"))
+                        }
+                    }
+                }
+                Spacer()
+                Button(action: { withAnimation { selectedTab = 1 } }) {
+                    HStack(spacing: 3) {
+                        Text("Ver todo")
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                    .foregroundColor(Color(hex: "#1C42E8"))
+                }
+            }
+
+            // Category filter chips
+            if !activeCategories.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        categoryChip(nil, label: LocalizedString("home.filter.all"), icon: "square.grid.2x2.fill")
+                        ForEach(activeCategories, id: \.self) { cat in
+                            categoryChip(cat, label: cat.displayName, emoji: cat.emoji)
+                        }
+                    }
+                }
+            }
+
+            // Story bubbles
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 18) {
+                    ForEach(Array(filteredMerchants.enumerated()), id: \.element.id) { idx, merchant in
+                        Button(action: {
+                            guard let loc = merchant.currentLocation else { return }
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            pendingMerchantPlace = SearchPlace(
+                                name: merchant.businessName,
+                                subtitle: "\(merchant.category.displayName) · \(formatDistance(distanceToMerchant(merchant)))",
+                                category: merchant.category.displayName,
+                                icon: "mappin.circle.fill",
+                                coordinate: loc.coordinate
+                            )
+                            selectedTab = 1
+                        }) {
+                            MerchantStoryBubble(
+                                merchant: merchant,
+                                distance: distanceToMerchant(merchant),
+                                onTimbre: { selectedMerchantForTimbre = merchant }
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .opacity(animateCards ? 1 : 0)
+                        .offset(y: animateCards ? 0 : 18)
+                        .animation(
+                            .spring(response: 0.5, dampingFraction: 0.82).delay(Double(idx) * 0.06 + 0.08),
+                            value: animateCards
+                        )
+                    }
+
+                    if filteredMerchants.isEmpty {
+                        VStack(spacing: 8) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 28))
+                                .foregroundColor(Color(hex: "#4A4A4A").opacity(0.28))
+                            Text("Sin vendedores activos")
+                                .font(.system(size: 13, design: .rounded))
+                                .foregroundColor(Color(hex: "#4A4A4A").opacity(0.45))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 20)
+                    }
+                }
+                .padding(.horizontal, 2)
+                .padding(.vertical, 4)
+            }
+        }
+        .padding(16)
+        .background(Color.white)
+        .cornerRadius(20)
+        .shadow(color: .black.opacity(0.05), radius: 12, x: 0, y: 4)
+    }
+
+    @ViewBuilder
+    private func categoryChip(_ category: MerchantCategory?, label: String, icon: String? = nil, emoji: String? = nil) -> some View {
+        let selected = selectedCategoryFilter == category
+        Button {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.78)) {
+                selectedCategoryFilter = category
+            }
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        } label: {
+            HStack(spacing: 4) {
+                if let icon = icon {
+                    Image(systemName: icon).font(.system(size: 10, weight: .semibold))
+                } else if let emoji = emoji {
+                    Text(emoji).font(.system(size: 11))
+                }
+                Text(label)
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(Capsule().fill(selected ? Color(hex: "#1C42E8") : Color(hex: "#F0EEF8")))
+            .foregroundColor(selected ? .white : Color(hex: "#4A4A4A"))
+        }
+        .buttonStyle(.plain)
+        .scaleEffect(selected ? CGFloat(1.04) : CGFloat(1.0), anchor: .center)
+        .animation(.spring(response: 0.26, dampingFraction: 0.7), value: selected)
+    }
+
+    // MARK: - Radar Compact
+
+    private var radarCompactSection: some View {
+        Button(action: {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            showRadar = true
+        }) {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(radarService.isScanning
+                              ? Color(hex: "#1C42E8").opacity(0.12)
+                              : Color(hex: "#4A4A4A").opacity(0.08))
+                        .frame(width: 50, height: 50)
+                    Image(systemName: "antenna.radiowaves.left.and.right")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(radarService.isScanning ? Color(hex: "#1C42E8") : Color(hex: "#4A4A4A"))
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(LocalizedString("home.detectMerchants"))
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundColor(Color(hex: "#081754"))
+                    if radarService.activeMerchantCount > 0 {
+                        Text(String(format: LocalizedString("home.nearby"), radarService.activeMerchantCount))
+                            .font(.system(size: 13, design: .rounded))
+                            .foregroundColor(Color(hex: "#1C42E8"))
+                    } else {
+                        Text(LocalizedString("home.searchingMerchants"))
+                            .font(.system(size: 13, design: .rounded))
+                            .foregroundColor(Color(hex: "#4A4A4A"))
+                    }
                 }
 
                 Spacer()
+
+                // Peer emoji stack
+                let peers = radarService.discoveredMerchants.filter { !$0.isStale }.prefix(3)
+                if !peers.isEmpty {
+                    HStack(spacing: -10) {
+                        ForEach(peers) { peer in
+                            Text(peer.emoji)
+                                .font(.system(size: 17))
+                                .frame(width: 30, height: 30)
+                                .background(Circle().fill(Color(hex: "#F5F3F0")))
+                                .overlay(Circle().strokeBorder(.white, lineWidth: 1.5))
+                        }
+                    }
+                }
+
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(Color(hex: "#7D42FF"))
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(Color(hex: "#1C42E8").opacity(0.7))
             }
-            .padding(14)
-            .background(Color(hex: "#FFFFFF"))
-            .cornerRadius(12)
+            .padding(16)
+            .background(Color.white)
+            .cornerRadius(16)
+            .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
         }
         .buttonStyle(PressButtonStyle())
         .opacity(animateCards ? 1 : 0)
-        .offset(y: animateCards ? 0 : 20)
+        .offset(y: animateCards ? 0 : 14)
+        .animation(.spring(response: 0.5, dampingFraction: 0.85).delay(0.14), value: animateCards)
     }
 
-    // MARK: - Quick Actions
+    // MARK: - 2×2 Actions Grid
 
-    private var customerQuickActions: some View {
+    private var customerActionsGrid: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(LocalizedString("home.quickActions"))
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundColor(Color(hex: "#081754"))
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .foregroundColor(Color(hex: "#1C42E8"))
+                .kerning(1.0)
+                .textCase(.uppercase)
 
-            HStack(spacing: 12) {
-                CustomerActionButton(icon: "camera.viewfinder", label: LocalizedString("home.menuAR"), color: Color(hex: "#7D42FF")) {
-                    showARStreetMenu = true
-                }
-                CustomerActionButton(icon: "wave.3.right", label: LocalizedString("home.pay"), color: Color(hex: "#1CA8F7")) {
-                    showTapToPay = true
-                }
-                CustomerActionButton(icon: "bell.fill", label: LocalizedString("home.timbre"), color: Color(hex: "#FFAE43")) {
+            let cols = [GridItem(.flexible()), GridItem(.flexible())]
+            LazyVGrid(columns: cols, spacing: 10) {
+                ActionGridButton(
+                    icon: "camera.viewfinder",
+                    label: LocalizedString("home.menuAR"),
+                    color: Color(hex: "#1C42E8"),
+                    bgColor: Color(hex: "#1C42E8").opacity(0.1)
+                ) { showARStreetMenu = true }
+
+                ActionGridButton(
+                    icon: "wave.3.right",
+                    label: LocalizedString("home.pay"),
+                    color: Color(hex: "#1C42E8"),
+                    bgColor: Color(hex: "#1C42E8").opacity(0.1)
+                ) { showTapToPay = true }
+
+                ActionGridButton(
+                    icon: "waveform.and.mic",
+                    label: LocalizedString("home.voiceTranslator"),
+                    color: Color(hex: "#1C42E8"),
+                    bgColor: Color(hex: "#1C42E8").opacity(0.1)
+                ) { showVoiceTranslator = true }
+
+                ActionGridButton(
+                    icon: "bell.fill",
+                    label: LocalizedString("home.timbre"),
+                    color: Color(hex: "#F0D224"),
+                    bgColor: Color(hex: "#F0D224").opacity(0.18)
+                ) {
                     if let first = merchantManager.activeMerchants().first {
                         selectedMerchantForTimbre = first
                     }
@@ -1166,43 +1065,192 @@ struct CustomerHomeView: View {
             }
         }
         .padding(16)
-        .background(Color(hex: "#FFFFFF"))
-        .cornerRadius(12)
+        .background(Color.white)
+        .cornerRadius(20)
+        .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 4)
         .opacity(animateCards ? 1 : 0)
-        .offset(y: animateCards ? 0 : 20)
+        .offset(y: animateCards ? 0 : 14)
+        .animation(.spring(response: 0.5, dampingFraction: 0.85).delay(0.2), value: animateCards)
     }
 
     // MARK: - World Cup Card
 
     private var worldCupEventCard: some View {
         Button(action: {}) {
-            HStack(spacing: 12) {
-                Image(systemName: "soccerball")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(Color(hex: "#0ABF4F"))
-                    .frame(width: 44, height: 44)
-                    .background(Color(hex: "#0ABF4F").opacity(0.12))
-                    .cornerRadius(12)
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(hex: "#F0D224").opacity(0.16), Color(hex: "#1C42E8").opacity(0.14)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 50, height: 50)
+                    Image(systemName: "soccerball")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundColor(Color(hex: "#1C42E8"))
+                }
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text(LocalizedString("home.matchToday"))
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
                         .foregroundColor(Color(hex: "#081754"))
                     Text(LocalizedString("home.matchTodayDesc"))
-                        .font(.system(size: 13, weight: .regular, design: .rounded))
+                        .font(.system(size: 13, design: .rounded))
                         .foregroundColor(Color(hex: "#4A4A4A"))
-                        .lineLimit(2)
+                        .lineLimit(1)
                 }
 
                 Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(Color(hex: "#1C42E8").opacity(0.7))
             }
-            .padding(14)
-            .background(Color(hex: "#FFFFFF"))
-            .cornerRadius(12)
+            .padding(16)
+            .background(Color.white)
+            .cornerRadius(16)
+            .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
         }
         .buttonStyle(PressButtonStyle())
         .opacity(animateCards ? 1 : 0)
-        .offset(y: animateCards ? 0 : 20)
+        .offset(y: animateCards ? 0 : 14)
+        .animation(.spring(response: 0.5, dampingFraction: 0.85).delay(0.25), value: animateCards)
+    }
+}
+
+// MARK: - Merchant Story Bubble
+
+struct MerchantStoryBubble: View {
+    let merchant: Merchant
+    let distance: Double
+    let onTimbre: () -> Void
+
+    @State private var ringPulse = false
+
+    var body: some View {
+        VStack(spacing: 8) {
+            ZStack(alignment: .bottomTrailing) {
+                // Animated ring for on-route merchants
+                Circle()
+                    .strokeBorder(
+                        merchant.isOnRoute
+                        ? Color(hex: "#1C42E8")
+                        : (merchant.isCurrentlyOpen
+                           ? Color(hex: "#1C42E8").opacity(0.35)
+                           : Color(hex: "#E8E4DF")),
+                        lineWidth: merchant.isOnRoute ? 2.5 : 1.5
+                    )
+                    .frame(width: 76, height: 76)
+                    .scaleEffect(merchant.isOnRoute && ringPulse ? CGFloat(1.07) : CGFloat(1.0), anchor: .center)
+                    .animation(
+                        merchant.isOnRoute
+                        ? .easeInOut(duration: 1.3).repeatForever(autoreverses: true)
+                        : .default,
+                        value: ringPulse
+                    )
+
+                // Emoji
+                Text(merchant.emoji)
+                    .font(.system(size: 36))
+                    .frame(width: 68, height: 68)
+                    .background(Circle().fill(Color(hex: "#F5F3F0")))
+
+                // Status dot
+                Circle()
+                    .fill(merchant.isCurrentlyOpen ? Color(hex: "#1C42E8") : Color(hex: "#F0D224"))
+                    .frame(width: 14, height: 14)
+                    .overlay(Circle().strokeBorder(.white, lineWidth: 2))
+                    .offset(x: 2, y: 2)
+            }
+            .onAppear { ringPulse = true }
+
+            // Name
+            Text(merchant.businessName)
+                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .foregroundColor(Color(hex: "#081754"))
+                .lineLimit(1)
+                .frame(width: 84)
+
+            // Distance
+            if distance < .infinity {
+                Text(distance < 1000 ? "\(Int(distance))m" : String(format: "%.1fkm", distance / 1000))
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundColor(merchant.isOnRoute ? Color(hex: "#1C42E8") : Color(hex: "#1C42E8"))
+            }
+
+            // Timbre CTA
+            Button(action: {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                onTimbre()
+            }) {
+                HStack(spacing: 3) {
+                    Image(systemName: "bell.fill")
+                        .font(.system(size: 9, weight: .bold))
+                    Text(LocalizedString("home.timbre"))
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                }
+                .foregroundColor(Color(hex: "#F0D224"))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Capsule().fill(Color(hex: "#F0D224").opacity(0.14)))
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(width: 90)
+    }
+}
+
+// MARK: - Action Grid Button
+
+struct ActionGridButton: View {
+    let icon: String
+    let label: String
+    let color: Color
+    let bgColor: Color
+    let action: () -> Void
+
+    @State private var isPressed = false
+
+    var body: some View {
+        Button(action: {
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) { isPressed = true }
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { isPressed = false }
+                action()
+            }
+        }) {
+            VStack(spacing: 10) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(bgColor)
+                        .frame(width: 54, height: 54)
+                    Image(systemName: icon)
+                        .font(.system(size: 23, weight: .semibold))
+                        .foregroundColor(color)
+                        .scaleEffect(isPressed ? CGFloat(1.18) : 1.0, anchor: .center)
+                        .animation(.spring(response: 0.2, dampingFraction: 0.5), value: isPressed)
+                }
+                Text(label)
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundColor(Color(hex: "#081754"))
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(Color(hex: "#FAFAF9"))
+            .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .strokeBorder(color.opacity(isPressed ? 0.38 : 0.14), lineWidth: 1.5)
+            )
+            .scaleEffect(isPressed ? CGFloat(0.93) : 1.0, anchor: .center)
+        }
+        .buttonStyle(.plain)
+        .animation(.spring(response: 0.26, dampingFraction: 0.7), value: isPressed)
     }
 }
 
@@ -1216,25 +1264,30 @@ struct MetricCard: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(color)
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.14))
+                    .frame(width: 40, height: 40)
+                Image(systemName: icon)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(color)
+            }
             Text(value)
                 .font(.system(size: 22, weight: .bold, design: .rounded))
                 .foregroundColor(Color(hex: "#081754"))
             Text(label)
-                .font(.system(size: 11, weight: .regular, design: .rounded))
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .foregroundColor(Color(hex: "#4A4A4A"))
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(Color(hex: "#FFFFFF"))
-        .cornerRadius(12)
+        .padding(.vertical, 16)
+        .background(color.opacity(0.07))
+        .cornerRadius(14)
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(color.opacity(0.15), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 14)
+                .strokeBorder(color.opacity(0.35), lineWidth: 1.5)
         )
     }
 }
@@ -1248,33 +1301,21 @@ struct MerchantActionRow: View {
 
     @State private var isPressed = false
 
-    private var strokeColor: Color {
-        color.opacity(isPressed ? 0.25 : 0.15)
-    }
-
-    private var contentScale: CGFloat {
-        isPressed ? 0.97 : 1.0
-    }
-
     var body: some View {
         Button(action: {
-            withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) {
-                isPressed = true
-            }
+            withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { isPressed = true }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) {
-                    isPressed = false
-                }
+                withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { isPressed = false }
             }
             action()
         }) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 20, weight: .semibold))
                     .foregroundColor(color)
-                    .frame(width: 44, height: 44)
-                    .background(color.opacity(0.12))
-                    .cornerRadius(10)
+                    .frame(width: 48, height: 48)
+                    .background(color.opacity(0.14))
+                    .cornerRadius(14)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
@@ -1289,23 +1330,23 @@ struct MerchantActionRow: View {
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(color)
+                    .foregroundColor(color.opacity(0.7))
             }
-            .padding(12)
-            .background(Color(hex: "#FFFFFF"))
-            .cornerRadius(12)
+            .padding(14)
+            .background(Color.white)
+            .cornerRadius(14)
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(strokeColor, lineWidth: 1)
+                RoundedRectangle(cornerRadius: 14)
+                    .strokeBorder(color.opacity(isPressed ? 0.5 : 0.3), lineWidth: 1.5)
             )
         }
         .buttonStyle(.plain)
-        .modifier(ScaleModifier(scale: contentScale))
+        .modifier(ScaleModifier(scale: isPressed ? 0.97 : 1.0))
         .modifier(OpacityModifier(opacity: isPressed ? 0.85 : 1.0))
     }
 }
 
-// MARK: - On Route Card
+// MARK: - On Route Card (kept for compatibility)
 
 struct OnRouteCard: View {
     let merchant: Merchant
@@ -1314,12 +1355,10 @@ struct OnRouteCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
-                Text(merchant.emoji)
-                    .font(.system(size: 26))
+                Text(merchant.emoji).font(.system(size: 26))
                 Spacer()
-                // Pulso verde: en ruta ahora
                 Circle()
-                    .fill(Color(hex: "#0ABF4F"))
+                    .fill(Color(hex: "#1C42E8"))
                     .frame(width: 8, height: 8)
             }
 
@@ -1333,49 +1372,42 @@ struct OnRouteCard: View {
                     .font(.system(size: 11, design: .rounded))
                     .foregroundColor(Color(hex: "#4A4A4A"))
                 if distance < .infinity {
-                    Text("·")
-                        .foregroundColor(Color(hex: "#4A4A4A"))
+                    Text("·").foregroundColor(Color(hex: "#4A4A4A"))
                     Text(formatDist(distance))
                         .font(.system(size: 11, weight: .medium, design: .rounded))
-                        .foregroundColor(Color(hex: "#0ABF4F"))
+                        .foregroundColor(Color(hex: "#1C42E8"))
                 }
             }
 
-            // Próxima parada
             if let stop = merchant.route?.sortedWaypoints.first?.name {
                 HStack(spacing: 3) {
-                    Image(systemName: "mappin.circle.fill")
-                        .font(.system(size: 9))
-                    Text(stop)
-                        .font(.system(size: 10, design: .rounded))
-                        .lineLimit(1)
+                    Image(systemName: "mappin.circle.fill").font(.system(size: 9))
+                    Text(stop).font(.system(size: 10, design: .rounded)).lineLimit(1)
                 }
                 .foregroundColor(Color(hex: "#4A4A4A"))
             }
 
             let stops = merchant.route?.waypoints.count ?? 0
             HStack(spacing: 4) {
-                Image(systemName: "figure.walk")
-                    .font(.system(size: 10))
+                Image(systemName: "figure.walk").font(.system(size: 10))
                 Text(stops > 0 ? "En Ruta · \(stops) paradas" : "En Ruta")
                     .font(.system(size: 10, weight: .semibold, design: .rounded))
             }
-            .foregroundColor(Color(hex: "#0ABF4F"))
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(Capsule().fill(Color(hex: "#0ABF4F").opacity(0.12)))
+            .foregroundColor(Color(hex: "#1C42E8"))
+            .padding(.horizontal, 8).padding(.vertical, 3)
+            .background(Capsule().fill(Color(hex: "#1C42E8").opacity(0.12)))
         }
         .padding(10)
         .frame(width: 155, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(hex: "#FFFFFF"))
+                .fill(Color.white)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .strokeBorder(Color(hex: "#0ABF4F").opacity(0.35), lineWidth: 1.5)
+                        .strokeBorder(Color(hex: "#1C42E8").opacity(0.35), lineWidth: 1.5)
                 )
         )
-        .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 2)
+        .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
     }
 
     private func formatDist(_ meters: Double) -> String {
@@ -1383,7 +1415,7 @@ struct OnRouteCard: View {
     }
 }
 
-// MARK: - Home Merchant Card (synced with map style)
+// MARK: - Home Merchant Card (kept for compatibility)
 
 struct HomeMerchantCard: View {
     let merchant: Merchant
@@ -1391,84 +1423,68 @@ struct HomeMerchantCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            // Header: emoji + verificación + status
             HStack(spacing: 6) {
-                Text(merchant.emoji)
-                    .font(.system(size: 26))
-
+                Text(merchant.emoji).font(.system(size: 26))
                 Spacer()
-
                 if merchant.trustLevel.isGreen {
                     Image(systemName: merchant.trustLevel.icon)
                         .font(.system(size: 14))
                         .foregroundColor(.green)
                 }
-
                 Circle()
-                    .fill(merchant.isCurrentlyOpen ? Color(hex: "#0ABF4F") : Color(hex: "#FFAE43"))
+                    .fill(merchant.isCurrentlyOpen ? Color(hex: "#1C42E8") : Color(hex: "#F0D224"))
                     .frame(width: 8, height: 8)
             }
 
-            // Nombre
             Text(merchant.businessName)
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .foregroundColor(Color(hex: "#081754"))
                 .lineLimit(1)
 
-            // Categoría + distancia
             HStack(spacing: 4) {
                 Text(merchant.category.displayName)
                     .font(.system(size: 11, design: .rounded))
                     .foregroundColor(Color(hex: "#4A4A4A"))
-
                 if distance < .infinity {
-                    Text("·")
-                        .foregroundColor(Color(hex: "#4A4A4A"))
+                    Text("·").foregroundColor(Color(hex: "#4A4A4A"))
                     Text(formatDist(distance))
                         .font(.system(size: 11, weight: .medium, design: .rounded))
                         .foregroundColor(Color(hex: "#1C42E8"))
                 }
             }
 
-            // Tipo: Fijo / Ambulante
             HStack(spacing: 4) {
                 Image(systemName: merchant.isStatic ? "mappin.circle.fill" : "figure.walk")
                     .font(.system(size: 10))
                 Text(merchant.isStatic ? LocalizedString("home.fixed") : LocalizedString("home.nomad"))
                     .font(.system(size: 10, weight: .semibold, design: .rounded))
             }
-            .foregroundColor(merchant.isStatic ? Color(hex: "#1C42E8") : Color(hex: "#FFAE43"))
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
+            .foregroundColor(merchant.isStatic ? Color(hex: "#1C42E8") : Color(hex: "#F0D224"))
+            .padding(.horizontal, 8).padding(.vertical, 3)
             .background(
-                Capsule()
-                    .fill(merchant.isStatic ? Color(hex: "#1C42E8").opacity(0.12) : Color(hex: "#FFAE43").opacity(0.12))
+                Capsule().fill(merchant.isStatic
+                    ? Color(hex: "#1C42E8").opacity(0.12)
+                    : Color(hex: "#F0D224").opacity(0.12))
             )
         }
         .padding(10)
         .frame(width: 140, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(hex: "#FFFFFF"))
+                .fill(Color.white)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
                         .strokeBorder(
-                            merchant.trustLevel.isGreen
-                                ? Color.green.opacity(0.4)
-                                : Color(hex: "#E8E4DF"),
+                            merchant.trustLevel.isGreen ? Color.green.opacity(0.4) : Color(hex: "#E8E4DF"),
                             lineWidth: merchant.trustLevel.isGreen ? 1.5 : 0.5
                         )
                 )
         )
-        .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 2)
+        .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
     }
 
     private func formatDist(_ meters: Double) -> String {
-        if meters < 1000 {
-            return "\(Int(meters))m"
-        } else {
-            return String(format: "%.1fkm", meters / 1000)
-        }
+        meters < 1000 ? "\(Int(meters))m" : String(format: "%.1fkm", meters / 1000)
     }
 }
 
@@ -1487,29 +1503,24 @@ struct NearbyMerchantChip: View {
                     .frame(width: 56, height: 56)
                     .background(Color(hex: "#EEE8E3"))
                     .clipShape(Circle())
-
                 Circle()
-                    .fill(isActive ? Color(hex: "#0ABF4F") : Color(hex: "#4A4A4A"))
+                    .fill(isActive ? Color(hex: "#1C42E8") : Color(hex: "#4A4A4A"))
                     .frame(width: 10, height: 10)
-                    .overlay(Circle().strokeBorder(Color(hex: "#FFFFFF"), lineWidth: 1.5))
+                    .overlay(Circle().strokeBorder(Color.white, lineWidth: 1.5))
             }
-
             Text(name)
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .foregroundColor(Color(hex: "#081754"))
             Text(distance)
                 .font(.system(size: 11, weight: .regular, design: .rounded))
                 .foregroundColor(Color(hex: "#4A4A4A"))
-
             Text(isStatic ? LocalizedString("home.fixed") : LocalizedString("home.nomad"))
                 .font(.system(size: 9, weight: .semibold, design: .rounded))
-                .foregroundColor(isStatic ? Color(hex: "#1C42E8") : Color(hex: "#FFAE43"))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(
-                    Capsule()
-                        .fill(isStatic ? Color(hex: "#1C42E8").opacity(0.12) : Color(hex: "#FFAE43").opacity(0.12))
-                )
+                .foregroundColor(isStatic ? Color(hex: "#1C42E8") : Color(hex: "#F0D224"))
+                .padding(.horizontal, 8).padding(.vertical, 3)
+                .background(Capsule().fill(isStatic
+                    ? Color(hex: "#1C42E8").opacity(0.12)
+                    : Color(hex: "#F0D224").opacity(0.12)))
         }
         .frame(width: 80)
     }
@@ -1525,13 +1536,9 @@ struct InteractivePeerButton: View {
 
     var body: some View {
         Button(action: {
-            withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) {
-                isPressed = true
-            }
+            withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { isPressed = true }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) {
-                    isPressed = false
-                }
+                withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { isPressed = false }
             }
             action()
         }) {
@@ -1542,28 +1549,21 @@ struct InteractivePeerButton: View {
                         .frame(width: 56, height: 56)
                         .background(Color(hex: "#EEE8E3"))
                         .clipShape(Circle())
-                        .overlay(
-                            Circle()
-                                .stroke(signalColor.opacity(isPressed ? 0.6 : 0.4), lineWidth: 1.5)
-                        )
-
+                        .overlay(Circle().stroke(signalColor.opacity(isPressed ? 0.6 : 0.4), lineWidth: 1.5))
                     Circle()
                         .fill(signalColor)
                         .frame(width: 10, height: 10)
-                        .overlay(Circle().strokeBorder(Color(hex: "#FFFFFF"), lineWidth: 1.5))
+                        .overlay(Circle().strokeBorder(Color.white, lineWidth: 1.5))
                 }
-
                 Text(name)
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .foregroundColor(Color(hex: "#081754"))
                     .lineLimit(1)
-
                 Text(LocalizedString("home.live"))
                     .font(.system(size: 10, weight: .semibold, design: .rounded))
-                    .foregroundColor(Color(hex: "#0ABF4F"))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(Color(hex: "#0ABF4F").opacity(0.12))
+                    .foregroundColor(Color(hex: "#1C42E8"))
+                    .padding(.horizontal, 8).padding(.vertical, 3)
+                    .background(Color(hex: "#1C42E8").opacity(0.12))
                     .cornerRadius(4)
             }
             .frame(width: 80)
@@ -1582,19 +1582,11 @@ struct CustomerActionButton: View {
 
     @State private var isPressed = false
 
-    private var borderColor: Color {
-        color.opacity(isPressed ? 0.4 : 0.2)
-    }
-
     var body: some View {
         Button(action: {
-            withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) {
-                isPressed = true
-            }
+            withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { isPressed = true }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) {
-                    isPressed = false
-                }
+                withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { isPressed = false }
             }
             action()
         }) {
@@ -1610,44 +1602,39 @@ struct CustomerActionButton: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
-            .background(Color(hex: "#FFFFFF"))
+            .background(Color.white)
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(borderColor, lineWidth: 1)
+                    .stroke(color.opacity(isPressed ? 0.4 : 0.2), lineWidth: 1)
             )
-            .modifier(ScaleModifier(scale: isPressed ? 0.95 : 1.0))
-            .modifier(OpacityModifier(opacity: isPressed ? 0.8 : 1.0))
-            .buttonStyle(.plain)
         }
+        .buttonStyle(.plain)
+        .modifier(ScaleModifier(scale: isPressed ? 0.96 : 1.0))
     }
 }
 
-// MARK: - Press Button Style
+// MARK: - Utility Styles & Modifiers
+
 struct PressButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
-        let scale: CGFloat = configuration.isPressed ? 0.95 : 1.0
-        return configuration.label
-            .modifier(ScaleModifier(scale: scale))
-            .modifier(OpacityModifier(opacity: configuration.isPressed ? 0.8 : 1.0))
+        configuration.label
+            .scaleEffect(configuration.isPressed ? CGFloat(0.97) : CGFloat(1.0), anchor: .center)
+            .opacity(configuration.isPressed ? 0.88 : 1.0)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }
 
-// MARK: - Opacity Modifier
-struct OpacityModifier: ViewModifier {
-    let opacity: Double
-
-    func body(content: Content) -> some View {
-        content.opacity(opacity)
-    }
-}
-
-// MARK: - Scale Modifier
 struct ScaleModifier: ViewModifier {
     let scale: CGFloat
-
     func body(content: Content) -> some View {
-        content
-            .transformEffect(CGAffineTransform(scaleX: scale, y: scale))
+        content.scaleEffect(scale, anchor: .center)
+    }
+}
+
+struct OpacityModifier: ViewModifier {
+    let opacity: Double
+    func body(content: Content) -> some View {
+        content.opacity(opacity)
     }
 }

@@ -1,4 +1,3 @@
-/*
 //
 //  DemandEvent.swift
 //  atenea
@@ -91,4 +90,3 @@ enum DemandIntensity: Int, CaseIterable {
         }
     }
 }
-*/

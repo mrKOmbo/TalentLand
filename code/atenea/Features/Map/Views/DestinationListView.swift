@@ -24,15 +24,23 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         #endif
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
+        manager.distanceFilter = kCLDistanceFilterNone
         manager.headingFilter = 5
-        manager.requestWhenInUseAuthorization()
-        manager.startUpdatingLocation()
-        manager.startUpdatingHeading()
+        manager.activityType = .fitness
+
+        let status = manager.authorizationStatus
+        print("📍 [LocationManager] init — authStatus=\(status.rawValue)")
+
+        if status == .authorizedWhenInUse || status == .authorizedAlways {
+            manager.startUpdatingLocation()
+            manager.startUpdatingHeading()
+        } else if status == .notDetermined {
+            manager.requestWhenInUseAuthorization()
+        }
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         #if targetEnvironment(simulator)
-        // En simulador ignoramos actualizaciones del sistema (San Francisco) y mantenemos Expo Santa Fe
         if currentLocation == nil {
             currentLocation = Self.expoSantaFe
         }
@@ -41,6 +49,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
            CLLocationCoordinate2DIsValid(location),
            !(location.latitude == 0.0 && location.longitude == 0.0) {
             currentLocation = location
+            print("📍 [GPS] Ubicación real: \(location.latitude), \(location.longitude)")
         }
         #endif
     }
@@ -49,6 +58,24 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
         if newHeading.headingAccuracy >= 0 {
             currentHeading = newHeading
+        }
+    }
+
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        let status = manager.authorizationStatus
+        print("📍 [LocationManager] authChanged → \(status.rawValue)")
+
+        switch status {
+        case .authorizedWhenInUse, .authorizedAlways:
+            manager.startUpdatingLocation()
+            manager.startUpdatingHeading()
+            print("📍 [LocationManager] startUpdatingLocation activado")
+        case .denied, .restricted:
+            print("📍 [LocationManager] ⚠️ Permiso de ubicación denegado/restringido")
+        case .notDetermined:
+            print("📍 [LocationManager] Permiso aún no determinado")
+        @unknown default:
+            break
         }
     }
 

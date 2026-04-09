@@ -108,6 +108,7 @@ struct Merchant: Identifiable, Codable, Equatable {
     let isStatic: Bool
     var currentLocation: MerchantLocation?
     let route: MerchantRoute? // Route for mobile merchants
+    var isOnRoute: Bool       // El comerciante está recorriendo su ruta activamente
     let createdAt: Date
     let isVerified: Bool
     let trustLevel: TrustLevel
@@ -125,6 +126,7 @@ struct Merchant: Identifiable, Codable, Equatable {
         isStatic: Bool = true,
         currentLocation: MerchantLocation? = nil,
         route: MerchantRoute? = nil,
+        isOnRoute: Bool = false,
         createdAt: Date = Date(),
         isVerified: Bool = false,
         trustLevel: TrustLevel = .unverified
@@ -141,6 +143,7 @@ struct Merchant: Identifiable, Codable, Equatable {
         self.isStatic = isStatic
         self.currentLocation = currentLocation
         self.route = route
+        self.isOnRoute = isOnRoute
         self.createdAt = createdAt
         self.isVerified = isVerified
         self.trustLevel = trustLevel

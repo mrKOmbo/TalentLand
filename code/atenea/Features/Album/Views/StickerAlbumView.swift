@@ -146,9 +146,9 @@ struct StickerAlbumView: View {
                         .fill(
                             LinearGradient(
                                 gradient: Gradient(colors: [
-                                    Color(hex: "#9D00FF"),
-                                    Color(hex: "#7B00FF"),
-                                    Color(hex: "#5D00CC")
+                                    Color(hex: "#1C42E8"),
+                                    Color(hex: "#1C42E8"),
+                                    Color(hex: "#1C42E8")
                                 ]),
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -161,8 +161,8 @@ struct StickerAlbumView: View {
                         .stroke(
                             LinearGradient(
                                 gradient: Gradient(colors: [
-                                    Color(hex: "#9D00FF"),
-                                    Color(hex: "#7B00FF")
+                                    Color(hex: "#1C42E8"),
+                                    Color(hex: "#1C42E8")
                                 ]),
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -192,7 +192,7 @@ struct StickerAlbumView: View {
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
                 }
-                .shadow(color: Color(hex: "#7B00FF").opacity(0.6), radius: 20, x: 0, y: 8)
+                .shadow(color: Color(hex: "#1C42E8").opacity(0.6), radius: 20, x: 0, y: 8)
                 .overlay(
                     Circle()
                         .stroke(Color(white: 1.0, opacity: 0.3), lineWidth: 1.5)
@@ -207,9 +207,9 @@ struct StickerAlbumView: View {
                     .padding(.vertical, 4)
                     .background(
                         Capsule()
-                            .fill(Color(hex: "#7B00FF"))
+                            .fill(Color(hex: "#1C42E8"))
                     )
-                    .shadow(color: Color(hex: "#7B00FF").opacity(0.5), radius: 8, x: 0, y: 4)
+                    .shadow(color: Color(hex: "#1C42E8").opacity(0.5), radius: 8, x: 0, y: 4)
             }
         }
         .buttonStyle(PlainButtonStyle())
@@ -265,8 +265,8 @@ struct StickerAlbumView: View {
                                 .fill(
                                     LinearGradient(
                                         gradient: Gradient(colors: [
-                                            Color(hex: "#00D084").opacity(0.15),
-                                            Color(hex: "#C8FF00").opacity(0.15)
+                                            Color(hex: "#1C42E8").opacity(0.15),
+                                            Color(hex: "#F0D224").opacity(0.15)
                                         ]),
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -278,8 +278,8 @@ struct StickerAlbumView: View {
                                         .stroke(
                                             LinearGradient(
                                                 gradient: Gradient(colors: [
-                                                    Color(hex: "#00D084"),
-                                                    Color(hex: "#C8FF00")
+                                                    Color(hex: "#1C42E8"),
+                                                    Color(hex: "#F0D224")
                                                 ]),
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
@@ -293,8 +293,8 @@ struct StickerAlbumView: View {
                                 .foregroundStyle(
                                     LinearGradient(
                                         gradient: Gradient(colors: [
-                                            Color(hex: "#00D084"),
-                                            Color(hex: "#00A067")
+                                            Color(hex: "#1C42E8"),
+                                            Color(hex: "#1C42E8")
                                         ]),
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -304,10 +304,10 @@ struct StickerAlbumView: View {
 
                         Text(showSections ? LocalizedString("album.album") : LocalizedString("album.sections"))
                             .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(Color(hex: "#00D084"))
+                            .foregroundColor(Color(hex: "#1C42E8"))
                     }
                 }
-                .shadow(color: Color(hex: "#00D084").opacity(0.3), radius: 8, x: 0, y: 4)
+                .shadow(color: Color(hex: "#1C42E8").opacity(0.3), radius: 8, x: 0, y: 4)
 
                 // Título y progreso - más claro
                 VStack(alignment: .leading, spacing: 4) {
@@ -317,8 +317,8 @@ struct StickerAlbumView: View {
                             .foregroundStyle(
                                 LinearGradient(
                                     gradient: Gradient(colors: [
-                                        Color(hex: "#1a1a1a"),
-                                        Color(hex: "#404040")
+                                        Color(hex: "#081754"),
+                                        Color(hex: "#4A4A4A")
                                     ]),
                                     startPoint: .leading,
                                     endPoint: .trailing
@@ -335,7 +335,7 @@ struct StickerAlbumView: View {
                                 .trim(from: 0, to: progress)
                                 .stroke(
                                     LinearGradient(
-                                        colors: [Color(hex: "#00D084"), Color(hex: "#C8FF00")],
+                                        colors: [Color(hex: "#1C42E8"), Color(hex: "#F0D224")],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     ),
@@ -346,14 +346,14 @@ struct StickerAlbumView: View {
 
                             Text("\(Int(progress * 100))%")
                                 .font(.system(size: 8, weight: .black))
-                                .foregroundColor(Color(hex: "#00D084"))
+                                .foregroundColor(Color(hex: "#1C42E8"))
                         }
                     }
 
                     HStack(spacing: 6) {
                         Image(systemName: "star.fill")
                             .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(Color(hex: "#FFD700"))
+                            .foregroundColor(Color(hex: "#F0D224"))
 
                         Text("\(collectionManager.collectedStickers.count) \(LocalizedString("album.of")) \(totalStickers) \(LocalizedString("album.collected"))")
                             .font(.system(size: 13, weight: .semibold))
@@ -375,9 +375,9 @@ struct StickerAlbumView: View {
                             .fill(
                                 LinearGradient(
                                     gradient: Gradient(colors: [
-                                        Color(hex: "#FF6B35"),
-                                        Color(hex: "#FF4500"),
-                                        Color(hex: "#D63000")
+                                        Color(hex: "#1C42E8"),
+                                        Color(hex: "#F0D224"),
+                                        Color(hex: "#1C42E8")
                                     ]),
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -396,7 +396,7 @@ struct StickerAlbumView: View {
                                 .foregroundColor(.white)
                         }
                     }
-                    .shadow(color: Color(hex: "#FF4500").opacity(0.5), radius: 12, x: 0, y: 6)
+                    .shadow(color: Color(hex: "#F0D224").opacity(0.5), radius: 12, x: 0, y: 6)
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
                             .stroke(Color.white.opacity(0.3), lineWidth: 1.5)
@@ -408,11 +408,11 @@ struct StickerAlbumView: View {
                     VStack(spacing: 4) {
                         Image(systemName: "doc.text.fill")
                             .font(.system(size: 14))
-                            .foregroundColor(Color(hex: "#00D084"))
+                            .foregroundColor(Color(hex: "#1C42E8"))
 
                         Text("\(currentPageIndex + 1)/\(albumPages.count)")
                             .font(.system(size: 13, weight: .bold, design: .rounded))
-                            .foregroundColor(Color(hex: "#1a1a1a"))
+                            .foregroundColor(Color(hex: "#081754"))
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
@@ -423,7 +423,7 @@ struct StickerAlbumView: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color(hex: "#00D084").opacity(0.2), lineWidth: 1.5)
+                            .stroke(Color(hex: "#1C42E8").opacity(0.2), lineWidth: 1.5)
                     )
                 }
             }
@@ -538,7 +538,7 @@ struct AlbumPageDetailView: View {
                 VStack(spacing: 8) {
                     Text(page.title)
                         .font(SwiftUI.Font.system(size: 24, weight: .bold))
-                        .foregroundColor(Color(hex: "#1a1a1a"))
+                        .foregroundColor(Color(hex: "#081754"))
 
                     if let subtitle = page.subtitle {
                         Text(subtitle)
@@ -644,8 +644,8 @@ struct StickerSlotView: View {
                         .stroke(
                             LinearGradient(
                                 gradient: Gradient(colors: [
-                                    Color(hex: "#00D084"),
-                                    Color(hex: "#C8FF00")
+                                    Color(hex: "#1C42E8"),
+                                    Color(hex: "#F0D224")
                                 ]),
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -668,7 +668,7 @@ struct StickerSlotView: View {
                         .fill(
                             RadialGradient(
                                 gradient: Gradient(colors: [
-                                    Color(hex: "#00D084").opacity(0.2),
+                                    Color(hex: "#1C42E8").opacity(0.2),
                                     Color.clear
                                 ]),
                                 center: .center,
@@ -695,8 +695,8 @@ struct StickerSlotView: View {
                                     (shouldHighlight ?
                                         LinearGradient(
                                             gradient: Gradient(colors: [
-                                                Color(hex: "#00D084"),
-                                                Color(hex: "#C8FF00")
+                                                Color(hex: "#1C42E8"),
+                                                Color(hex: "#F0D224")
                                             ]),
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
@@ -741,7 +741,7 @@ struct StickerSlotView: View {
                                     .fill(
                                         RadialGradient(
                                             gradient: Gradient(colors: [
-                                                Color(hex: "#FFD700").opacity(0.25),
+                                                Color(hex: "#F0D224").opacity(0.25),
                                                 Color.clear
                                             ]),
                                             center: .center,
@@ -765,8 +765,8 @@ struct StickerSlotView: View {
                                         .fill(
                                             LinearGradient(
                                                 colors: [
-                                                    Color(hex: "#00D084").opacity(0.15),
-                                                    Color(hex: "#00D084").opacity(0.08)
+                                                    Color(hex: "#1C42E8").opacity(0.15),
+                                                    Color(hex: "#1C42E8").opacity(0.08)
                                                 ],
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
@@ -779,12 +779,12 @@ struct StickerSlotView: View {
                                         .foregroundStyle(
                                             isSpecial ?
                                                 LinearGradient(
-                                                    colors: [Color(hex: "#FFD700"), Color(hex: "#FFA500")],
+                                                    colors: [Color(hex: "#F0D224"), Color(hex: "#F0D224")],
                                                     startPoint: .topLeading,
                                                     endPoint: .bottomTrailing
                                                 ) :
                                                 LinearGradient(
-                                                    colors: [Color(hex: "#00D084"), Color(hex: "#00A067")],
+                                                    colors: [Color(hex: "#1C42E8"), Color(hex: "#1C42E8")],
                                                     startPoint: .topLeading,
                                                     endPoint: .bottomTrailing
                                                 )
@@ -797,12 +797,12 @@ struct StickerSlotView: View {
                         // Badge con número
                         Text("#\(stickerId)")
                             .font(SwiftUI.Font.system(size: 11, weight: .bold, design: .rounded))
-                            .foregroundColor(Color(hex: "#00D084"))
+                            .foregroundColor(Color(hex: "#1C42E8"))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
                             .background(
                                 Capsule()
-                                    .fill(Color(hex: "#00D084").opacity(0.12))
+                                    .fill(Color(hex: "#1C42E8").opacity(0.12))
                             )
 
                         // Badge "NUEVO" para stickers destacados
@@ -820,13 +820,13 @@ struct StickerSlotView: View {
                                 Capsule()
                                     .fill(
                                         LinearGradient(
-                                            colors: [Color(hex: "#00D084"), Color(hex: "#00A067")],
+                                            colors: [Color(hex: "#1C42E8"), Color(hex: "#1C42E8")],
                                             startPoint: .leading,
                                             endPoint: .trailing
                                         )
                                     )
                             )
-                            .shadow(color: Color(hex: "#00D084").opacity(0.5), radius: 6, x: 0, y: 3)
+                            .shadow(color: Color(hex: "#1C42E8").opacity(0.5), radius: 6, x: 0, y: 3)
                             .scaleEffect(highlightPulse ? CGFloat(1.05) : CGFloat(0.95))
                             .animation(
                                 Animation.easeInOut(duration: 0.6)
@@ -865,7 +865,7 @@ struct StickerSlotView: View {
             }
             .frame(height: 140)
             .shadow(
-                color: shouldHighlight && isCollected ? Color(hex: "#00D084").opacity(0.4) : Color.clear,
+                color: shouldHighlight && isCollected ? Color(hex: "#1C42E8").opacity(0.4) : Color.clear,
                 radius: shouldHighlight && isCollected ? 10 : 0,
                 x: 0,
                 y: 0
@@ -877,7 +877,7 @@ struct StickerSlotView: View {
             if let label = label {
                 Text(label)
                     .font(SwiftUI.Font.system(size: 12, weight: .medium))
-                    .foregroundColor(Color(hex: "#1a1a1a"))
+                    .foregroundColor(Color(hex: "#081754"))
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .frame(maxWidth: .infinity)
@@ -957,12 +957,12 @@ struct SectionCard: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text(section.rawValue)
                                 .font(.system(size: 22, weight: .heavy, design: .rounded))
-                                .foregroundColor(Color(hex: "#1a1a1a"))
+                                .foregroundColor(Color(hex: "#081754"))
 
                             HStack(spacing: 8) {
                                 Image(systemName: progress >= 1.0 ? "checkmark.circle.fill" : "clock.fill")
                                     .font(.system(size: 13, weight: .bold))
-                                    .foregroundColor(progress >= 1.0 ? Color(hex: "#00D084") : section.color)
+                                    .foregroundColor(progress >= 1.0 ? Color(hex: "#1C42E8") : section.color)
 
                                 Text("\(Int(progress * 100))% \(LocalizedString("album.completed"))")
                                     .font(.system(size: 15, weight: .semibold, design: .rounded))
@@ -1048,7 +1048,7 @@ struct SectionCard: View {
                                     .padding(.vertical, 4)
                                     .background(
                                         Capsule()
-                                            .fill(Color(hex: "#00D084"))
+                                            .fill(Color(hex: "#1C42E8"))
                                     )
                                 }
                             }
@@ -1106,9 +1106,9 @@ struct EnhancedProgressBar: View {
                         .fill(
                             LinearGradient(
                                 gradient: Gradient(colors: [
-                                    Color(hex: "#00D084"),
-                                    Color(hex: "#00C078"),
-                                    Color(hex: "#C8FF00")
+                                    Color(hex: "#1C42E8"),
+                                    Color(hex: "#1C42E8"),
+                                    Color(hex: "#F0D224")
                                 ]),
                                 startPoint: .leading,
                                 endPoint: .trailing
@@ -1154,7 +1154,7 @@ struct EnhancedProgressBar: View {
             }
         }
         .frame(height: 28)
-        .shadow(color: Color(hex: "#00D084").opacity(0.25), radius: 8, x: 0, y: 4)
+        .shadow(color: Color(hex: "#1C42E8").opacity(0.25), radius: 8, x: 0, y: 4)
         .onAppear {
             withAnimation(.spring(response: 1.0, dampingFraction: 0.8)) {
                 animatedProgress = progress

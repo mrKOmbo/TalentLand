@@ -8,25 +8,143 @@
 import Foundation
 internal import Combine
 import CoreLocation
+import UserNotifications
 
 class MerchantManager: ObservableObject {
     static let shared = MerchantManager()
 
     @Published var merchants: [Merchant] = []
     @Published var currentMerchantProfile: Merchant?
+    /// Emite el merchant que acaba de iniciar su ruta y está cerca del usuario (para banner in-app al cliente)
+    @Published var merchantJustStartedRoute: Merchant?
+
+    private var cancellables = Set<AnyCancellable>()
+    private var lastNotifiedMerchantIds = Set<UUID>()      // evitar push notifications repetidas
+    private var lastAlertedOnRouteIds = Set<UUID>()        // evitar banner in-app repetido
+    private var userLocation: CLLocationCoordinate2D?
 
     private init() {
         loadMockMerchants()
         syncMocksToSupabaseIfNeeded()
         fetchMerchantsFromSupabase()
+        connectRealtime()
     }
 
-    /// Sync mock merchants to Supabase once on first launch
+    // MARK: - Supabase Realtime
+
+    private func connectRealtime() {
+        SupabaseRealtimeService.shared.connect()
+
+        SupabaseRealtimeService.shared.merchantUpdatePublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] record in
+                self?.applyRealtimeUpdate(record)
+            }
+            .store(in: &cancellables)
+    }
+
+    private func applyRealtimeUpdate(_ record: [String: Any]) {
+        guard let idStr = record["id"] as? String,
+              let id = UUID(uuidString: idStr) else { return }
+
+        if let idx = merchants.firstIndex(where: { $0.id == id }) {
+            // Actualizar ubicación
+            if let lat = record["latitude"] as? Double,
+               let lon = record["longitude"] as? Double {
+                merchants[idx].currentLocation = MerchantLocation(latitude: lat, longitude: lon)
+            }
+            // Actualizar estado "en ruta"
+            if let onRoute = record["is_on_route"] as? Bool {
+                let wasOnRoute = merchants[idx].isOnRoute
+                merchants[idx].isOnRoute = onRoute
+                if onRoute && !wasOnRoute {
+                    print("🗺️ [Realtime] \(merchants[idx].businessName) inició su ruta")
+                    notifyClientMerchantStartedRoute(merchants[idx])
+                }
+            }
+            // Actualizar isActive
+            if let active = record["is_active"] as? Bool {
+                merchants[idx].isActive = active
+            }
+            // Sincronizar perfil propio si aplica
+            if merchants[idx].id == currentMerchantProfile?.id {
+                currentMerchantProfile = merchants[idx]
+            }
+            // Notificar al cliente si el merchant en ruta entró a 500m
+            checkProximityNotification(for: merchants[idx])
+        }
+    }
+
+    // MARK: - Notificación de proximidad
+
+    func updateUserLocation(_ coordinate: CLLocationCoordinate2D) {
+        userLocation = coordinate
+        // Verificar si algún merchant ya en ruta está ahora cerca del cliente
+        for merchant in merchants where merchant.isOnRoute {
+            checkProximityNotification(for: merchant)
+            notifyClientMerchantStartedRoute(merchant)
+        }
+    }
+
+    private func checkProximityNotification(for merchant: Merchant) {
+        guard merchant.isOnRoute,
+              let merchantLoc = merchant.currentLocation,
+              let userLoc = userLocation else { return }
+
+        let dist = CLLocation(latitude: merchantLoc.latitude, longitude: merchantLoc.longitude)
+            .distance(from: CLLocation(latitude: userLoc.latitude, longitude: userLoc.longitude))
+
+        guard dist <= 500, !lastNotifiedMerchantIds.contains(merchant.id) else { return }
+        lastNotifiedMerchantIds.insert(merchant.id)
+
+        let content = UNMutableNotificationContent()
+        content.title = "\(merchant.emoji) \(merchant.businessName) está cerca"
+        let mins = Int(dist / 75)   // ~75 m/min caminando
+        content.body = mins > 0
+            ? "A unos \(mins) min de tu ubicación · está en ruta"
+            : "¡Está a menos de 100m de ti!"
+        content.sound = .default
+
+        let req = UNNotificationRequest(
+            identifier: "merchant-near-\(merchant.id)",
+            content: content,
+            trigger: nil   // inmediata
+        )
+        UNUserNotificationCenter.current().add(req)
+        print("🔔 Notificación: \(merchant.businessName) a \(Int(dist))m")
+
+        // Limpiar flag después de 5 min para poder notificar de nuevo
+        DispatchQueue.main.asyncAfter(deadline: .now() + 300) { [weak self] in
+            self?.lastNotifiedMerchantIds.remove(merchant.id)
+        }
+    }
+
+    /// Emite el merchant al publisher para mostrar banner in-app al cliente si está a ≤1km
+    private func notifyClientMerchantStartedRoute(_ merchant: Merchant) {
+        guard let userLoc = userLocation,
+              let merchantLoc = merchant.currentLocation,
+              !lastAlertedOnRouteIds.contains(merchant.id) else { return }
+        let dist = CLLocation(latitude: merchantLoc.latitude, longitude: merchantLoc.longitude)
+            .distance(from: CLLocation(latitude: userLoc.latitude, longitude: userLoc.longitude))
+        guard dist <= 1000 else { return }
+        lastAlertedOnRouteIds.insert(merchant.id)
+        merchantJustStartedRoute = merchant
+        // Permitir volver a alertar tras 5 min (en caso de que salga y vuelva a entrar)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 300) { [weak self] in
+            self?.lastAlertedOnRouteIds.remove(merchant.id)
+        }
+    }
+
+    /// Sync mock merchants to Supabase solo si la tabla está vacía
     private func syncMocksToSupabaseIfNeeded() {
         let key = "hasSyncedMocksToSupabase"
         guard !UserDefaults.standard.bool(forKey: key) else { return }
 
         Task {
+            if let existing = try? await SupabaseService.shared.fetchMerchants(), !existing.isEmpty {
+                UserDefaults.standard.set(true, forKey: key)
+                return
+            }
             await SupabaseService.shared.syncAllMerchants(merchants)
             UserDefaults.standard.set(true, forKey: key)
         }
@@ -38,6 +156,7 @@ class MerchantManager: ObservableObject {
             do {
                 let records = try await SupabaseService.shared.fetchMerchants()
                 let existingIds = Set(merchants.map { $0.id.uuidString })
+                var existingNames = Set(merchants.map { $0.businessName.lowercased() })
 
                 var newMerchants: [Merchant] = []
                 for record in records {
@@ -46,6 +165,8 @@ class MerchantManager: ObservableObject {
                           let id = UUID(uuidString: idString) else { continue }
 
                     let businessName = record["business_name"] as? String ?? ""
+                    guard !existingNames.contains(businessName.lowercased()) else { continue }
+
                     let categoryRaw = record["category"] as? String ?? "otro"
                     let category = MerchantCategory(rawValue: categoryRaw) ?? .otro
                     let emoji = record["emoji"] as? String ?? category.emoji
@@ -132,6 +253,7 @@ class MerchantManager: ObservableObject {
                         trustLevel: TrustLevel(rawValue: record["trust_level"] as? String ?? "unverified") ?? .unverified
                     )
                     newMerchants.append(merchant)
+                    existingNames.insert(businessName.lowercased())
                 }
 
                 if !newMerchants.isEmpty {
@@ -479,8 +601,20 @@ class MerchantManager: ObservableObject {
                     Product(name: "Agua Fresca", price: 15, emoji: "🥤"),
                 ],
                 schedule: MerchantSchedule(openTime: "10:00", closeTime: "22:00", daysOfWeek: [1, 2, 3, 4, 5, 6, 7]),
-                isStatic: true,
-                currentLocation: MerchantLocation(latitude: 19.3029, longitude: -99.1506),
+                isStatic: false,
+                currentLocation: MerchantLocation(latitude: 19.3639649, longitude: -99.2616620),
+                route: MerchantRoute(
+                    merchantId: donTacoUserId,
+                    waypoints: [
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3639649, longitude: -99.2616620), order: 0, name: "Inicio"),
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3652000, longitude: -99.2616620), order: 1, name: "Punto 2"),
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3665000, longitude: -99.2616620), order: 2, name: "Punto 3"),
+                        RouteWaypoint(coordinate: CLLocationCoordinate2D(latitude: 19.3678000, longitude: -99.2616620), order: 3, name: "Final"),
+                    ],
+                    estimatedDuration: 1200,
+                    estimatedDistance: 420,
+                    isActive: true
+                ),
                 isVerified: true,
                 trustLevel: .trusted
             ),

@@ -115,7 +115,7 @@ class ContextEngine: ObservableObject {
             icon: "soccerball",
             title: title,
             subtitle: subtitle,
-            accentColor: "#0ABF4F",
+            accentColor: "#1C42E8",
             action: .openPrediction
         )
     }
@@ -151,7 +151,7 @@ class ContextEngine: ObservableObject {
             icon: "flame.fill",
             title: "\(categoryEmoji) Alta demanda de \(categoryName)",
             subtitle: "Zona caliente activa — \(zone.demandScore) búsquedas recientes",
-            accentColor: "#FF6B35",
+            accentColor: "#1C42E8",
             action: .openMap
         )
     }
@@ -166,7 +166,7 @@ class ContextEngine: ObservableObject {
                 icon: "sunrise.fill",
                 title: "Buenos días — ¿tamales para empezar?",
                 subtitle: "Los tamaleros madrugadores ya están activos",
-                accentColor: "#FFAE43",
+                accentColor: "#F0D224",
                 action: .openChat(prefill: "¿Dónde hay tamales cerca de mí?")
             )
         case 10..<14:
@@ -174,7 +174,7 @@ class ContextEngine: ObservableObject {
                 icon: "fork.knife",
                 title: "Se acerca la hora de comer",
                 subtitle: "Encuentra tacos, tortas y antojitos cerca",
-                accentColor: "#FF6B35",
+                accentColor: "#1C42E8",
                 action: .openChat(prefill: "¿Qué hay de comer por aquí?")
             )
         case 14..<18:
@@ -184,7 +184,7 @@ class ContextEngine: ObservableObject {
                 icon: "cup.and.saucer.fill",
                 title: "Tarde de antojitos",
                 subtitle: "\(count) vendedores activos cerca — elotes, helados, jugos",
-                accentColor: "#7D42FF",
+                accentColor: "#1C42E8",
                 action: .openMap
             )
         case 18..<22:

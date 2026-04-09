@@ -89,16 +89,25 @@ struct RadarView: View {
         for merchant in activeMerchants {
             guard let loc = merchant.currentLocation else { continue }
             let coord = loc.coordinate
-            let dist = MerchantManager.haversineDistance(
-                lat1: userLocation.latitude, lon1: userLocation.longitude,
-                lat2: coord.latitude, lon2: coord.longitude
-            )
-            guard dist <= maxDistance * 1.2 else { continue }
 
-            let bear = bearingBetween(from: userLocation, to: coord)
             let blePeer = radarService.discoveredMerchants.first {
                 $0.businessName == merchant.businessName
             }
+
+            // Prioridad: UWB > GPS haversine
+            let dist: Double
+            if let uwb = blePeer?.uwbDistance {
+                dist = Double(uwb)
+            } else {
+                dist = MerchantManager.haversineDistance(
+                    lat1: userLocation.latitude, lon1: userLocation.longitude,
+                    lat2: coord.latitude, lon2: coord.longitude
+                )
+            }
+
+            guard dist <= maxDistance * 1.2 else { continue }
+
+            let bear = bearingBetween(from: userLocation, to: coord)
 
             result.append(RadarMerchant(
                 id: merchant.id,
@@ -115,12 +124,16 @@ struct RadarView: View {
             includedNames.insert(merchant.businessName)
         }
 
-        // 2. Peers BLE que NO están ya incluidos — estimar distancia por RSSI
-        //    Esto captura merchants detectados por BLE cuyo GPS está lejano o no existe.
+        // 2. Peers BLE que NO están ya incluidos — UWB si disponible, sino RSSI
         for peer in radarService.discoveredMerchants where !includedNames.contains(peer.businessName) {
-            let txPower: Double = -59
-            let estimatedDist = pow(10.0, (txPower - Double(peer.rssi)) / 20.0)
-            let clampedDist = min(max(estimatedDist, 1.0), maxDistance)
+            let clampedDist: Double
+            if let uwb = peer.uwbDistance {
+                clampedDist = Double(uwb)
+            } else {
+                let txPower: Double = -59
+                let estimatedDist = pow(10.0, (txPower - Double(peer.rssi)) / 20.0)
+                clampedDist = min(max(estimatedDist, 1.0), maxDistance)
+            }
 
             // Buscar merchant en catálogo para datos completos (productos, etc.)
             let catalogMerchant = merchantManager.merchants.first { $0.businessName == peer.businessName }
@@ -427,13 +440,8 @@ struct RadarView: View {
                                     .foregroundColor(.white)
                                 HStack(spacing: 4) {
                                     Text(merchant.formattedDistance)
-                                        .font(.system(size: 12, weight: .medium))
+                                        .font(.system(size: 12, weight: .bold))
                                         .foregroundColor(.cyan)
-                                    Text("·")
-                                        .foregroundColor(.white.opacity(0.3))
-                                    Text(directionLabel(merchant.bearing))
-                                        .font(.system(size: 12))
-                                        .foregroundColor(.white.opacity(0.5))
                                     if merchant.mpcPeer != nil {
                                         Text("· \(LocalizedString("radar.live"))")
                                             .font(.system(size: 9, weight: .bold))
@@ -444,11 +452,9 @@ struct RadarView: View {
 
                             Spacer()
 
-                            // Mini flecha de dirección
-                            Image(systemName: "location.north.fill")
-                                .font(.system(size: 14))
-                                .foregroundColor(.green.opacity(0.6))
-                                .rotationEffect(.degrees(merchant.bearing - heading))
+                            Text(merchant.formattedDistance)
+                                .font(.system(size: 15, weight: .bold, design: .monospaced))
+                                .foregroundColor(.cyan.opacity(0.8))
                         }
                         .padding(12)
                         .background(

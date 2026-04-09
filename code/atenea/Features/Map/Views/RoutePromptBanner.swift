@@ -168,6 +168,11 @@ struct RoutePromptBanner: View {
             Spacer()
         }
         .padding(.top, 60)
+        .onAppear {
+            if routeTracker.isNearRoute && !routeTracker.isOnRoute && !routeTracker.promptDismissed {
+                showBanner()
+            }
+        }
         .onChange(of: routeTracker.isNearRoute) { _, isNear in
             if isNear && !routeTracker.isOnRoute && !routeTracker.promptDismissed {
                 showBanner()

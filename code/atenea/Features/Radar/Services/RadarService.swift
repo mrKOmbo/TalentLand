@@ -12,12 +12,15 @@ import Foundation
 internal import Combine
 import CoreBluetooth
 import SwiftUI
+@preconcurrency import NearbyInteraction
 
 // MARK: - BLE UUIDs (Atenea)
 
 struct AteneaBLE {
     static let serviceUUID = CBUUID(string: "A1E2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D")
     static let timbreCharUUID = CBUUID(string: "B2F3D4E5-F6A7-5B6C-9D0E-1F2A3B4C5D6E")
+
+    static let niTokenCharUUID = CBUUID(string: "A2E3D4F5-E6A7-5B8C-0D1E-2F3A4B5C6D7E")
 
     static let centralRestoreKey = "com.atenea.ble.central"
     static let peripheralRestoreKey = "com.atenea.ble.peripheral"
@@ -42,6 +45,7 @@ struct RadarPeer: Identifiable, Equatable {
     var lastSeen: Date
     var signalStrength: SignalStrength
     var rssi: Int                      // RSSI real del BLE scan
+    var uwbDistance: Float?            // Distancia UWB (NearbyInteraction), nil si no disponible
 
     enum SignalStrength: String {
         case strong = "strong"
@@ -114,6 +118,12 @@ class RadarService: NSObject, ObservableObject {
     private var pendingScanStart = false
     private var pendingAdvertiseInfo: String?
 
+    // NearbyInteraction (UWB)
+    private var niSession: NISession?
+    private var niTokenMutableChar: CBMutableCharacteristic?
+    private var niTokenData: Data?
+    private var niCurrentPeerID: String?
+
     // MARK: - Init
 
     private override init() {
@@ -172,16 +182,41 @@ class RadarService: NSObject, ObservableObject {
     }
 
     private func setupPeripheralService() {
-        let characteristic = CBMutableCharacteristic(
+        // Crear NISession si no existe (merchant necesita su token para el GATT char)
+        if niSession == nil {
+            niSession = NISession()
+            niSession?.delegate = self
+        }
+
+        let timbreChar = CBMutableCharacteristic(
             type: AteneaBLE.timbreCharUUID,
             properties: [.write, .writeWithoutResponse, .notify],
             value: nil,
             permissions: [.writeable]
         )
-        timbreCharacteristic = characteristic
+        timbreCharacteristic = timbreChar
+
+        var chars: [CBMutableCharacteristic] = [timbreChar]
+
+        // NI token char: el merchant expone su token (readable) y acepta el del cliente (writable)
+        // CoreBluetooth: chars con value cacheado deben ser read-only.
+        // Para read+write, value=nil y se responde dinámicamente en didReceiveRead.
+        if let niToken = niSession?.discoveryToken,
+           let tokenData = try? NSKeyedArchiver.archivedData(withRootObject: niToken, requiringSecureCoding: true) {
+            let niChar = CBMutableCharacteristic(
+                type: AteneaBLE.niTokenCharUUID,
+                properties: [.read, .write],
+                value: nil,
+                permissions: [.readable, .writeable]
+            )
+            niTokenData = tokenData
+            niTokenMutableChar = niChar
+            chars.append(niChar)
+            print("📡 [UWB] NI token char agregado al GATT (\(tokenData.count) bytes)")
+        }
 
         let service = CBMutableService(type: AteneaBLE.serviceUUID, primary: true)
-        service.characteristics = [characteristic]
+        service.characteristics = chars
         timbreService = service
 
         peripheralManager.add(service)
@@ -517,21 +552,32 @@ extension RadarService: CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         guard let services = peripheral.services else { return }
         for service in services where service.uuid == AteneaBLE.serviceUUID {
-            peripheral.discoverCharacteristics([AteneaBLE.timbreCharUUID], for: service)
+            peripheral.discoverCharacteristics([AteneaBLE.timbreCharUUID, AteneaBLE.niTokenCharUUID], for: service)
         }
     }
 
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
         guard let chars = service.characteristics else { return }
-        for char in chars where char.uuid == AteneaBLE.timbreCharUUID {
-            remoteTimbreCharacteristic = char
-            peripheral.setNotifyValue(true, for: char)
-
-            // Enviar timbre pendiente
-            if let pending = pendingTimbreToSend, pending.peripheral.identifier == peripheral.identifier {
-                peripheral.writeValue(pending.data, for: char, type: .withResponse)
-                print("📡 [BLE] ✅ Timbre pendiente enviado (\(pending.data.count) bytes)")
-                pendingTimbreToSend = nil
+        for char in chars {
+            switch char.uuid {
+            case AteneaBLE.timbreCharUUID:
+                remoteTimbreCharacteristic = char
+                peripheral.setNotifyValue(true, for: char)
+                if let pending = pendingTimbreToSend, pending.peripheral.identifier == peripheral.identifier {
+                    peripheral.writeValue(pending.data, for: char, type: .withResponse)
+                    print("📡 [BLE] ✅ Timbre pendiente enviado (\(pending.data.count) bytes)")
+                    pendingTimbreToSend = nil
+                }
+            case AteneaBLE.niTokenCharUUID:
+                // Iniciar NISession del cliente si no existe
+                if niSession == nil {
+                    niSession = NISession()
+                    niSession?.delegate = self
+                }
+                peripheral.readValue(for: char)   // leer token del merchant
+                print("📡 [UWB] Leyendo NI token del merchant...")
+            default:
+                break
             }
         }
     }
@@ -544,6 +590,32 @@ extension RadarService: CBPeripheralDelegate {
 
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         guard let data = characteristic.value else { return }
+
+        // NI token read response — intercambiar token y arrancar UWB session
+        if characteristic.uuid == AteneaBLE.niTokenCharUUID {
+            guard let merchantToken = try? NSKeyedUnarchiver.unarchivedObject(
+                ofClass: NIDiscoveryToken.self, from: data
+            ) else {
+                print("📡 [UWB] ❌ No se pudo decodificar NI token del merchant")
+                return
+            }
+
+            niCurrentPeerID = peripheral.identifier.uuidString
+
+            // Escribir nuestro token en la char del merchant para que él también arranque
+            if let myToken = niSession?.discoveryToken,
+               let myTokenData = try? NSKeyedArchiver.archivedData(withRootObject: myToken, requiringSecureCoding: true) {
+                peripheral.writeValue(myTokenData, for: characteristic, type: .withResponse)
+                print("📡 [UWB] Token propio enviado al merchant (\(myTokenData.count) bytes)")
+            }
+
+            let config = NINearbyPeerConfiguration(peerToken: merchantToken)
+            niSession?.run(config)
+            print("📡 [UWB] NISession del cliente iniciada con token del merchant")
+            return
+        }
+
+        // Timbre notify
         do {
             let message = try JSONDecoder().decode(TimbreP2PMessage.self, from: data)
             DispatchQueue.main.async {
@@ -592,27 +664,55 @@ extension RadarService: CBPeripheralManagerDelegate {
 
     func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
         for request in requests {
-            guard request.characteristic.uuid == AteneaBLE.timbreCharUUID,
-                  let data = request.value else {
+            guard let data = request.value else {
                 peripheral.respond(to: request, withResult: .unlikelyError)
                 continue
             }
 
-            peripheral.respond(to: request, withResult: .success)
-            print("📩 [BLE RECV] \(data.count) bytes de central=\(request.central.identifier.uuidString.prefix(8))")
+            if request.characteristic.uuid == AteneaBLE.niTokenCharUUID {
+                // Cliente escribió su NI token — arrancar UWB session como merchant
+                peripheral.respond(to: request, withResult: .success)
 
-            do {
-                let message = try JSONDecoder().decode(TimbreP2PMessage.self, from: data)
-                DispatchQueue.main.async {
-                    if case .timbreEvent(let timbre) = message {
-                        print("📩 [BLE RECV TIMBRE] client=\(timbre.clientName) type=\(timbre.type.rawValue) lat=\(timbre.clientLatitude) lon=\(timbre.clientLongitude) msg=\(timbre.message ?? "nil")")
-                        TimbreManager.shared.receiveTimbre(timbre)
-                        self.peerMerchantMap[request.central.identifier.uuidString] = timbre.clientName
-                    }
+                guard let clientToken = try? NSKeyedUnarchiver.unarchivedObject(
+                    ofClass: NIDiscoveryToken.self, from: data
+                ) else {
+                    print("📡 [UWB] ❌ No se pudo decodificar NI token del cliente")
+                    continue
                 }
-            } catch {
-                print("📡 [BLE Periph] ❌ Error decodificando: \(error)")
+
+                niCurrentPeerID = request.central.identifier.uuidString
+                let config = NINearbyPeerConfiguration(peerToken: clientToken)
+                niSession?.run(config)
+                print("📡 [UWB] NISession del merchant iniciada con token del cliente")
+
+            } else if request.characteristic.uuid == AteneaBLE.timbreCharUUID {
+                peripheral.respond(to: request, withResult: .success)
+                print("📩 [BLE RECV] \(data.count) bytes de central=\(request.central.identifier.uuidString.prefix(8))")
+
+                do {
+                    let message = try JSONDecoder().decode(TimbreP2PMessage.self, from: data)
+                    DispatchQueue.main.async {
+                        if case .timbreEvent(let timbre) = message {
+                            print("📩 [BLE RECV TIMBRE] client=\(timbre.clientName) type=\(timbre.type.rawValue) lat=\(timbre.clientLatitude) lon=\(timbre.clientLongitude) msg=\(timbre.message ?? "nil")")
+                            TimbreManager.shared.receiveTimbre(timbre)
+                            self.peerMerchantMap[request.central.identifier.uuidString] = timbre.clientName
+                        }
+                    }
+                } catch {
+                    print("📡 [BLE Periph] ❌ Error decodificando: \(error)")
+                }
+            } else {
+                peripheral.respond(to: request, withResult: .unlikelyError)
             }
+        }
+    }
+
+    func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveRead request: CBATTRequest) {
+        if request.characteristic.uuid == AteneaBLE.niTokenCharUUID, let data = niTokenData {
+            request.value = data
+            peripheral.respond(to: request, withResult: .success)
+        } else {
+            peripheral.respond(to: request, withResult: .attributeNotFound)
         }
     }
 
@@ -637,6 +737,45 @@ extension RadarService: CBPeripheralManagerDelegate {
                 timbreService = service
                 timbreCharacteristic = service.characteristics?.first as? CBMutableCharacteristic
             }
+        }
+    }
+}
+
+// MARK: - NISessionDelegate (UWB ranging)
+
+extension RadarService: NISessionDelegate {
+
+    func session(_ session: NISession, didUpdate nearbyObjects: [NINearbyObject]) {
+        guard let object = nearbyObjects.first,
+              let distance = object.distance,
+              let peerID = niCurrentPeerID else { return }
+
+        DispatchQueue.main.async {
+            if let idx = self.discoveredMerchants.firstIndex(where: { $0.id == peerID }) {
+                self.discoveredMerchants[idx].uwbDistance = distance
+                print("📡 [UWB] 📏 \(String(format: "%.2f", distance))m → \(self.discoveredMerchants[idx].businessName)")
+            }
+        }
+    }
+
+    func session(_ session: NISession, didInvalidateWith error: Error) {
+        print("📡 [UWB] ❌ NISession invalidada: \(error.localizedDescription)")
+        niSession = nil
+        niCurrentPeerID = nil
+    }
+
+    func sessionWasSuspended(_ session: NISession) {
+        print("📡 [UWB] ⏸ NISession suspendida")
+    }
+
+    func sessionSuspensionEnded(_ session: NISession) {
+        print("📡 [UWB] ▶️ NISession reanudada — reiniciando")
+        if let peerID = niCurrentPeerID,
+           let peer = discoveredMerchants.first(where: { $0.id == peerID }),
+           let _ = peer.peripheral {
+            // La session fue suspendida (background) — el peer necesita re-intercambiar tokens
+            // Reconectarse forzará un nuevo intercambio de tokens via GATT
+            print("📡 [UWB] Re-intercambio de tokens necesario")
         }
     }
 }

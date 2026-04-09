@@ -17,12 +17,20 @@ struct NearbyMerchantsPanel: View {
 
     @State private var selectedCategoryFilter: MerchantCategory? = nil
 
-    private var filteredMerchants: [Merchant] {
+    /// Radio máximo para considerar un merchant como "cercano" (5km)
+    private let maxRadiusMeters: Double = 5000
+
+    private var nearbyActiveMerchants: [Merchant] {
         let active = merchants.filter { $0.isActive && $0.currentLocation != nil }
+        guard let userLoc = userLocation else { return active }
+        return active.filter { distance(from: userLoc, to: $0) <= maxRadiusMeters }
+    }
+
+    private var filteredMerchants: [Merchant] {
         if let cat = selectedCategoryFilter {
-            return active.filter { $0.category == cat }
+            return nearbyActiveMerchants.filter { $0.category == cat }
         }
-        return active
+        return nearbyActiveMerchants
     }
 
     private var sortedMerchants: [Merchant] {
@@ -35,7 +43,7 @@ struct NearbyMerchantsPanel: View {
     }
 
     private var activeCategories: [MerchantCategory] {
-        let cats = Set(merchants.filter { $0.isActive }.map { $0.category })
+        let cats = Set(nearbyActiveMerchants.map { $0.category })
         return MerchantCategory.allCases.filter { cats.contains($0) }
     }
 
@@ -225,19 +233,34 @@ struct MerchantCard: View {
                 }
             }
 
-            // Tipo: fijo o ambulante
-            HStack(spacing: 4) {
-                Image(systemName: merchant.isStatic ? "mappin.circle.fill" : "figure.walk")
-                    .font(.system(size: 10))
-                Text(merchant.isStatic ? "Fijo" : "Ambulante")
-                    .font(.system(size: 10, weight: .medium))
+            // Badge "En Ruta" si está activo, si no muestra tipo fijo/ambulante
+            if merchant.isOnRoute {
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(Color.green)
+                        .frame(width: 6, height: 6)
+                        .modifier(PulsingDot())
+                    Text("En Ruta")
+                        .font(.system(size: 10, weight: .bold))
+                }
+                .foregroundColor(.green)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Capsule().fill(Color.green.opacity(0.12)))
+            } else {
+                HStack(spacing: 4) {
+                    Image(systemName: merchant.isStatic ? "mappin.circle.fill" : "figure.walk")
+                        .font(.system(size: 10))
+                    Text(merchant.isStatic ? "Fijo" : "Ambulante")
+                        .font(.system(size: 10, weight: .medium))
+                }
+                .foregroundColor(merchant.isStatic ? .blue : .orange)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(
+                    Capsule().fill(merchant.isStatic ? Color.blue.opacity(0.1) : Color.orange.opacity(0.1))
+                )
             }
-            .foregroundColor(merchant.isStatic ? .blue : .orange)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(
-                Capsule().fill(merchant.isStatic ? Color.blue.opacity(0.1) : Color.orange.opacity(0.1))
-            )
         }
         .padding(10)
         .frame(width: 140, alignment: .leading)
@@ -262,5 +285,18 @@ struct MerchantCard: View {
         } else {
             return String(format: "%.1fkm", meters / 1000)
         }
+    }
+}
+
+// MARK: - Pulsing Dot Animation
+
+private struct PulsingDot: ViewModifier {
+    @State private var scale: CGFloat = 1.0
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(scale)
+            .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: scale)
+            .onAppear { scale = 1.6 }
     }
 }

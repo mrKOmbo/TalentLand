@@ -8,6 +8,8 @@
 import SwiftUI
 import MapKit
 import MapboxMaps
+import CoreLocation
+internal import Combine
 
 struct BusinessLocationMapView: View {
     @Environment(\.dismiss) var dismiss
@@ -24,6 +26,10 @@ struct BusinessLocationMapView: View {
     @State private var isCalculatingRoute = false
     @State private var estimatedDistance: Double?
     @State private var estimatedDuration: Double?
+    @State private var centerOnUser = false
+    @State private var approachCoordinates: [CLLocationCoordinate2D] = []
+    @State private var approachDistance: Double?
+    @StateObject private var approachLocationManager = ApproachLocationManager()
 
     var body: some View {
         ZStack {
@@ -33,9 +39,14 @@ struct BusinessLocationMapView: View {
                 selectedCoordinate: $selectedCoordinate,
                 routeCoordinates: $routeCoordinates,
                 isMobileBusinesse: isMobileBusinesse,
-                onMapTap: handleMapTap
+                onMapTap: handleMapTap,
+                centerOnUserLocation: $centerOnUser,
+                approachRouteCoordinates: $approachCoordinates
             )
             .ignoresSafeArea()
+            .onAppear { approachLocationManager.requestLocation() }
+            .onChange(of: waypoints) { _, _ in calculateApproachRoute() }
+            .onChange(of: approachLocationManager.currentLocation) { _, _ in calculateApproachRoute() }
 
             // Overlay UI
             VStack {
@@ -43,6 +54,28 @@ struct BusinessLocationMapView: View {
                 searchBar
 
                 Spacer()
+
+                // Botón de ubicación actual (lado derecho)
+                HStack {
+                    Spacer()
+                    Button(action: {
+                        centerOnUser = true
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(.white)
+                                .frame(width: 46, height: 46)
+                                .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+
+                            Image(systemName: "location.fill")
+                                .font(.system(size: 20))
+                                .foregroundColor(.purple)
+                        }
+                    }
+                    .padding(.trailing, 16)
+                    .padding(.bottom, 12)
+                }
 
                 // Instructions and confirm button
                 bottomControls
@@ -186,6 +219,35 @@ struct BusinessLocationMapView: View {
 
     private var bottomControls: some View {
         VStack(spacing: 16) {
+            // Approach route indicator (distancia al inicio)
+            if isMobileBusinesse && !approachCoordinates.isEmpty, let dist = approachDistance {
+                HStack(spacing: 10) {
+                    Image(systemName: "figure.walk.motion")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.orange)
+
+                    Text("Estás a \(dist < 1000 ? "\(Int(dist))m" : String(format: "%.1f km", dist / 1000)) del inicio de tu ruta")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(.primary)
+
+                    Spacer()
+
+                    Circle()
+                        .fill(.orange)
+                        .frame(width: 8, height: 8)
+                }
+                .padding(14)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(.white)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .strokeBorder(Color.orange.opacity(0.3), lineWidth: 1)
+                        )
+                        .shadow(color: .orange.opacity(0.15), radius: 12, x: 0, y: 4)
+                )
+            }
+
             // Route stats (mobile only)
             if isMobileBusinesse && waypoints.count >= 2 {
                 HStack(spacing: 16) {
@@ -397,6 +459,74 @@ struct BusinessLocationMapView: View {
         }
 
         dismiss()
+    }
+
+    // MARK: - Approach Route (ruta para llegar al inicio)
+
+    private func calculateApproachRoute() {
+        guard isMobileBusinesse,
+              waypoints.count >= 2,
+              let userLoc = approachLocationManager.currentLocation else {
+            approachCoordinates = []
+            approachDistance = nil
+            return
+        }
+
+        let startWaypoint = waypoints.sorted(by: { $0.order < $1.order }).first!
+        let distToStart = CLLocation(latitude: userLoc.latitude, longitude: userLoc.longitude)
+            .distance(from: CLLocation(latitude: startWaypoint.latitude, longitude: startWaypoint.longitude))
+
+        // Solo mostrar si estamos a más de 50m del inicio
+        guard distToStart > 50 else {
+            approachCoordinates = []
+            approachDistance = nil
+            return
+        }
+
+        let userWaypoint = RouteWaypoint(coordinate: userLoc, order: 0)
+        let targetWaypoint = RouteWaypoint(coordinate: startWaypoint.coordinate, order: 1)
+
+        MapboxRoutingService.shared.calculateRoute(waypoints: [userWaypoint, targetWaypoint], profile: .walking) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let response):
+                    guard let route = response.routes.first else { return }
+                    approachCoordinates = route.geometry.coordinates.map {
+                        CLLocationCoordinate2D(latitude: $0[1], longitude: $0[0])
+                    }
+                    approachDistance = route.distance
+                case .failure:
+                    approachCoordinates = []
+                    approachDistance = nil
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Approach Location Manager
+
+class ApproachLocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+    @Published var currentLocation: CLLocationCoordinate2D?
+    private let manager = CLLocationManager()
+
+    override init() {
+        super.init()
+        manager.delegate = self
+        manager.desiredAccuracy = kCLLocationAccuracyBest
+    }
+
+    func requestLocation() {
+        manager.requestWhenInUseAuthorization()
+        manager.startUpdatingLocation()
+    }
+
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        currentLocation = locations.last?.coordinate
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("📍 Approach location error: \(error.localizedDescription)")
     }
 }
 

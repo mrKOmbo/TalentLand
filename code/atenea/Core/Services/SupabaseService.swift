@@ -169,6 +169,27 @@ class SupabaseService {
         return merchants
     }
 
+    // MARK: - Update Route Status
+
+    /// Marca al comerciante como "en ruta" o "no en ruta" en Supabase
+    func updateMerchantRouteStatus(merchantId: UUID, isOnRoute: Bool) async throws {
+        let payload: [String: Any] = ["is_on_route": isOnRoute]
+        let jsonData = try JSONSerialization.data(withJSONObject: payload)
+
+        var request = URLRequest(url: URL(string: "\(baseURL)/merchants?id=eq.\(merchantId.uuidString)")!)
+        request.httpMethod = "PATCH"
+        request.httpBody = jsonData
+        for (key, value) in headers { request.setValue(value, forHTTPHeaderField: key) }
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            let body = String(data: data, encoding: .utf8) ?? "?"
+            throw SupabaseError.saveFailed(body)
+        }
+        print("☁️ isOnRoute=\(isOnRoute) → merchant \(merchantId)")
+    }
+
     // MARK: - Sync All Mock Merchants (run once on first launch)
 
     func syncAllMerchants(_ merchants: [Merchant]) async {
