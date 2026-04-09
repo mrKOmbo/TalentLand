@@ -17,24 +17,37 @@ enum BusinessQRService {
 
     /// URL con ID de Supabase — la web consulta los datos desde la DB
     static func businessURL(for merchant: Merchant) -> String {
-        return "\(baseURL)?id=\(merchant.id.uuidString)"
+        let url = "\(baseURL)?id=\(merchant.id.uuidString)"
+        print("🔗 [QR] businessURL (ID-only): \(url)")
+        return url
     }
 
     /// Fallback: URL con datos embebidos en base64 (funciona sin internet para la web)
     static func businessURLWithData(for merchant: Merchant) -> String {
         let data = businessPayload(for: merchant)
+        print("🔗 [QR] businessURLWithData payload keys: \(data.keys.sorted())")
+        print("🔗 [QR] tiene lat/lng: \(data["lat"] != nil && data["lng"] != nil)")
         guard let jsonData = try? JSONSerialization.data(withJSONObject: data),
               let jsonString = String(data: jsonData, encoding: .utf8) else {
+            print("🔗 [QR] ERROR: no se pudo serializar payload a JSON")
             return baseURL
         }
         let base64 = Data(jsonString.utf8).base64EncodedString()
-        return "\(baseURL)?d=\(base64)"
+        let url = "\(baseURL)?d=\(base64)"
+        print("🔗 [QR] businessURLWithData URL length: \(url.count) chars")
+        return url
     }
 
     /// Genera la imagen QR para el negocio (usa datos embebidos para que funcione sin Supabase)
     static func generateQR(for merchant: Merchant, size: CGSize = CGSize(width: 280, height: 280)) -> UIImage? {
+        print("🔗 [QR] generateQR para: \(merchant.businessName) (id=\(merchant.id.uuidString.prefix(8)))")
+        print("🔗 [QR] currentLocation: \(merchant.currentLocation != nil ? "lat=\(merchant.currentLocation!.latitude), lng=\(merchant.currentLocation!.longitude)" : "nil")")
+        print("🔗 [QR] productos: \(merchant.products.count), disponibles: \(merchant.products.filter { $0.isAvailable }.count)")
+        print("🔗 [QR] schedule: \(merchant.schedule != nil ? "\(merchant.schedule!.openTime)-\(merchant.schedule!.closeTime)" : "nil")")
         let url = businessURLWithData(for: merchant)
-        return QRGeneratorService.generateQRCode(from: url, size: size)
+        let qrImage = QRGeneratorService.generateQRCode(from: url, size: size)
+        print("🔗 [QR] imagen generada: \(qrImage != nil ? "✅ \(Int(qrImage!.size.width))x\(Int(qrImage!.size.height))" : "❌ nil")")
+        return qrImage
     }
 
     // MARK: - Payload (for base64 fallback)

@@ -236,6 +236,8 @@ struct MerchantDetailSheet: View {
 
                 // QR
                 Button {
+                    print("📋 [MerchantDetailSheet] QR button tapped — merchant: \(merchant.businessName), id=\(merchant.id.uuidString.prefix(8))")
+                    print("📋 [MerchantDetailSheet] currentLocation: \(merchant.currentLocation != nil ? "lat=\(merchant.currentLocation!.latitude), lng=\(merchant.currentLocation!.longitude)" : "nil")")
                     showQR = true
                 } label: {
                     HStack {

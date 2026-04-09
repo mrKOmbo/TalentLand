@@ -98,12 +98,40 @@ class SupabaseService {
     // MARK: - Update Merchant Location
 
     func updateMerchantLocation(merchantId: UUID, latitude: Double, longitude: Double) async throws {
+        print("☁️ [updateMerchantLocation] INICIO — merchantId=\(merchantId.uuidString.prefix(8)), lat=\(latitude), lng=\(longitude)")
         let payload: [String: Any] = [
             "latitude": latitude,
             "longitude": longitude,
             "is_active": true
         ]
 
+        let jsonData = try JSONSerialization.data(withJSONObject: payload)
+        print("☁️ [updateMerchantLocation] payload: \(String(data: jsonData, encoding: .utf8) ?? "?")")
+
+        var request = URLRequest(url: URL(string: "\(baseURL)/merchants?id=eq.\(merchantId.uuidString)")!)
+        request.httpMethod = "PATCH"
+        request.httpBody = jsonData
+        for (key, value) in headers {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+            print("☁️ [updateMerchantLocation] ❌ ERROR HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0): \(errorBody)")
+            throw SupabaseError.saveFailed(errorBody)
+        }
+
+        print("☁️ [updateMerchantLocation] ✅ OK (HTTP \(httpResponse.statusCode)) — merchant: \(merchantId.uuidString.prefix(8))")
+    }
+
+    // MARK: - Update Merchant Active Status
+
+    func updateMerchantStatus(merchantId: UUID, isActive: Bool) async throws {
+        print("☁️ [updateMerchantStatus] INICIO — merchantId=\(merchantId.uuidString.prefix(8)), isActive=\(isActive)")
+        let payload: [String: Any] = ["is_active": isActive]
         let jsonData = try JSONSerialization.data(withJSONObject: payload)
 
         var request = URLRequest(url: URL(string: "\(baseURL)/merchants?id=eq.\(merchantId.uuidString)")!)
@@ -118,33 +146,11 @@ class SupabaseService {
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
             let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw SupabaseError.saveFailed(errorBody)
+            print("☁️ [updateMerchantStatus] ❌ ERROR HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0): \(errorBody)")
+            throw SupabaseError.saveFailed("Status update failed: \(errorBody)")
         }
 
-        print("☁️ Location updated in Supabase for merchant: \(merchantId)")
-    }
-
-    // MARK: - Update Merchant Active Status
-
-    func updateMerchantStatus(merchantId: UUID, isActive: Bool) async throws {
-        let payload: [String: Any] = ["is_active": isActive]
-        let jsonData = try JSONSerialization.data(withJSONObject: payload)
-
-        var request = URLRequest(url: URL(string: "\(baseURL)/merchants?id=eq.\(merchantId.uuidString)")!)
-        request.httpMethod = "PATCH"
-        request.httpBody = jsonData
-        for (key, value) in headers {
-            request.setValue(value, forHTTPHeaderField: key)
-        }
-
-        let (_, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200...299).contains(httpResponse.statusCode) else {
-            throw SupabaseError.saveFailed("Status update failed")
-        }
-
-        print("☁️ Status updated in Supabase: \(merchantId) → \(isActive ? "active" : "inactive")")
+        print("☁️ [updateMerchantStatus] ✅ OK (HTTP \(httpResponse.statusCode)) — merchant: \(merchantId.uuidString.prefix(8)) → \(isActive ? "active" : "inactive")")
     }
 
     // MARK: - Fetch All Merchants

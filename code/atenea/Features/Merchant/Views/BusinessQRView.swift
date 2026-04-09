@@ -16,7 +16,9 @@ struct BusinessQRView: View {
     @State private var showCopiedToast = false
 
     private var businessURL: String {
-        BusinessQRService.businessURL(for: merchant)
+        let url = BusinessQRService.businessURL(for: merchant)
+        print("📱 [BusinessQRView] businessURL: \(url)")
+        return url
     }
 
     var body: some View {
@@ -57,7 +59,11 @@ struct BusinessQRView: View {
             }
         }
         .onAppear {
+            print("📱 [BusinessQRView] onAppear — merchant: \(merchant.businessName), id=\(merchant.id.uuidString.prefix(8))")
+            print("📱 [BusinessQRView] merchant.currentLocation: \(merchant.currentLocation != nil ? "lat=\(merchant.currentLocation!.latitude), lng=\(merchant.currentLocation!.longitude)" : "nil")")
+            print("📱 [BusinessQRView] merchant.isActive: \(merchant.isActive), isOpen: \(merchant.isCurrentlyOpen)")
             qrImage = BusinessQRService.generateQR(for: merchant)
+            print("📱 [BusinessQRView] qrImage generado: \(qrImage != nil ? "✅" : "❌")")
         }
     }
 
@@ -303,13 +309,19 @@ struct BusinessQRView: View {
     // MARK: - Share
 
     private func shareQR() {
+        print("📱 [BusinessQRView] shareQR tapped")
         var items: [Any] = []
 
         if let qr = qrImage {
             items.append(qr)
+            print("📱 [BusinessQRView] share: QR image añadida")
+        } else {
+            print("📱 [BusinessQRView] share: ⚠️ sin QR image")
         }
 
-        items.append(businessURL)
+        let url = businessURL
+        items.append(url)
+        print("📱 [BusinessQRView] share: URL añadida — \(url)")
 
         let activityVC = UIActivityViewController(activityItems: items, applicationActivities: nil)
 

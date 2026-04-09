@@ -328,24 +328,38 @@ class MerchantManager: ObservableObject {
         }
 
         // Sync status + location to Supabase
+        let hasLocation = merchants[index].currentLocation != nil
+        print("🏪 [toggleActive] currentLocation: \(hasLocation ? "lat=\(merchants[index].currentLocation!.latitude), lng=\(merchants[index].currentLocation!.longitude)" : "nil")")
+        print("🏪 [toggleActive] syncing to Supabase: isActive=\(despues), willSyncLocation=\(despues && hasLocation)")
         Task {
             try? await SupabaseService.shared.updateMerchantStatus(merchantId: merchantId, isActive: despues)
+            print("🏪 [toggleActive] ✅ status synced to Supabase: isActive=\(despues)")
             if despues, let loc = merchants[index].currentLocation {
                 try? await SupabaseService.shared.updateMerchantLocation(merchantId: merchantId, latitude: loc.latitude, longitude: loc.longitude)
+                print("🏪 [toggleActive] ✅ location synced to Supabase: lat=\(loc.latitude), lng=\(loc.longitude)")
+            } else if despues {
+                print("🏪 [toggleActive] ⚠️ activado pero SIN location — Supabase no tendrá lat/lng")
             }
         }
     }
 
     func updateLocation(merchantId: UUID, latitude: Double, longitude: Double) {
-        guard let index = merchants.firstIndex(where: { $0.id == merchantId }) else { return }
+        print("📍 [updateLocation] merchantId=\(merchantId.uuidString.prefix(8)), lat=\(latitude), lng=\(longitude)")
+        guard let index = merchants.firstIndex(where: { $0.id == merchantId }) else {
+            print("📍 [updateLocation] ERROR: merchant no encontrado en array")
+            return
+        }
         merchants[index].currentLocation = MerchantLocation(latitude: latitude, longitude: longitude)
+        print("📍 [updateLocation] currentLocation actualizado para: \(merchants[index].businessName)")
         if merchants[index].id == currentMerchantProfile?.id {
             currentMerchantProfile = merchants[index]
+            print("📍 [updateLocation] currentMerchantProfile actualizado")
         }
 
         // Sync location to Supabase
         Task {
             try? await SupabaseService.shared.updateMerchantLocation(merchantId: merchantId, latitude: latitude, longitude: longitude)
+            print("📍 [updateLocation] ✅ location synced to Supabase")
         }
     }
 
